@@ -190,6 +190,14 @@ _Avoid_: Suggested commentary, visible hint
 A claim that the workflow must refuse to make for a Benchmark Case because the evidence or causal chain cannot support it.
 _Avoid_: Style preference, optional warning
 
+**Successful Investigation**:
+A variance investigation that correctly identifies the Variance, uses relevant Supporting Evidence, preserves epistemic states, and states evidence boundaries without over-inference. It may correctly end with an Unresolved Driver.
+_Avoid_: Successfully explained variance, plausible narrative
+
+**Successfully Explained Variance**:
+A Successful Investigation with at least one Supported Driver promoted by a Provider FP&A Analyst to Analyst-Confirmed Cause and no undisclosed unresolved issue that could materially change the Conclusion.
+_Avoid_: AI-confirmed explanation, supported hypothesis
+
 ## Product phases
 
 **Provider FP&A MVP**:

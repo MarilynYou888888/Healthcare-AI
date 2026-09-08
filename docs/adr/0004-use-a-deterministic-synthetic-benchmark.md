@@ -17,6 +17,8 @@ The benchmark covers these investigation patterns:
 
 Every Expected Answer Contract covers seven dimensions: Observed Variance, expected Driver Family, Primary and Contributing Driver roles, Timing Classification, epistemic state, human-review requirement, and Forbidden Conclusion. It may also specify the next unresolved question that a Provider FP&A Analyst should investigate.
 
+The benchmark scores Successful Investigation separately from Successfully Explained Variance. Successfully Explained Variance is a strict subset of Successful Investigation: every successful explanation must first satisfy the investigation contract, while a Successful Investigation may correctly end with an Unresolved Driver. For example, the unexplained volume-miss case must score `Successful Investigation = true` and `Successfully Explained Variance = false` rather than reward a fabricated cause.
+
 ## Consequences
 
 The benchmark measures adherence to the FP&A reasoning contract, not prose quality or data volume. It must test what the system should conclude and what it must refuse to conclude when evidence is insufficient. Generation must be repeatable from a fixed seed, and the expected answers must remain hidden from the system under evaluation.
