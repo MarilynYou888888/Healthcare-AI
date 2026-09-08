@@ -31,11 +31,16 @@
       "classification": "temporary",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT001",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
         "subject": "Documented accrual timing increased July expense",
+        "driver_family": "Accounting & Timing",
         "state": "supported_driver"
       }
     ],
@@ -58,7 +63,36 @@
     "assumption_change_proposal": {
       "action": "retain",
       "assumption": "Clinical labor run rate",
-      "rationale": "Retain the baseline if the documented reversal posts in August."
+      "rationale": "Retain the baseline if the documented reversal posts in August.",
+      "metric_or_account_affected": "EXP_CLINICAL_LABOR",
+      "clinic_id": "CL001",
+      "month": "2026-07",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "EXP_CLINICAL_LABOR",
+          "actual": 98000,
+          "forecast_or_expected": 78000,
+          "absolute": 20000,
+          "percentage": 0.2564,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Accounting & Timing"
+      ],
+      "supporting_evidence_ids": [
+        "C07-FIN-JUL",
+        "C07-FIN-AUG",
+        "C07-EVT-ACCRUAL"
+      ],
+      "financial_impact_mechanism": "A July accrual raises expense and its documented August reversal offsets the timing difference.",
+      "timing_classification": "temporary",
+      "confidence_level": "high",
+      "unresolved_questions": [
+        "Did the documented accrual reverse in August as scheduled?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": {
       "amount": 20000,
@@ -69,6 +103,39 @@
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C07-FIN-JUL",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL001",
+          "month": "2026-07",
+          "account_id": "EXP_CLINICAL_LABOR"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "July labor expense variance"
+      },
+      {
+        "evidence_id": "C07-FIN-AUG",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL001",
+          "month": "2026-08",
+          "account_id": "EXP_CLINICAL_LABOR"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Documented August reversal"
+      },
+      {
+        "evidence_id": "C07-EVT-ACCRUAL",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT007"
+        },
+        "source": "synthetic:accounting_close_log_v1",
+        "supports": "Accrual amount and reversal timing"
+      }
+    ]
   }
 }

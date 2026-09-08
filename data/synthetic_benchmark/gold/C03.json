@@ -46,7 +46,11 @@
       "classification": "temporary",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT003",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
@@ -54,7 +58,13 @@
         "state": "observed_fact"
       },
       {
+        "subject": "Lower patient visits reduced net patient revenue",
+        "driver_family": "Demand & Volume",
+        "state": "supported_driver"
+      },
+      {
         "subject": "Reduced clinic capacity contributed to lower visits",
+        "driver_family": "Clinic Capacity & Operations",
         "state": "supported_driver"
       }
     ],
@@ -78,13 +88,108 @@
     "assumption_change_proposal": {
       "action": "scenario_test",
       "assumption": "Patient visit volume",
-      "rationale": "Test a temporary May shortfall with possible June recovery."
+      "rationale": "Test a temporary May shortfall with possible June recovery.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL003",
+      "month": "2026-05",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 175875,
+          "forecast_or_expected": 207030,
+          "absolute": -31155,
+          "percentage": -0.1505,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PATIENT_VISITS",
+          "actual": 875,
+          "forecast_or_expected": 1030,
+          "absolute": -155,
+          "percentage": -0.1505,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Demand & Volume",
+        "Clinic Capacity & Operations",
+        "External Disruption"
+      ],
+      "supporting_evidence_ids": [
+        "C03-FIN-REV",
+        "C03-OP-VISITS",
+        "C03-OP-CLOSURE",
+        "C03-EVT-WEATHER",
+        "C03-EVT-CLOSURE"
+      ],
+      "financial_impact_mechanism": "Clinic closure reduces appointment capacity; lower visits then reduce net patient revenue.",
+      "timing_classification": "temporary",
+      "confidence_level": "high",
+      "unresolved_questions": [
+        "Did deferred visits return in June, or were they lost?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C03-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL003",
+          "month": "2026-05",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C03-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL003",
+          "month": "2026-05",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Demand and volume primary driver"
+      },
+      {
+        "evidence_id": "C03-OP-CLOSURE",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL003",
+          "month": "2026-05",
+          "metric_id": "CLINIC_CLOSURE_DAYS"
+        },
+        "source": "synthetic:operations_calendar_v1",
+        "supports": "Clinic capacity contributing driver"
+      },
+      {
+        "evidence_id": "C03-EVT-WEATHER",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT003"
+        },
+        "source": "synthetic:operations_incident_log_v1",
+        "supports": "External disruption upstream context"
+      },
+      {
+        "evidence_id": "C03-EVT-CLOSURE",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT004"
+        },
+        "source": "synthetic:operations_calendar_v1",
+        "supports": "Documented closure"
+      }
+    ]
   }
 }

@@ -40,11 +40,16 @@
       "classification": "temporary",
       "recurring": true,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT003",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
         "subject": "Approved seasonal pattern supports an August demand decline",
+        "driver_family": "Demand & Volume",
         "state": "supported_driver"
       }
     ],
@@ -67,13 +72,84 @@
     "assumption_change_proposal": {
       "action": "retain",
       "assumption": "Post-August patient visit baseline",
-      "rationale": "Retain if forward bookings support seasonal recovery."
+      "rationale": "Retain if forward bookings support seasonal recovery.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL003",
+      "month": "2026-08",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 189141,
+          "forecast_or_expected": 210045,
+          "absolute": -20904,
+          "percentage": -0.0995,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PATIENT_VISITS",
+          "actual": 941,
+          "forecast_or_expected": 1045,
+          "absolute": -104,
+          "percentage": -0.0995,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Demand & Volume"
+      ],
+      "supporting_evidence_ids": [
+        "C09-FIN-REV",
+        "C09-OP-VISITS",
+        "C09-EVT-SEASON"
+      ],
+      "financial_impact_mechanism": "A recurring seasonal visit decline reduces August net patient revenue.",
+      "timing_classification": "temporary",
+      "confidence_level": "moderate",
+      "unresolved_questions": [
+        "Does September booking activity support the expected seasonal recovery?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C09-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL003",
+          "month": "2026-08",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C09-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL003",
+          "month": "2026-08",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Recurring visit-volume decline"
+      },
+      {
+        "evidence_id": "C09-EVT-SEASON",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT009"
+        },
+        "source": "synthetic:approved_seasonality_calendar_v1",
+        "supports": "Approved recurring seasonal pattern"
+      }
+    ]
   }
 }

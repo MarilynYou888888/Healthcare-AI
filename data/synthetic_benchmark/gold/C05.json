@@ -31,11 +31,16 @@
       "classification": "temporary",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT005",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
         "subject": "Overtime increased clinical labor expense",
+        "driver_family": "Workforce & Operating Expense",
         "state": "supported_driver"
       }
     ],
@@ -58,13 +63,75 @@
     "assumption_change_proposal": {
       "action": "scenario_test",
       "assumption": "Clinical labor expense",
-      "rationale": "Test temporary overtime until the vacancy is filled."
+      "rationale": "Test temporary overtime until the vacancy is filled.",
+      "metric_or_account_affected": "EXP_CLINICAL_LABOR",
+      "clinic_id": "CL005",
+      "month": "2026-06",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "EXP_CLINICAL_LABOR",
+          "actual": 105000,
+          "forecast_or_expected": 90000,
+          "absolute": 15000,
+          "percentage": 0.1667,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Workforce & Operating Expense"
+      ],
+      "supporting_evidence_ids": [
+        "C05-FIN-LABOR",
+        "C05-OP-OT",
+        "C05-EVT-VACANCY"
+      ],
+      "financial_impact_mechanism": "Additional overtime hours increase clinical labor expense.",
+      "timing_classification": "temporary",
+      "confidence_level": "moderate",
+      "unresolved_questions": [
+        "Did overtime hours and expense normalize after the vacancy was filled?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C05-FIN-LABOR",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-06",
+          "account_id": "EXP_CLINICAL_LABOR"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Labor expense variance"
+      },
+      {
+        "evidence_id": "C05-OP-OT",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-06",
+          "metric_id": "OVERTIME_HOURS"
+        },
+        "source": "synthetic:workforce_summary_v1",
+        "supports": "Overtime driver"
+      },
+      {
+        "evidence_id": "C05-EVT-VACANCY",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT005"
+        },
+        "source": "synthetic:workforce_plan_v1",
+        "supports": "Temporary vacancy timing"
+      }
+    ]
   }
 }

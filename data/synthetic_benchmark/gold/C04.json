@@ -40,11 +40,25 @@
       "classification": "unresolved",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT004",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
+        "subject": "Provider availability was on plan",
+        "state": "observed_fact"
+      },
+      {
+        "subject": "Provider availability explains the shortfall",
+        "driver_family": "Provider Availability",
+        "state": "rejected_driver"
+      },
+      {
         "subject": "Cause of visit shortfall",
+        "driver_family": "Unresolved",
         "state": "unresolved_driver"
       }
     ],
@@ -68,13 +82,86 @@
     "assumption_change_proposal": {
       "action": "review",
       "assumption": "Patient visit volume",
-      "rationale": "Do not change the baseline until operating evidence is available."
+      "rationale": "Do not change the baseline until operating evidence is available.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL004",
+      "month": "2026-06",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 196656,
+          "forecast_or_expected": 223380,
+          "absolute": -26724,
+          "percentage": -0.1196,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PATIENT_VISITS",
+          "actual": 964,
+          "forecast_or_expected": 1095,
+          "absolute": -131,
+          "percentage": -0.1196,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Unresolved"
+      ],
+      "supporting_evidence_ids": [
+        "C04-FIN-REV",
+        "C04-OP-VISITS",
+        "C04-OP-AVAIL"
+      ],
+      "financial_impact_mechanism": "Lower visits align with lower revenue, but the operating cause of the visit shortfall is unresolved.",
+      "timing_classification": "unresolved",
+      "confidence_level": "low",
+      "unresolved_questions": [
+        "What operating event or schedule change explains the missing visits?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": false
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C04-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL004",
+          "month": "2026-06",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C04-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL004",
+          "month": "2026-06",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Visit-volume shortfall"
+      },
+      {
+        "evidence_id": "C04-OP-AVAIL",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL004",
+          "month": "2026-06",
+          "metric_id": "PROVIDER_AVAILABLE_DAYS"
+        },
+        "source": "synthetic:provider_capacity_summary_v1",
+        "supports": "Provider availability candidate is not supported"
+      }
+    ]
   }
 }

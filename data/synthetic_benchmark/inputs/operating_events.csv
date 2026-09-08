@@ -1,5 +1,10 @@
 event_id,clinic_id,event_type,start_date,end_date,description,source,reported_at
-EVT000,CL001,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT001,CL001,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT002,CL002,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT003,CL003,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT004,CL004,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT005,CL005,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
+FCT006,CL006,forecast_horizon,2026-09-01,2026-12-31,Latest Approved Forecast extends through December 2026.,synthetic:forecast_governance_log_v1,2026-09-07T00:00:00Z
 EVT001,CL001,provider_pto,2026-03-10,2026-03-11,Approved provider PTO reduced scheduled provider availability by two days.,synthetic:provider_schedule_v1,2026-03-01T12:00:00Z
 EVT002,CL002,provider_departure,2026-04-05,2026-12-31,Provider departed; no replacement start date is approved within the forecast horizon.,synthetic:workforce_plan_v1,2026-04-06T15:00:00Z
 EVT003,CL003,weather_disruption,2026-05-15,2026-05-16,Severe weather affected local travel and clinic operations.,synthetic:operations_incident_log_v1,2026-05-15T09:00:00Z
@@ -7,7 +12,7 @@ EVT004,CL003,clinic_closure,2026-05-15,2026-05-16,Clinic closed for two days bec
 EVT005,CL005,temporary_staffing_vacancy,2026-06-01,2026-06-30,Temporary clinical staffing vacancy required approved overtime coverage.,synthetic:workforce_plan_v1,2026-06-02T14:00:00Z
 EVT006,CL006,payer_contract_change,2026-07-01,2026-12-31,Payer mix shifted toward lower-reimbursing plans and is expected to persist through December.,synthetic:revenue_cycle_review_v1,2026-08-10T16:00:00Z
 EVT007,CL001,accrual_timing,2026-07-31,2026-08-31,"A documented USD 20,000 labor accrual posted in July and is scheduled to reverse in August.",synthetic:accounting_close_log_v1,2026-08-05T17:00:00Z
-EVT008,CL002,data_feed_failure,2026-07-01,2026-07-31,The July patient-visit aggregate failed validation and was withheld from the dataset.,synthetic:data_quality_log_v1,2026-08-04T11:00:00Z
+EVT008,CL004,data_feed_failure,2026-07-01,2026-07-31,The July patient-visit aggregate failed validation and was withheld from the dataset.,synthetic:data_quality_log_v1,2026-08-04T11:00:00Z
 EVT009,CL003,seasonal_pattern,2026-08-01,2026-08-31,The approved seasonal calendar identifies a recurring August demand decline with September recovery.,synthetic:approved_seasonality_calendar_v1,2026-01-15T13:00:00Z
 EVT010,CL005,provider_pto,2026-08-11,2026-08-11,Approved provider PTO reduced August appointment capacity.,synthetic:provider_schedule_v1,2026-08-01T12:00:00Z
 EVT011,CL005,equipment_outage,2026-08-20,2026-08-21,A clinical equipment outage caused cancellations; overlap with PTO is not quantified.,synthetic:operations_incident_log_v1,2026-08-22T10:00:00Z

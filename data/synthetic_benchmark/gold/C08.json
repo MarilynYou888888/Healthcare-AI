@@ -2,7 +2,7 @@
   "case_id": "C08",
   "scenario": "Missing operating input",
   "target": {
-    "clinic_id": "CL002",
+    "clinic_id": "CL004",
     "month": "2026-07",
     "variance_type": "financial_variance",
     "target_id": "REV_NET_PATIENT"
@@ -33,7 +33,11 @@
       "classification": "unresolved",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT004",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
@@ -42,6 +46,7 @@
       },
       {
         "subject": "Business cause of revenue variance",
+        "driver_family": "Unresolved",
         "state": "unresolved_driver"
       }
     ],
@@ -65,13 +70,63 @@
     "assumption_change_proposal": {
       "action": "review",
       "assumption": "None until data is restored",
-      "rationale": "Resolve the data-quality issue before changing forecast assumptions."
+      "rationale": "Resolve the data-quality issue before changing forecast assumptions.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL004",
+      "month": "2026-07",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 170755,
+          "forecast_or_expected": 194040,
+          "absolute": -23285,
+          "percentage": -0.12,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Data Quality Issue"
+      ],
+      "supporting_evidence_ids": [
+        "C08-FIN-REV",
+        "C08-EVT-DQ"
+      ],
+      "financial_impact_mechanism": "The revenue variance is observed, but missing visit input blocks a supported operating mechanism.",
+      "timing_classification": "unresolved",
+      "confidence_level": "low",
+      "unresolved_questions": [
+        "Can the July visit feed be restored and reconciled before causal review?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": false
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C08-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL004",
+          "month": "2026-07",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C08-EVT-DQ",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT008"
+        },
+        "source": "synthetic:data_quality_log_v1",
+        "supports": "Visit input was withheld after validation failure"
+      }
+    ]
   }
 }

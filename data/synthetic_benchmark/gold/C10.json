@@ -45,15 +45,26 @@
       "classification": "temporary",
       "recurring": false,
       "structural": false,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT005",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
+        "subject": "Lower patient visits reduced net patient revenue",
+        "driver_family": "Demand & Volume",
+        "state": "supported_driver"
+      },
+      {
         "subject": "Reduced provider availability contributed to lower visits",
+        "driver_family": "Provider Availability",
         "state": "supported_driver"
       },
       {
         "subject": "Equipment outage reduced clinic capacity",
+        "driver_family": "Clinic Capacity & Operations",
         "state": "supported_driver"
       }
     ],
@@ -77,13 +88,120 @@
     "assumption_change_proposal": {
       "action": "scenario_test",
       "assumption": "Patient visit volume",
-      "rationale": "Test a temporary August reduction without allocating unsupported contribution percentages."
+      "rationale": "Test a temporary August reduction without allocating unsupported contribution percentages.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL005",
+      "month": "2026-08",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 204930,
+          "forecast_or_expected": 241155,
+          "absolute": -36225,
+          "percentage": -0.1502,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PATIENT_VISITS",
+          "actual": 990,
+          "forecast_or_expected": 1165,
+          "absolute": -175,
+          "percentage": -0.1502,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Demand & Volume",
+        "Provider Availability",
+        "Clinic Capacity & Operations"
+      ],
+      "supporting_evidence_ids": [
+        "C10-FIN-REV",
+        "C10-OP-VISITS",
+        "C10-OP-AVAIL",
+        "C10-OP-CLOSURE",
+        "C10-EVT-PTO",
+        "C10-EVT-OUTAGE"
+      ],
+      "financial_impact_mechanism": "Lower visits reduce net patient revenue; PTO and an equipment outage both constrain visit capacity.",
+      "timing_classification": "temporary",
+      "confidence_level": "moderate",
+      "unresolved_questions": [
+        "How did appointment cancellations overlap with provider PTO and the equipment outage?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C10-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-08",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C10-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-08",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Demand and volume primary driver"
+      },
+      {
+        "evidence_id": "C10-OP-AVAIL",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-08",
+          "metric_id": "PROVIDER_AVAILABLE_DAYS"
+        },
+        "source": "synthetic:provider_capacity_summary_v1",
+        "supports": "Provider availability contributing driver"
+      },
+      {
+        "evidence_id": "C10-OP-CLOSURE",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL005",
+          "month": "2026-08",
+          "metric_id": "CLINIC_CLOSURE_DAYS"
+        },
+        "source": "synthetic:operations_calendar_v1",
+        "supports": "Clinic capacity contributing driver"
+      },
+      {
+        "evidence_id": "C10-EVT-PTO",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT010"
+        },
+        "source": "synthetic:provider_schedule_v1",
+        "supports": "Provider PTO context"
+      },
+      {
+        "evidence_id": "C10-EVT-OUTAGE",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT011"
+        },
+        "source": "synthetic:operations_incident_log_v1",
+        "supports": "Equipment outage context"
+      }
+    ]
   }
 }

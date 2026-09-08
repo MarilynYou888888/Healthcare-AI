@@ -1,12 +1,10 @@
 [
   {
     "case_id": "C01",
-    "scenario": "Provider PTO",
     "clinic_id": "CL001",
     "month": "2026-03",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Temporary multi-step chain from availability to visits to revenue",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -19,12 +17,10 @@
   },
   {
     "case_id": "C02",
-    "scenario": "Provider departure",
     "clinic_id": "CL002",
     "month": "2026-04",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Structural capacity loss over the remaining forecast horizon",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -37,12 +33,10 @@
   },
   {
     "case_id": "C03",
-    "scenario": "Weather closure",
     "clinic_id": "CL003",
     "month": "2026-05",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Upstream external event must not become the primary financial driver",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -55,12 +49,10 @@
   },
   {
     "case_id": "C04",
-    "scenario": "Unexplained visit-volume miss",
     "clinic_id": "CL004",
     "month": "2026-06",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Insufficient evidence must end unresolved",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -73,12 +65,10 @@
   },
   {
     "case_id": "C05",
-    "scenario": "Labor overtime",
     "clinic_id": "CL005",
     "month": "2026-06",
     "target_type": "financial_variance",
     "target_id": "EXP_CLINICAL_LABOR",
-    "core_behavior": "Operating-expense variance linked to overtime evidence",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -91,12 +81,10 @@
   },
   {
     "case_id": "C06",
-    "scenario": "Payer-mix and reimbursement shift",
     "clinic_id": "CL006",
     "month": "2026-07",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Revenue realization changes while visit volume remains on plan",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -109,12 +97,10 @@
   },
   {
     "case_id": "C07",
-    "scenario": "Accounting accrual timing",
     "clinic_id": "CL001",
     "month": "2026-07",
     "target_type": "financial_variance",
     "target_id": "EXP_CLINICAL_LABOR",
-    "core_behavior": "Documented temporary accounting timing difference",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -127,12 +113,10 @@
   },
   {
     "case_id": "C08",
-    "scenario": "Missing operating input",
-    "clinic_id": "CL002",
+    "clinic_id": "CL004",
     "month": "2026-07",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Data quality issue blocks causal interpretation",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -145,12 +129,10 @@
   },
   {
     "case_id": "C09",
-    "scenario": "Seasonal demand decline",
     "clinic_id": "CL003",
     "month": "2026-08",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Recurring seasonal effect is not structural",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",
@@ -163,12 +145,10 @@
   },
   {
     "case_id": "C10",
-    "scenario": "Multiple supported drivers",
     "clinic_id": "CL005",
     "month": "2026-08",
     "target_type": "financial_variance",
     "target_id": "REV_NET_PATIENT",
-    "core_behavior": "Primary and contributing drivers without fabricated attribution",
     "review_queue": {
       "selected": true,
       "selected_by": "configured_rule",

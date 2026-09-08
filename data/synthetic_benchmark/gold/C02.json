@@ -43,11 +43,21 @@
       "classification": "structural",
       "recurring": false,
       "structural": true,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT002",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
+        "subject": "Lower patient visits reduced net patient revenue",
+        "driver_family": "Demand & Volume",
+        "state": "supported_driver"
+      },
+      {
         "subject": "Provider departure reduced capacity through the forecast horizon",
+        "driver_family": "Provider Availability",
         "state": "supported_driver"
       }
     ],
@@ -70,13 +80,109 @@
     "assumption_change_proposal": {
       "action": "review",
       "assumption": "Provider capacity and patient visits",
-      "rationale": "Revisit remaining-month capacity until the replacement starts."
+      "rationale": "Revisit remaining-month capacity until the replacement starts.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL002",
+      "month": "2026-04",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 152856,
+          "forecast_or_expected": 191070,
+          "absolute": -38214,
+          "percentage": -0.2,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PROVIDER_AVAILABLE_DAYS",
+          "actual": 16,
+          "forecast_or_expected": 20,
+          "absolute": -4,
+          "percentage": -0.2,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Demand & Volume",
+        "Provider Availability"
+      ],
+      "supporting_evidence_ids": [
+        "C02-FIN-REV",
+        "C02-OP-VISITS",
+        "C02-OP-AVAIL-APR",
+        "C02-OP-AVAIL-AUG",
+        "C02-EVT-DEPART"
+      ],
+      "financial_impact_mechanism": "Lower provider capacity reduces available appointments, visits, and net patient revenue.",
+      "timing_classification": "structural",
+      "confidence_level": "high",
+      "unresolved_questions": [
+        "What replacement start date is included in the approved staffing plan?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C02-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL002",
+          "month": "2026-04",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C02-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL002",
+          "month": "2026-04",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Demand and volume driver"
+      },
+      {
+        "evidence_id": "C02-OP-AVAIL-APR",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL002",
+          "month": "2026-04",
+          "metric_id": "PROVIDER_AVAILABLE_DAYS"
+        },
+        "source": "synthetic:provider_capacity_summary_v1",
+        "supports": "Initial capacity loss"
+      },
+      {
+        "evidence_id": "C02-OP-AVAIL-AUG",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL002",
+          "month": "2026-08",
+          "metric_id": "PROVIDER_AVAILABLE_DAYS"
+        },
+        "source": "synthetic:provider_capacity_summary_v1",
+        "supports": "Capacity loss persists in closed months"
+      },
+      {
+        "evidence_id": "C02-EVT-DEPART",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT002"
+        },
+        "source": "synthetic:workforce_plan_v1",
+        "supports": "No replacement within forecast horizon"
+      }
+    ]
   }
 }

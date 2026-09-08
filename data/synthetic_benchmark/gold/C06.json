@@ -49,12 +49,22 @@
       "classification": "structural",
       "recurring": false,
       "structural": true,
-      "forecast_horizon_end": "2026-12"
+      "forecast_horizon_end": "2026-12",
+      "forecast_horizon_source": {
+        "event_id": "FCT006",
+        "source": "synthetic:forecast_governance_log_v1"
+      }
     },
     "epistemic_state": [
       {
         "subject": "Payer-mix shift reduced net revenue per visit",
+        "driver_family": "Revenue Realization",
         "state": "supported_driver"
+      },
+      {
+        "subject": "Lower visit volume caused the revenue variance",
+        "driver_family": "Demand & Volume",
+        "state": "rejected_driver"
       }
     ],
     "human_review_requirement": {
@@ -76,13 +86,117 @@
     "assumption_change_proposal": {
       "action": "review",
       "assumption": "Net revenue per visit",
-      "rationale": "Review the remaining-month rate and payer-mix assumption."
+      "rationale": "Review the remaining-month rate and payer-mix assumption.",
+      "metric_or_account_affected": "REV_NET_PATIENT",
+      "clinic_id": "CL006",
+      "month": "2026-07",
+      "actual_vs_forecast_or_expected": [
+        {
+          "variance_type": "financial_variance",
+          "id": "REV_NET_PATIENT",
+          "actual": 234240,
+          "forecast_or_expected": 256200,
+          "absolute": -21960,
+          "percentage": -0.0857,
+          "direction": "unfavorable"
+        },
+        {
+          "variance_type": "operational_metric_variance",
+          "id": "PATIENT_VISITS",
+          "actual": 1220,
+          "forecast_or_expected": 1220,
+          "absolute": 0,
+          "percentage": 0,
+          "direction": "on_plan"
+        },
+        {
+          "variance_type": "forecast_assumption_variance",
+          "id": "NET_REVENUE_PER_VISIT",
+          "actual": 192,
+          "forecast_or_expected": 210,
+          "absolute": -18,
+          "percentage": -0.0857,
+          "direction": "unfavorable"
+        }
+      ],
+      "candidate_operating_drivers": [
+        "Revenue Realization"
+      ],
+      "supporting_evidence_ids": [
+        "C06-FIN-REV",
+        "C06-OP-VISITS",
+        "C06-OP-RATE",
+        "C06-OP-MIX",
+        "C06-EVT-CONTRACT"
+      ],
+      "financial_impact_mechanism": "Stable visits at lower net revenue per visit reduce net patient revenue.",
+      "timing_classification": "structural",
+      "confidence_level": "high",
+      "unresolved_questions": [
+        "Is the new payer mix expected to persist through December?"
+      ],
+      "analyst_approval_status": "pending"
     },
     "contribution_estimate": null,
     "success_criteria": {
       "successful_investigation": true,
       "successfully_explained_variance_before_human_review": false,
       "successfully_explained_variance_after_gold_human_review": true
-    }
+    },
+    "supporting_evidence": [
+      {
+        "evidence_id": "C06-FIN-REV",
+        "input_file": "financial_values.csv",
+        "row_selector": {
+          "clinic_id": "CL006",
+          "month": "2026-07",
+          "account_id": "REV_NET_PATIENT"
+        },
+        "source": "synthetic:financial_model_v1",
+        "supports": "Revenue variance"
+      },
+      {
+        "evidence_id": "C06-OP-VISITS",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL006",
+          "month": "2026-07",
+          "metric_id": "PATIENT_VISITS"
+        },
+        "source": "synthetic:operations_dashboard_v1",
+        "supports": "Visit volume remained on plan"
+      },
+      {
+        "evidence_id": "C06-OP-RATE",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL006",
+          "month": "2026-07",
+          "metric_id": "NET_REVENUE_PER_VISIT"
+        },
+        "source": "synthetic:revenue_cycle_summary_v1",
+        "supports": "Net revenue per visit assumption variance"
+      },
+      {
+        "evidence_id": "C06-OP-MIX",
+        "input_file": "operational_values.csv",
+        "row_selector": {
+          "clinic_id": "CL006",
+          "month": "2026-07",
+          "metric_id": "COMMERCIAL_PAYER_MIX"
+        },
+        "source": "synthetic:revenue_cycle_summary_v1",
+        "supports": "Payer-mix shift"
+      },
+      {
+        "evidence_id": "C06-EVT-CONTRACT",
+        "input_file": "operating_events.csv",
+        "row_selector": {
+          "event_id": "EVT006"
+        },
+        "source": "synthetic:revenue_cycle_review_v1",
+        "supports": "Persistence through forecast horizon"
+      }
+    ]
   }
 }

@@ -3,6 +3,7 @@ import argparse
 import csv
 import json
 import random
+from copy import deepcopy
 from pathlib import Path
 
 
@@ -36,6 +37,24 @@ REQUIRED_GOLD_DIMENSIONS = {
     "epistemic_state",
     "human_review_requirement",
     "forbidden_conclusion",
+    "supporting_evidence",
+    "assumption_change_proposal",
+    "success_criteria",
+}
+
+REQUIRED_PROPOSAL_FIELDS = {
+    "action",
+    "metric_or_account_affected",
+    "clinic_id",
+    "month",
+    "actual_vs_forecast_or_expected",
+    "candidate_operating_drivers",
+    "supporting_evidence_ids",
+    "financial_impact_mechanism",
+    "timing_classification",
+    "confidence_level",
+    "unresolved_questions",
+    "analyst_approval_status",
 }
 
 PROHIBITED_PATIENT_LEVEL_FIELDS = {
@@ -63,7 +82,7 @@ CASE_OVERVIEWS = [
     {"case_id": "C05", "scenario": "Labor overtime", "clinic_id": "CL005", "month": "2026-06", "target_type": "financial_variance", "target_id": "EXP_CLINICAL_LABOR", "core_behavior": "Operating-expense variance linked to overtime evidence"},
     {"case_id": "C06", "scenario": "Payer-mix and reimbursement shift", "clinic_id": "CL006", "month": "2026-07", "target_type": "financial_variance", "target_id": "REV_NET_PATIENT", "core_behavior": "Revenue realization changes while visit volume remains on plan"},
     {"case_id": "C07", "scenario": "Accounting accrual timing", "clinic_id": "CL001", "month": "2026-07", "target_type": "financial_variance", "target_id": "EXP_CLINICAL_LABOR", "core_behavior": "Documented temporary accounting timing difference"},
-    {"case_id": "C08", "scenario": "Missing operating input", "clinic_id": "CL002", "month": "2026-07", "target_type": "financial_variance", "target_id": "REV_NET_PATIENT", "core_behavior": "Data quality issue blocks causal interpretation"},
+    {"case_id": "C08", "scenario": "Missing operating input", "clinic_id": "CL004", "month": "2026-07", "target_type": "financial_variance", "target_id": "REV_NET_PATIENT", "core_behavior": "Data quality issue blocks causal interpretation"},
     {"case_id": "C09", "scenario": "Seasonal demand decline", "clinic_id": "CL003", "month": "2026-08", "target_type": "financial_variance", "target_id": "REV_NET_PATIENT", "core_behavior": "Recurring seasonal effect is not structural"},
     {"case_id": "C10", "scenario": "Multiple supported drivers", "clinic_id": "CL005", "month": "2026-08", "target_type": "financial_variance", "target_id": "REV_NET_PATIENT", "core_behavior": "Primary and contributing drivers without fabricated attribution"},
 ]
@@ -97,7 +116,8 @@ GOLD_FIXTURES = {
         "timing_classification": {"classification": "temporary", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
         "epistemic_state": [
             {"subject": "Patient visits below expected", "state": "observed_fact"},
-            {"subject": "Provider PTO reduced availability", "state": "supported_driver"},
+            {"subject": "Lower patient visits reduced net patient revenue", "driver_family": "Demand & Volume", "state": "supported_driver"},
+            {"subject": "Provider PTO reduced availability", "driver_family": "Provider Availability", "state": "supported_driver"},
         ],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Provider PTO caused 100% of the revenue decline."],
@@ -114,7 +134,10 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Demand & Volume", "Provider Availability"],
         "driver_roles": {"primary": "Demand & Volume", "contributing": ["Provider Availability"], "upstream_context": []},
         "timing_classification": {"classification": "structural", "recurring": False, "structural": True, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Provider departure reduced capacity through the forecast horizon", "state": "supported_driver"}],
+        "epistemic_state": [
+            {"subject": "Lower patient visits reduced net patient revenue", "driver_family": "Demand & Volume", "state": "supported_driver"},
+            {"subject": "Provider departure reduced capacity through the forecast horizon", "driver_family": "Provider Availability", "state": "supported_driver"},
+        ],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Revenue will permanently remain at the April level."],
         "expected_question": ["What replacement start date is included in the approved staffing plan?"],
@@ -132,7 +155,8 @@ GOLD_FIXTURES = {
         "timing_classification": {"classification": "temporary", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
         "epistemic_state": [
             {"subject": "Weather closed the clinic for two days", "state": "observed_fact"},
-            {"subject": "Reduced clinic capacity contributed to lower visits", "state": "supported_driver"},
+            {"subject": "Lower patient visits reduced net patient revenue", "driver_family": "Demand & Volume", "state": "supported_driver"},
+            {"subject": "Reduced clinic capacity contributed to lower visits", "driver_family": "Clinic Capacity & Operations", "state": "supported_driver"},
         ],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Weather is the primary driver of the revenue variance.", "The closure caused 100% of the revenue decline."],
@@ -149,7 +173,11 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Unresolved"],
         "driver_roles": {"primary": None, "contributing": [], "upstream_context": []},
         "timing_classification": {"classification": "unresolved", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Cause of visit shortfall", "state": "unresolved_driver"}],
+        "epistemic_state": [
+            {"subject": "Provider availability was on plan", "state": "observed_fact"},
+            {"subject": "Provider availability explains the shortfall", "driver_family": "Provider Availability", "state": "rejected_driver"},
+            {"subject": "Cause of visit shortfall", "driver_family": "Unresolved", "state": "unresolved_driver"},
+        ],
         "human_review_requirement": human_review("request_more_evidence"),
         "forbidden_conclusion": ["Lower provider availability caused the decline.", "The volume miss is temporary."],
         "expected_question": ["What operating event or schedule change explains the missing visits?"],
@@ -162,7 +190,7 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Workforce & Operating Expense"],
         "driver_roles": {"primary": "Workforce & Operating Expense", "contributing": [], "upstream_context": []},
         "timing_classification": {"classification": "temporary", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Overtime increased clinical labor expense", "state": "supported_driver"}],
+        "epistemic_state": [{"subject": "Overtime increased clinical labor expense", "driver_family": "Workforce & Operating Expense", "state": "supported_driver"}],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Overtime explains the entire expense variance without an applicable labor-rate bridge."],
         "expected_question": ["Did overtime hours and expense normalize after the vacancy was filled?"],
@@ -179,7 +207,10 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Revenue Realization"],
         "driver_roles": {"primary": "Revenue Realization", "contributing": [], "upstream_context": []},
         "timing_classification": {"classification": "structural", "recurring": False, "structural": True, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Payer-mix shift reduced net revenue per visit", "state": "supported_driver"}],
+        "epistemic_state": [
+            {"subject": "Payer-mix shift reduced net revenue per visit", "driver_family": "Revenue Realization", "state": "supported_driver"},
+            {"subject": "Lower visit volume caused the revenue variance", "driver_family": "Demand & Volume", "state": "rejected_driver"},
+        ],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Lower visit volume caused the revenue variance."],
         "expected_question": ["Is the new payer mix expected to persist through December?"],
@@ -192,7 +223,7 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Accounting & Timing"],
         "driver_roles": {"primary": "Accounting & Timing", "contributing": [], "upstream_context": []},
         "timing_classification": {"classification": "temporary", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Documented accrual timing increased July expense", "state": "supported_driver"}],
+        "epistemic_state": [{"subject": "Documented accrual timing increased July expense", "driver_family": "Accounting & Timing", "state": "supported_driver"}],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["The July expense variance reflects a permanent labor run-rate increase."],
         "expected_question": ["Did the documented accrual reverse in August as scheduled?"],
@@ -205,7 +236,7 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Data Quality Issue"],
         "driver_roles": {"primary": None, "contributing": [], "upstream_context": ["Data Quality Issue"]},
         "timing_classification": {"classification": "unresolved", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "July patient-visit input is missing", "state": "observed_fact"}, {"subject": "Business cause of revenue variance", "state": "unresolved_driver"}],
+        "epistemic_state": [{"subject": "July patient-visit input is missing", "state": "observed_fact"}, {"subject": "Business cause of revenue variance", "driver_family": "Unresolved", "state": "unresolved_driver"}],
         "human_review_requirement": human_review("request_more_evidence"),
         "forbidden_conclusion": ["The missing visit record means patient volume was zero.", "Provider availability caused the revenue decline."],
         "expected_question": ["Can the July visit feed be restored and reconciled before causal review?"],
@@ -221,7 +252,7 @@ GOLD_FIXTURES = {
         "expected_driver_family": ["Demand & Volume"],
         "driver_roles": {"primary": "Demand & Volume", "contributing": [], "upstream_context": []},
         "timing_classification": {"classification": "temporary", "recurring": True, "structural": False, "forecast_horizon_end": "2026-12"},
-        "epistemic_state": [{"subject": "Approved seasonal pattern supports an August demand decline", "state": "supported_driver"}],
+        "epistemic_state": [{"subject": "Approved seasonal pattern supports an August demand decline", "driver_family": "Demand & Volume", "state": "supported_driver"}],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["The recurring August decline is a structural demand reduction."],
         "expected_question": ["Does September booking activity support the expected seasonal recovery?"],
@@ -238,8 +269,9 @@ GOLD_FIXTURES = {
         "driver_roles": {"primary": "Demand & Volume", "contributing": ["Provider Availability", "Clinic Capacity & Operations"], "upstream_context": []},
         "timing_classification": {"classification": "temporary", "recurring": False, "structural": False, "forecast_horizon_end": "2026-12"},
         "epistemic_state": [
-            {"subject": "Reduced provider availability contributed to lower visits", "state": "supported_driver"},
-            {"subject": "Equipment outage reduced clinic capacity", "state": "supported_driver"},
+            {"subject": "Lower patient visits reduced net patient revenue", "driver_family": "Demand & Volume", "state": "supported_driver"},
+            {"subject": "Reduced provider availability contributed to lower visits", "driver_family": "Provider Availability", "state": "supported_driver"},
+            {"subject": "Equipment outage reduced clinic capacity", "driver_family": "Clinic Capacity & Operations", "state": "supported_driver"},
         ],
         "human_review_requirement": human_review("confirm"),
         "forbidden_conclusion": ["Provider availability caused 60% of the revenue decline.", "The equipment outage caused 40% of the revenue decline."],
@@ -249,6 +281,150 @@ GOLD_FIXTURES = {
         "success_criteria": success(True),
     },
 }
+
+
+def evidence_item(
+    evidence_id: str,
+    input_file: str,
+    source: str,
+    supports: str,
+    **row_selector,
+) -> dict:
+    return {
+        "evidence_id": evidence_id,
+        "input_file": input_file,
+        "row_selector": row_selector,
+        "source": source,
+        "supports": supports,
+    }
+
+
+CASE_EVIDENCE = {
+    "C01": [
+        evidence_item("C01-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL001", month="2026-03", account_id="REV_NET_PATIENT"),
+        evidence_item("C01-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Demand and volume driver", clinic_id="CL001", month="2026-03", metric_id="PATIENT_VISITS"),
+        evidence_item("C01-OP-AVAIL", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Provider availability driver", clinic_id="CL001", month="2026-03", metric_id="PROVIDER_AVAILABLE_DAYS"),
+        evidence_item("C01-OP-PTO", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Provider PTO context", clinic_id="CL001", month="2026-03", metric_id="PROVIDER_PTO_DAYS"),
+        evidence_item("C01-EVT-PTO", "operating_events.csv", "synthetic:provider_schedule_v1", "Temporary PTO timing", event_id="EVT001"),
+    ],
+    "C02": [
+        evidence_item("C02-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL002", month="2026-04", account_id="REV_NET_PATIENT"),
+        evidence_item("C02-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Demand and volume driver", clinic_id="CL002", month="2026-04", metric_id="PATIENT_VISITS"),
+        evidence_item("C02-OP-AVAIL-APR", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Initial capacity loss", clinic_id="CL002", month="2026-04", metric_id="PROVIDER_AVAILABLE_DAYS"),
+        evidence_item("C02-OP-AVAIL-AUG", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Capacity loss persists in closed months", clinic_id="CL002", month="2026-08", metric_id="PROVIDER_AVAILABLE_DAYS"),
+        evidence_item("C02-EVT-DEPART", "operating_events.csv", "synthetic:workforce_plan_v1", "No replacement within forecast horizon", event_id="EVT002"),
+    ],
+    "C03": [
+        evidence_item("C03-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL003", month="2026-05", account_id="REV_NET_PATIENT"),
+        evidence_item("C03-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Demand and volume primary driver", clinic_id="CL003", month="2026-05", metric_id="PATIENT_VISITS"),
+        evidence_item("C03-OP-CLOSURE", "operational_values.csv", "synthetic:operations_calendar_v1", "Clinic capacity contributing driver", clinic_id="CL003", month="2026-05", metric_id="CLINIC_CLOSURE_DAYS"),
+        evidence_item("C03-EVT-WEATHER", "operating_events.csv", "synthetic:operations_incident_log_v1", "External disruption upstream context", event_id="EVT003"),
+        evidence_item("C03-EVT-CLOSURE", "operating_events.csv", "synthetic:operations_calendar_v1", "Documented closure", event_id="EVT004"),
+    ],
+    "C04": [
+        evidence_item("C04-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL004", month="2026-06", account_id="REV_NET_PATIENT"),
+        evidence_item("C04-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Visit-volume shortfall", clinic_id="CL004", month="2026-06", metric_id="PATIENT_VISITS"),
+        evidence_item("C04-OP-AVAIL", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Provider availability candidate is not supported", clinic_id="CL004", month="2026-06", metric_id="PROVIDER_AVAILABLE_DAYS"),
+    ],
+    "C05": [
+        evidence_item("C05-FIN-LABOR", "financial_values.csv", "synthetic:financial_model_v1", "Labor expense variance", clinic_id="CL005", month="2026-06", account_id="EXP_CLINICAL_LABOR"),
+        evidence_item("C05-OP-OT", "operational_values.csv", "synthetic:workforce_summary_v1", "Overtime driver", clinic_id="CL005", month="2026-06", metric_id="OVERTIME_HOURS"),
+        evidence_item("C05-EVT-VACANCY", "operating_events.csv", "synthetic:workforce_plan_v1", "Temporary vacancy timing", event_id="EVT005"),
+    ],
+    "C06": [
+        evidence_item("C06-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL006", month="2026-07", account_id="REV_NET_PATIENT"),
+        evidence_item("C06-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Visit volume remained on plan", clinic_id="CL006", month="2026-07", metric_id="PATIENT_VISITS"),
+        evidence_item("C06-OP-RATE", "operational_values.csv", "synthetic:revenue_cycle_summary_v1", "Net revenue per visit assumption variance", clinic_id="CL006", month="2026-07", metric_id="NET_REVENUE_PER_VISIT"),
+        evidence_item("C06-OP-MIX", "operational_values.csv", "synthetic:revenue_cycle_summary_v1", "Payer-mix shift", clinic_id="CL006", month="2026-07", metric_id="COMMERCIAL_PAYER_MIX"),
+        evidence_item("C06-EVT-CONTRACT", "operating_events.csv", "synthetic:revenue_cycle_review_v1", "Persistence through forecast horizon", event_id="EVT006"),
+    ],
+    "C07": [
+        evidence_item("C07-FIN-JUL", "financial_values.csv", "synthetic:financial_model_v1", "July labor expense variance", clinic_id="CL001", month="2026-07", account_id="EXP_CLINICAL_LABOR"),
+        evidence_item("C07-FIN-AUG", "financial_values.csv", "synthetic:financial_model_v1", "Documented August reversal", clinic_id="CL001", month="2026-08", account_id="EXP_CLINICAL_LABOR"),
+        evidence_item("C07-EVT-ACCRUAL", "operating_events.csv", "synthetic:accounting_close_log_v1", "Accrual amount and reversal timing", event_id="EVT007"),
+    ],
+    "C08": [
+        evidence_item("C08-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL004", month="2026-07", account_id="REV_NET_PATIENT"),
+        evidence_item("C08-EVT-DQ", "operating_events.csv", "synthetic:data_quality_log_v1", "Visit input was withheld after validation failure", event_id="EVT008"),
+    ],
+    "C09": [
+        evidence_item("C09-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL003", month="2026-08", account_id="REV_NET_PATIENT"),
+        evidence_item("C09-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Recurring visit-volume decline", clinic_id="CL003", month="2026-08", metric_id="PATIENT_VISITS"),
+        evidence_item("C09-EVT-SEASON", "operating_events.csv", "synthetic:approved_seasonality_calendar_v1", "Approved recurring seasonal pattern", event_id="EVT009"),
+    ],
+    "C10": [
+        evidence_item("C10-FIN-REV", "financial_values.csv", "synthetic:financial_model_v1", "Revenue variance", clinic_id="CL005", month="2026-08", account_id="REV_NET_PATIENT"),
+        evidence_item("C10-OP-VISITS", "operational_values.csv", "synthetic:operations_dashboard_v1", "Demand and volume primary driver", clinic_id="CL005", month="2026-08", metric_id="PATIENT_VISITS"),
+        evidence_item("C10-OP-AVAIL", "operational_values.csv", "synthetic:provider_capacity_summary_v1", "Provider availability contributing driver", clinic_id="CL005", month="2026-08", metric_id="PROVIDER_AVAILABLE_DAYS"),
+        evidence_item("C10-OP-CLOSURE", "operational_values.csv", "synthetic:operations_calendar_v1", "Clinic capacity contributing driver", clinic_id="CL005", month="2026-08", metric_id="CLINIC_CLOSURE_DAYS"),
+        evidence_item("C10-EVT-PTO", "operating_events.csv", "synthetic:provider_schedule_v1", "Provider PTO context", event_id="EVT010"),
+        evidence_item("C10-EVT-OUTAGE", "operating_events.csv", "synthetic:operations_incident_log_v1", "Equipment outage context", event_id="EVT011"),
+    ],
+}
+
+FINANCIAL_IMPACT_MECHANISMS = {
+    "C01": "Fewer visits at a stable revenue-per-visit rate reduce net patient revenue.",
+    "C02": "Lower provider capacity reduces available appointments, visits, and net patient revenue.",
+    "C03": "Clinic closure reduces appointment capacity; lower visits then reduce net patient revenue.",
+    "C04": "Lower visits align with lower revenue, but the operating cause of the visit shortfall is unresolved.",
+    "C05": "Additional overtime hours increase clinical labor expense.",
+    "C06": "Stable visits at lower net revenue per visit reduce net patient revenue.",
+    "C07": "A July accrual raises expense and its documented August reversal offsets the timing difference.",
+    "C08": "The revenue variance is observed, but missing visit input blocks a supported operating mechanism.",
+    "C09": "A recurring seasonal visit decline reduces August net patient revenue.",
+    "C10": "Lower visits reduce net patient revenue; PTO and an equipment outage both constrain visit capacity.",
+}
+
+CONFIDENCE_LEVELS = {
+    "C01": "moderate",
+    "C02": "high",
+    "C03": "high",
+    "C04": "low",
+    "C05": "moderate",
+    "C06": "high",
+    "C07": "high",
+    "C08": "low",
+    "C09": "moderate",
+    "C10": "moderate",
+}
+
+
+def enrich_expected_contract(case: dict) -> dict:
+    case_id = case["case_id"]
+    expected = deepcopy(GOLD_FIXTURES[case_id])
+    evidence = deepcopy(CASE_EVIDENCE[case_id])
+    horizon_event_id = f"FCT{int(case['clinic_id'][2:]):03d}"
+    expected["supporting_evidence"] = evidence
+    expected["timing_classification"]["forecast_horizon_source"] = {
+        "event_id": horizon_event_id,
+        "source": "synthetic:forecast_governance_log_v1",
+    }
+
+    proposal = expected["assumption_change_proposal"]
+    primary = expected["driver_roles"]["primary"]
+    candidate_drivers = (
+        ([primary] if primary else [])
+        + expected["driver_roles"]["contributing"]
+        + expected["driver_roles"]["upstream_context"]
+    )
+    if not candidate_drivers:
+        candidate_drivers = expected["expected_driver_family"]
+    proposal.update({
+        "metric_or_account_affected": case["target_id"],
+        "clinic_id": case["clinic_id"],
+        "month": case["month"],
+        "actual_vs_forecast_or_expected": deepcopy(expected["observed_variance"]),
+        "candidate_operating_drivers": candidate_drivers,
+        "supporting_evidence_ids": [item["evidence_id"] for item in evidence],
+        "financial_impact_mechanism": FINANCIAL_IMPACT_MECHANISMS[case_id],
+        "timing_classification": expected["timing_classification"]["classification"],
+        "confidence_level": CONFIDENCE_LEVELS[case_id],
+        "unresolved_questions": deepcopy(expected["expected_question"]),
+        "analyst_approval_status": expected["human_review_requirement"][
+            "analyst_status_at_system_output"
+        ],
+    })
+    return expected
 
 
 def write_csv(path: Path, headers: list[str], rows: list[dict]) -> None:
@@ -304,7 +480,16 @@ def build_case_overviews(input_rows: dict[str, list[dict]]) -> list[dict]:
         if rule["always_review"] == "true":
             reasons.append("critical_metric_rule")
 
-        case = dict(overview)
+        case = {
+            field: overview[field]
+            for field in (
+                "case_id",
+                "clinic_id",
+                "month",
+                "target_type",
+                "target_id",
+            )
+        }
         case["review_queue"] = {
             "selected": bool(reasons),
             "selected_by": "configured_rule" if reasons else None,
@@ -392,12 +577,17 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
     financial_overrides = {
         ("CL001", "2026-03", "REV_NET_PATIENT"): (154440, 175500),
         ("CL002", "2026-04", "REV_NET_PATIENT"): (152856, 191070),
+        ("CL002", "2026-05", "REV_NET_PATIENT"): (153648, 192060),
+        ("CL002", "2026-06", "REV_NET_PATIENT"): (154440, 193050),
+        ("CL002", "2026-07", "REV_NET_PATIENT"): (155232, 194040),
+        ("CL002", "2026-08", "REV_NET_PATIENT"): (156024, 195030),
         ("CL003", "2026-05", "REV_NET_PATIENT"): (175875, 207030),
         ("CL004", "2026-06", "REV_NET_PATIENT"): (196656, 223380),
         ("CL005", "2026-06", "EXP_CLINICAL_LABOR"): (105000, 90000),
         ("CL006", "2026-07", "REV_NET_PATIENT"): (234240, 256200),
         ("CL001", "2026-07", "EXP_CLINICAL_LABOR"): (98000, 78000),
-        ("CL002", "2026-07", "REV_NET_PATIENT"): (170755, 194040),
+        ("CL001", "2026-08", "EXP_CLINICAL_LABOR"): (58000, 78000),
+        ("CL004", "2026-07", "REV_NET_PATIENT"): (170755, 194040),
         ("CL003", "2026-08", "REV_NET_PATIENT"): (189141, 210045),
         ("CL005", "2026-08", "REV_NET_PATIENT"): (204930, 241155),
     }
@@ -418,6 +608,14 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
         ("CL001", "2026-03", "PROVIDER_PTO_DAYS"): (2, 0),
         ("CL002", "2026-04", "PATIENT_VISITS"): (772, 965),
         ("CL002", "2026-04", "PROVIDER_AVAILABLE_DAYS"): (16, 20),
+        ("CL002", "2026-05", "PATIENT_VISITS"): (776, 970),
+        ("CL002", "2026-05", "PROVIDER_AVAILABLE_DAYS"): (16, 20),
+        ("CL002", "2026-06", "PATIENT_VISITS"): (780, 975),
+        ("CL002", "2026-06", "PROVIDER_AVAILABLE_DAYS"): (16, 20),
+        ("CL002", "2026-07", "PATIENT_VISITS"): (784, 980),
+        ("CL002", "2026-07", "PROVIDER_AVAILABLE_DAYS"): (16, 20),
+        ("CL002", "2026-08", "PATIENT_VISITS"): (788, 985),
+        ("CL002", "2026-08", "PROVIDER_AVAILABLE_DAYS"): (16, 20),
         ("CL003", "2026-05", "PATIENT_VISITS"): (875, 1030),
         ("CL003", "2026-05", "CLINIC_CLOSURE_DAYS"): (2, 0),
         ("CL004", "2026-06", "PATIENT_VISITS"): (964, 1095),
@@ -431,7 +629,7 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
         ("CL005", "2026-08", "NET_REVENUE_PER_VISIT"): (207, 207),
         ("CL005", "2026-08", "PROVIDER_AVAILABLE_DAYS"): (18, 20),
         ("CL005", "2026-08", "PROVIDER_PTO_DAYS"): (1, 0),
-        ("CL005", "2026-08", "CLINIC_CLOSURE_DAYS"): (1, 0),
+        ("CL005", "2026-08", "CLINIC_CLOSURE_DAYS"): (2, 0),
     }
     for (clinic_id, month, metric_id), values in operational_overrides.items():
         update_value_row(
@@ -447,7 +645,7 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
     operational_rows = [
         row for row in operational_rows
         if not (
-            row["clinic_id"] == "CL002"
+            row["clinic_id"] == "CL004"
             and row["month"] == "2026-07"
             and row["metric_id"] == "PATIENT_VISITS"
         )
@@ -455,11 +653,17 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
 
     operating_events = [
         {
-            "event_id": "EVT000", "clinic_id": "CL001", "event_type": "forecast_horizon",
-            "start_date": "2026-09-01", "end_date": "2026-12-31",
+            "event_id": f"FCT{index:03d}",
+            "clinic_id": clinic["clinic_id"],
+            "event_type": "forecast_horizon",
+            "start_date": "2026-09-01",
+            "end_date": "2026-12-31",
             "description": "Latest Approved Forecast extends through December 2026.",
-            "source": "synthetic:forecast_governance_log_v1", "reported_at": LOADED_AT,
-        },
+            "source": "synthetic:forecast_governance_log_v1",
+            "reported_at": LOADED_AT,
+        }
+        for index, clinic in enumerate(CLINICS, start=1)
+    ] + [
         {
             "event_id": "EVT001", "clinic_id": "CL001", "event_type": "provider_pto",
             "start_date": "2026-03-10", "end_date": "2026-03-11",
@@ -503,7 +707,7 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
             "source": "synthetic:accounting_close_log_v1", "reported_at": "2026-08-05T17:00:00Z",
         },
         {
-            "event_id": "EVT008", "clinic_id": "CL002", "event_type": "data_feed_failure",
+            "event_id": "EVT008", "clinic_id": "CL004", "event_type": "data_feed_failure",
             "start_date": "2026-07-01", "end_date": "2026-07-31",
             "description": "The July patient-visit aggregate failed validation and was withheld from the dataset.",
             "source": "synthetic:data_quality_log_v1", "reported_at": "2026-08-04T11:00:00Z",
@@ -577,6 +781,10 @@ def validate_generated_benchmark(output_dir: Path) -> None:
         [case["case_id"] for case in cases] == [f"C{index:02d}" for index in range(1, 11)],
         "Case identifiers must be C01 through C10",
     )
+    require(
+        all("scenario" not in case and "core_behavior" not in case for case in cases),
+        "Public case manifest must not reveal expected conclusions",
+    )
 
     financial_lookup = {
         (row["clinic_id"], row["month"], row["account_id"]): row
@@ -598,6 +806,10 @@ def validate_generated_benchmark(output_dir: Path) -> None:
         )
         require(bool(expected["forbidden_conclusion"]), f"Missing forbidden conclusion for {case['case_id']}")
         require(expected["human_review_requirement"]["required"] is True, "Human review must be required")
+        require(
+            REQUIRED_PROPOSAL_FIELDS.issubset(expected["assumption_change_proposal"]),
+            f"Incomplete assumption-change proposal for {case['case_id']}",
+        )
         success_criteria = expected["success_criteria"]
         require(success_criteria["successful_investigation"] is True, "Investigation benchmark must be successful")
         require(
@@ -621,6 +833,38 @@ def validate_generated_benchmark(output_dir: Path) -> None:
             require(expected_value == variance["forecast_or_expected"], f"Comparator mismatch in {case['case_id']}")
             require(actual - expected_value == variance["absolute"], f"Absolute variance mismatch in {case['case_id']}")
             require(percentage == variance["percentage"], f"Percentage variance mismatch in {case['case_id']}")
+
+        primary = expected["driver_roles"]["primary"]
+        if primary is not None:
+            require(
+                any(
+                    state.get("driver_family") == primary
+                    and state["state"] == "supported_driver"
+                    for state in expected["epistemic_state"]
+                ),
+                f"Primary driver lacks supported state in {case['case_id']}",
+            )
+
+        for evidence in expected["supporting_evidence"]:
+            source_rows = input_rows[evidence["input_file"]]
+            matches = [
+                row for row in source_rows
+                if all(
+                    row[field] == str(value)
+                    for field, value in evidence["row_selector"].items()
+                )
+            ]
+            require(len(matches) == 1, f"Evidence reference does not resolve: {evidence['evidence_id']}")
+            require(matches[0]["source"] == evidence["source"], f"Evidence source mismatch: {evidence['evidence_id']}")
+
+        horizon = expected["timing_classification"]["forecast_horizon_source"]
+        horizon_matches = [
+            event for event in input_rows["operating_events.csv"]
+            if event["event_id"] == horizon["event_id"]
+            and event["clinic_id"] == case["clinic_id"]
+            and event["source"] == horizon["source"]
+        ]
+        require(len(horizon_matches) == 1, f"Forecast horizon source does not resolve: {case['case_id']}")
 
     require(
         variance_types == {
@@ -730,20 +974,22 @@ def generate(output_dir: Path, seed: int) -> None:
         write_csv(inputs_dir / filename, headers, input_rows[filename])
 
     cases = build_case_overviews(input_rows)
+    private_case_lookup = {case["case_id"]: case for case in CASE_OVERVIEWS}
     (output_dir / "cases.json").write_text(
         json.dumps(cases, indent=2) + "\n", encoding="utf-8"
     )
     for case in cases:
+        private_case = private_case_lookup[case["case_id"]]
         fixture = {
             "case_id": case["case_id"],
-            "scenario": case["scenario"],
+            "scenario": private_case["scenario"],
             "target": {
                 "clinic_id": case["clinic_id"],
                 "month": case["month"],
                 "variance_type": case["target_type"],
                 "target_id": case["target_id"],
             },
-            "expected": GOLD_FIXTURES[case["case_id"]],
+            "expected": enrich_expected_contract(case),
         }
         (gold_dir / f"{case['case_id']}.json").write_text(
             json.dumps(fixture, indent=2) + "\n", encoding="utf-8"

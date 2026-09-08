@@ -133,7 +133,8 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
                 "Seasonal demand decline",
                 "Multiple supported drivers",
             ]
-            self.assertEqual([case["scenario"] for case in cases], expected_scenarios)
+            self.assertTrue(all("scenario" not in case for case in cases))
+            self.assertTrue(all("core_behavior" not in case for case in cases))
 
             required_dimensions = {
                 "observed_variance",
@@ -163,6 +164,11 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
                 )
                 gold[case["case_id"]] = fixture
 
+            self.assertEqual(
+                [gold[f"C{index:02d}"]["scenario"] for index in range(1, 11)],
+                expected_scenarios,
+            )
+
             self.assertEqual(observed_variance_types, {
                 "financial_variance",
                 "operational_metric_variance",
@@ -178,20 +184,52 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
                 "Weather is the primary driver of the revenue variance.",
                 gold["C03"]["expected"]["forbidden_conclusion"],
             )
-            self.assertEqual(gold["C04"]["expected"]["epistemic_state"][0]["state"], "unresolved_driver")
+            self.assertTrue(any(
+                state["state"] == "unresolved_driver"
+                for state in gold["C04"]["expected"]["epistemic_state"]
+            ))
             self.assertTrue(gold["C04"]["expected"]["success_criteria"]["successful_investigation"])
             self.assertFalse(
                 gold["C04"]["expected"]["success_criteria"][
                     "successfully_explained_variance_after_gold_human_review"
                 ]
             )
-            self.assertEqual(gold["C09"]["expected"]["timing_classification"], {
-                "classification": "temporary",
-                "recurring": True,
-                "structural": False,
-                "forecast_horizon_end": "2026-12",
-            })
+            c09_timing = gold["C09"]["expected"]["timing_classification"]
+            self.assertEqual(c09_timing["classification"], "temporary")
+            self.assertTrue(c09_timing["recurring"])
+            self.assertFalse(c09_timing["structural"])
+            self.assertEqual(c09_timing["forecast_horizon_end"], "2026-12")
             self.assertIsNone(gold["C10"]["expected"]["contribution_estimate"])
+
+            proposal_fields = {
+                "action",
+                "metric_or_account_affected",
+                "clinic_id",
+                "month",
+                "actual_vs_forecast_or_expected",
+                "candidate_operating_drivers",
+                "supporting_evidence_ids",
+                "financial_impact_mechanism",
+                "timing_classification",
+                "confidence_level",
+                "unresolved_questions",
+                "analyst_approval_status",
+            }
+            for fixture in gold.values():
+                expected = fixture["expected"]
+                self.assertTrue(expected["supporting_evidence"])
+                self.assertTrue(proposal_fields.issubset(expected["assumption_change_proposal"]))
+                primary = expected["driver_roles"]["primary"]
+                if primary is not None:
+                    self.assertTrue(any(
+                        state.get("driver_family") == primary
+                        and state["state"] == "supported_driver"
+                        for state in expected["epistemic_state"]
+                    ))
+                self.assertIn(
+                    "forecast_horizon_source",
+                    expected["timing_classification"],
+                )
 
     def test_gold_variances_and_evidence_are_grounded_in_input_rows(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -205,6 +243,11 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
             financial = read_csv("financial_values.csv")
             operational = read_csv("operational_values.csv")
             events = read_csv("operating_events.csv")
+            evidence_tables = {
+                "financial_values.csv": financial,
+                "operational_values.csv": operational,
+                "operating_events.csv": events,
+            }
             cases = json.loads((output_dir / "cases.json").read_text())
 
             def matching_row(rows, clinic_id, month, id_field, item_id):
@@ -221,6 +264,29 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
                 fixture = json.loads(
                     (output_dir / "gold" / f"{case['case_id']}.json").read_text()
                 )
+                for evidence in fixture["expected"]["supporting_evidence"]:
+                    rows = evidence_tables[evidence["input_file"]]
+                    matches = [
+                        row for row in rows
+                        if all(
+                            row[field] == str(value)
+                            for field, value in evidence["row_selector"].items()
+                        )
+                    ]
+                    self.assertEqual(len(matches), 1, evidence["evidence_id"])
+                    self.assertEqual(matches[0]["source"], evidence["source"])
+
+                horizon = fixture["expected"]["timing_classification"][
+                    "forecast_horizon_source"
+                ]
+                horizon_matches = [
+                    event for event in events
+                    if event["event_id"] == horizon["event_id"]
+                    and event["clinic_id"] == case["clinic_id"]
+                    and event["source"] == horizon["source"]
+                ]
+                self.assertEqual(len(horizon_matches), 1)
+
                 for variance in fixture["expected"]["observed_variance"]:
                     if variance["variance_type"] == "financial_variance":
                         row = matching_row(
@@ -261,18 +327,36 @@ class SyntheticBenchmarkCliTests(unittest.TestCase):
 
             c08_visits = [
                 row for row in operational
-                if row["clinic_id"] == "CL002"
+                if row["clinic_id"] == "CL004"
                 and row["month"] == "2026-07"
                 and row["metric_id"] == "PATIENT_VISITS"
             ]
             self.assertEqual(c08_visits, [])
             self.assertTrue(
                 any(
-                    event["clinic_id"] == "CL002"
+                    event["clinic_id"] == "CL004"
                     and event["event_type"] == "data_feed_failure"
                     for event in events
                 )
             )
+
+            c02_future_availability = [
+                float(row["actual_value"]) for row in operational
+                if row["clinic_id"] == "CL002"
+                and row["month"] in {"2026-05", "2026-06", "2026-07", "2026-08"}
+                and row["metric_id"] == "PROVIDER_AVAILABLE_DAYS"
+            ]
+            self.assertEqual(c02_future_availability, [16.0, 16.0, 16.0, 16.0])
+
+            c07_reversal = matching_row(
+                financial,
+                "CL001",
+                "2026-08",
+                "account_id",
+                "EXP_CLINICAL_LABOR",
+            )
+            self.assertEqual(float(c07_reversal["actual_value"]), 58000)
+            self.assertEqual(float(c07_reversal["forecast_value"]), 78000)
 
             c10_events = [event for event in events if event["clinic_id"] == "CL005"]
             self.assertTrue({"provider_pto", "equipment_outage"}.issubset(
