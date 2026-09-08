@@ -24,6 +24,10 @@ _Avoid_: Facility, site, location
 One Clinic during one Closed Month; the intersection at which the MVP aligns financial results, operational metrics, assumptions, and events.
 _Avoid_: Clinic period, monthly facility
 
+**Calendar Month**:
+A month identified uniformly as `YYYY-MM`, such as `2026-08`, across every Clinic-Month input and output.
+_Avoid_: Reporting date, mixed month formats
+
 **Market**:
 A reporting group of Clinics used to aggregate results above the Clinic-Month level. It does not replace the Clinic-Month as the MVP's core analysis unit.
 _Avoid_: Performance Unit
@@ -72,6 +76,22 @@ _Avoid_: AI override, exception guess
 An operational condition that can explain a financial result, such as patient volume, provider availability, capacity, reimbursement, payer mix, staffing, or accounting timing.
 _Avoid_: Cause, factor
 
+**Driver Family**:
+One of the canonical investigation categories: Demand & Volume, Provider Availability, Clinic Capacity & Operations, Revenue Realization, Workforce & Operating Expense, Accounting & Timing, or External Disruption. Other, Unresolved, and Data Quality Issue are explicit fallback classifications.
+_Avoid_: Free-form category, root cause
+
+**Primary Driver**:
+The most direct supported business mechanism explaining a Financial Variance or Operational Metric Variance.
+_Avoid_: Most upstream event, most interesting story
+
+**Contributing Driver**:
+A supported upstream or secondary condition that helps explain a Primary Driver without replacing its direct business mechanism.
+_Avoid_: Primary driver, background context
+
+**Contribution Estimate**:
+A quantitatively supported allocation of a Variance to a driver. It remains unknown when the available evidence cannot support an allocation.
+_Avoid_: Guessed percentage, qualitative confidence
+
 **Variance Explanation**:
 An evidence-backed account of which candidate Operating Drivers plausibly produced a Variance and which remain unresolved.
 _Avoid_: Summary, root cause
@@ -85,12 +105,60 @@ An analyst-reviewable recommendation to retain, scenario-test, or reconsider a F
 _Avoid_: Forecast update, automatic adjustment
 
 **Timing Classification**:
-The assessment of whether an Operating Driver is temporary, structural, or unresolved over the forecast horizon.
+The assessment of whether an Operating Driver is Temporary, Structural, or Unresolved over the Forecast Horizon; recurrence is a separate property.
 _Avoid_: Duration
 
+**Forecast Horizon**:
+The remaining months in the Latest Approved Forecast. When no Latest Approved Forecast exists, the explicitly labeled fallback horizon is the next three Calendar Months.
+_Avoid_: Fixed twelve months, implicit horizon
+
+**Temporary Driver**:
+An Operating Driver with a credible end point whose affected baseline is expected to normalize before the end of the Forecast Horizon.
+_Avoid_: One-time driver, non-recurring driver
+
+**Structural Driver**:
+An Operating Driver expected to change capacity, rate, mix, demand, or cost structure through a material portion of the remaining Forecast Horizon.
+_Avoid_: Permanent driver, recurring driver
+
+**Recurring Pattern**:
+A time-linked effect expected to repeat, such as seasonality. Recurrence alone does not make an Operating Driver Structural.
+_Avoid_: Structural driver
+
 **Supporting Evidence**:
-A traceable source or data point that supports or contradicts a candidate Operating Driver or Assumption-Change Proposal.
-_Avoid_: Context, citation
+A traceable input that supports or contradicts a Candidate Driver or Assumption-Change Proposal. Every evidence item retains its Source Reference.
+_Avoid_: Driver, conclusion, unsupported context
+
+**Source Reference**:
+The identity and provenance of the data, document, or event record from which an Observed Fact or Supporting Evidence originates.
+_Avoid_: Untraceable note, generic citation
+
+**Observed Fact**:
+A statement directly established by a traceable input or event, without a causal interpretation.
+_Avoid_: Hypothesis, driver, conclusion
+
+**Candidate Driver**:
+An Operating Driver with a plausible business mechanism for a Variance but insufficient Supporting Evidence.
+_Avoid_: Fact, confirmed cause
+
+**Supported Driver**:
+An Operating Driver for which Supporting Evidence and a coherent business mechanism exist, but which has not been confirmed by an analyst.
+_Avoid_: Analyst-confirmed cause, proven cause
+
+**Analyst-Confirmed Cause**:
+A Supported Driver that a Provider FP&A Analyst has explicitly accepted as a cause of the reviewed Variance. AI cannot assign this status.
+_Avoid_: AI-confirmed cause, supported driver
+
+**Rejected Driver**:
+A Candidate or Supported Driver contradicted by evidence or explicitly rejected by a Provider FP&A Analyst.
+_Avoid_: Unresolved driver
+
+**Unresolved Driver**:
+A Candidate Driver that available evidence can neither support nor reject.
+_Avoid_: Rejected driver, supported driver
+
+**Conclusion**:
+The bounded interpretation drawn from Observed Facts, Supporting Evidence, and driver states for a reviewed Variance.
+_Avoid_: Evidence, driver, fact
 
 **Clinic-Month Dataset**:
 Aggregated financial and operational data aligned to a Clinic-Month, including permitted measures such as revenue, expense, volume, provider availability, staffing, capacity, closure days, and aggregate payer-mix or reimbursement metrics.
