@@ -172,6 +172,24 @@ _Avoid_: Clinic-Month data, aggregate operations data
 The explicit human decision to accept, reject, or request further investigation of an Assumption-Change Proposal.
 _Avoid_: AI approval, automatic approval
 
+## Evaluation language
+
+**Synthetic Benchmark**:
+A deterministic collection of designed Clinic-Month scenarios used to test whether the investigation workflow follows its financial, causal, temporal, and epistemic contracts.
+_Avoid_: Random spreadsheet, realistic-looking demo data
+
+**Benchmark Case**:
+One self-contained scenario in the Synthetic Benchmark with defined inputs and an Expected Answer Contract.
+_Avoid_: Example, sample row
+
+**Expected Answer Contract**:
+The system-hidden canonical analytical output for a Benchmark Case, including both required and prohibited conclusions.
+_Avoid_: Suggested commentary, visible hint
+
+**Forbidden Conclusion**:
+A claim that the workflow must refuse to make for a Benchmark Case because the evidence or causal chain cannot support it.
+_Avoid_: Style preference, optional warning
+
 ## Product phases
 
 **Provider FP&A MVP**:
