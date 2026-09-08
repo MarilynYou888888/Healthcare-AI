@@ -1,0 +1,5 @@
+rule_id,account_or_metric_id,absolute_threshold,percentage_threshold,always_review,effective_from,effective_to,source
+RR001,REV_NET_PATIENT,15000,0.05,false,2026-01,,synthetic:review_policy_v1
+RR002,EXP_CLINICAL_LABOR,10000,0.1,false,2026-01,,synthetic:review_policy_v1
+RR003,PATIENT_VISITS,50,0.05,false,2026-01,,synthetic:review_policy_v1
+RR004,PROVIDER_AVAILABLE_DAYS,1,0.05,true,2026-01,,synthetic:review_policy_v1

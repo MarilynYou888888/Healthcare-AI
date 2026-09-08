@@ -1,0 +1,86 @@
+{
+  "case_id": "C01",
+  "scenario": "Provider PTO",
+  "target": {
+    "clinic_id": "CL001",
+    "month": "2026-03",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 154440,
+        "forecast_or_expected": 175500,
+        "absolute": -21060,
+        "percentage": -0.12,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PATIENT_VISITS",
+        "actual": 792,
+        "forecast_or_expected": 900,
+        "absolute": -108,
+        "percentage": -0.12,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Demand & Volume",
+      "Provider Availability"
+    ],
+    "driver_roles": {
+      "primary": "Demand & Volume",
+      "contributing": [
+        "Provider Availability"
+      ],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "temporary",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Patient visits below expected",
+        "state": "observed_fact"
+      },
+      {
+        "subject": "Provider PTO reduced availability",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Provider PTO caused 100% of the revenue decline."
+    ],
+    "expected_question": [
+      "Did visit volume recover after the provider returned?"
+    ],
+    "assumption_change_proposal": {
+      "action": "scenario_test",
+      "assumption": "Patient visit volume",
+      "rationale": "Test a one-month reduction and return to baseline after PTO ends."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

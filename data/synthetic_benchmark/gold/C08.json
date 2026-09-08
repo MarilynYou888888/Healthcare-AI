@@ -1,0 +1,77 @@
+{
+  "case_id": "C08",
+  "scenario": "Missing operating input",
+  "target": {
+    "clinic_id": "CL002",
+    "month": "2026-07",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 170755,
+        "forecast_or_expected": 194040,
+        "absolute": -23285,
+        "percentage": -0.12,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Data Quality Issue"
+    ],
+    "driver_roles": {
+      "primary": null,
+      "contributing": [],
+      "upstream_context": [
+        "Data Quality Issue"
+      ]
+    },
+    "timing_classification": {
+      "classification": "unresolved",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "July patient-visit input is missing",
+        "state": "observed_fact"
+      },
+      {
+        "subject": "Business cause of revenue variance",
+        "state": "unresolved_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "request_more_evidence",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "The missing visit record means patient volume was zero.",
+      "Provider availability caused the revenue decline."
+    ],
+    "expected_question": [
+      "Can the July visit feed be restored and reconciled before causal review?"
+    ],
+    "assumption_change_proposal": {
+      "action": "review",
+      "assumption": "None until data is restored",
+      "rationale": "Resolve the data-quality issue before changing forecast assumptions."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": false
+    }
+  }
+}

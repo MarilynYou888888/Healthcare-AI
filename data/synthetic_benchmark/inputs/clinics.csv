@@ -1,0 +1,7 @@
+clinic_id,clinic_name,market_id,specialty,active_from,active_to,source
+CL001,Northgate Foot and Ankle,MKT001,Podiatry,2021-01,,synthetic:clinic_master_v1
+CL002,Lakeside Foot and Ankle,MKT001,Podiatry,2021-07,,synthetic:clinic_master_v1
+CL003,Riverbend Specialty Clinic,MKT001,Podiatry,2022-02,,synthetic:clinic_master_v1
+CL004,Oak Park Specialty Clinic,MKT001,Podiatry,2022-09,,synthetic:clinic_master_v1
+CL005,Naperville Specialty Clinic,MKT001,Podiatry,2023-01,,synthetic:clinic_master_v1
+CL006,Aurora Specialty Clinic,MKT001,Podiatry,2023-06,,synthetic:clinic_master_v1

@@ -1,0 +1,74 @@
+{
+  "case_id": "C07",
+  "scenario": "Accounting accrual timing",
+  "target": {
+    "clinic_id": "CL001",
+    "month": "2026-07",
+    "variance_type": "financial_variance",
+    "target_id": "EXP_CLINICAL_LABOR"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "EXP_CLINICAL_LABOR",
+        "actual": 98000,
+        "forecast_or_expected": 78000,
+        "absolute": 20000,
+        "percentage": 0.2564,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Accounting & Timing"
+    ],
+    "driver_roles": {
+      "primary": "Accounting & Timing",
+      "contributing": [],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "temporary",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Documented accrual timing increased July expense",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "The July expense variance reflects a permanent labor run-rate increase."
+    ],
+    "expected_question": [
+      "Did the documented accrual reverse in August as scheduled?"
+    ],
+    "assumption_change_proposal": {
+      "action": "retain",
+      "assumption": "Clinical labor run rate",
+      "rationale": "Retain the baseline if the documented reversal posts in August."
+    },
+    "contribution_estimate": {
+      "amount": 20000,
+      "unit": "USD",
+      "basis": "documented accrual scheduled to reverse"
+    },
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

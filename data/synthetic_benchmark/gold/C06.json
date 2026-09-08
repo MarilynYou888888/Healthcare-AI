@@ -1,0 +1,88 @@
+{
+  "case_id": "C06",
+  "scenario": "Payer-mix and reimbursement shift",
+  "target": {
+    "clinic_id": "CL006",
+    "month": "2026-07",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 234240,
+        "forecast_or_expected": 256200,
+        "absolute": -21960,
+        "percentage": -0.0857,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PATIENT_VISITS",
+        "actual": 1220,
+        "forecast_or_expected": 1220,
+        "absolute": 0,
+        "percentage": 0,
+        "direction": "on_plan"
+      },
+      {
+        "variance_type": "forecast_assumption_variance",
+        "id": "NET_REVENUE_PER_VISIT",
+        "actual": 192,
+        "forecast_or_expected": 210,
+        "absolute": -18,
+        "percentage": -0.0857,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Revenue Realization"
+    ],
+    "driver_roles": {
+      "primary": "Revenue Realization",
+      "contributing": [],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "structural",
+      "recurring": false,
+      "structural": true,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Payer-mix shift reduced net revenue per visit",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Lower visit volume caused the revenue variance."
+    ],
+    "expected_question": [
+      "Is the new payer mix expected to persist through December?"
+    ],
+    "assumption_change_proposal": {
+      "action": "review",
+      "assumption": "Net revenue per visit",
+      "rationale": "Review the remaining-month rate and payer-mix assumption."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

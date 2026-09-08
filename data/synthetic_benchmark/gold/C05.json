@@ -1,0 +1,70 @@
+{
+  "case_id": "C05",
+  "scenario": "Labor overtime",
+  "target": {
+    "clinic_id": "CL005",
+    "month": "2026-06",
+    "variance_type": "financial_variance",
+    "target_id": "EXP_CLINICAL_LABOR"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "EXP_CLINICAL_LABOR",
+        "actual": 105000,
+        "forecast_or_expected": 90000,
+        "absolute": 15000,
+        "percentage": 0.1667,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Workforce & Operating Expense"
+    ],
+    "driver_roles": {
+      "primary": "Workforce & Operating Expense",
+      "contributing": [],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "temporary",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Overtime increased clinical labor expense",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Overtime explains the entire expense variance without an applicable labor-rate bridge."
+    ],
+    "expected_question": [
+      "Did overtime hours and expense normalize after the vacancy was filled?"
+    ],
+    "assumption_change_proposal": {
+      "action": "scenario_test",
+      "assumption": "Clinical labor expense",
+      "rationale": "Test temporary overtime until the vacancy is filled."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

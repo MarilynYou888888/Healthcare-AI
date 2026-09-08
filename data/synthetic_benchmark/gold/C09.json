@@ -1,0 +1,79 @@
+{
+  "case_id": "C09",
+  "scenario": "Seasonal demand decline",
+  "target": {
+    "clinic_id": "CL003",
+    "month": "2026-08",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 189141,
+        "forecast_or_expected": 210045,
+        "absolute": -20904,
+        "percentage": -0.0995,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PATIENT_VISITS",
+        "actual": 941,
+        "forecast_or_expected": 1045,
+        "absolute": -104,
+        "percentage": -0.0995,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Demand & Volume"
+    ],
+    "driver_roles": {
+      "primary": "Demand & Volume",
+      "contributing": [],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "temporary",
+      "recurring": true,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Approved seasonal pattern supports an August demand decline",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "The recurring August decline is a structural demand reduction."
+    ],
+    "expected_question": [
+      "Does September booking activity support the expected seasonal recovery?"
+    ],
+    "assumption_change_proposal": {
+      "action": "retain",
+      "assumption": "Post-August patient visit baseline",
+      "rationale": "Retain if forward bookings support seasonal recovery."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

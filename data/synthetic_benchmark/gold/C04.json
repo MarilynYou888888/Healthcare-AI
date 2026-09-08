@@ -1,0 +1,80 @@
+{
+  "case_id": "C04",
+  "scenario": "Unexplained visit-volume miss",
+  "target": {
+    "clinic_id": "CL004",
+    "month": "2026-06",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 196656,
+        "forecast_or_expected": 223380,
+        "absolute": -26724,
+        "percentage": -0.1196,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PATIENT_VISITS",
+        "actual": 964,
+        "forecast_or_expected": 1095,
+        "absolute": -131,
+        "percentage": -0.1196,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Unresolved"
+    ],
+    "driver_roles": {
+      "primary": null,
+      "contributing": [],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "unresolved",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Cause of visit shortfall",
+        "state": "unresolved_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "request_more_evidence",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Lower provider availability caused the decline.",
+      "The volume miss is temporary."
+    ],
+    "expected_question": [
+      "What operating event or schedule change explains the missing visits?"
+    ],
+    "assumption_change_proposal": {
+      "action": "review",
+      "assumption": "Patient visit volume",
+      "rationale": "Do not change the baseline until operating evidence is available."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": false
+    }
+  }
+}

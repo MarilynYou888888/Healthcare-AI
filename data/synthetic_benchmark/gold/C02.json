@@ -1,0 +1,82 @@
+{
+  "case_id": "C02",
+  "scenario": "Provider departure",
+  "target": {
+    "clinic_id": "CL002",
+    "month": "2026-04",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 152856,
+        "forecast_or_expected": 191070,
+        "absolute": -38214,
+        "percentage": -0.2,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PROVIDER_AVAILABLE_DAYS",
+        "actual": 16,
+        "forecast_or_expected": 20,
+        "absolute": -4,
+        "percentage": -0.2,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Demand & Volume",
+      "Provider Availability"
+    ],
+    "driver_roles": {
+      "primary": "Demand & Volume",
+      "contributing": [
+        "Provider Availability"
+      ],
+      "upstream_context": []
+    },
+    "timing_classification": {
+      "classification": "structural",
+      "recurring": false,
+      "structural": true,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Provider departure reduced capacity through the forecast horizon",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Revenue will permanently remain at the April level."
+    ],
+    "expected_question": [
+      "What replacement start date is included in the approved staffing plan?"
+    ],
+    "assumption_change_proposal": {
+      "action": "review",
+      "assumption": "Provider capacity and patient visits",
+      "rationale": "Revisit remaining-month capacity until the replacement starts."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}

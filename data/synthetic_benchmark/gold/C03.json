@@ -1,0 +1,90 @@
+{
+  "case_id": "C03",
+  "scenario": "Weather closure",
+  "target": {
+    "clinic_id": "CL003",
+    "month": "2026-05",
+    "variance_type": "financial_variance",
+    "target_id": "REV_NET_PATIENT"
+  },
+  "expected": {
+    "observed_variance": [
+      {
+        "variance_type": "financial_variance",
+        "id": "REV_NET_PATIENT",
+        "actual": 175875,
+        "forecast_or_expected": 207030,
+        "absolute": -31155,
+        "percentage": -0.1505,
+        "direction": "unfavorable"
+      },
+      {
+        "variance_type": "operational_metric_variance",
+        "id": "PATIENT_VISITS",
+        "actual": 875,
+        "forecast_or_expected": 1030,
+        "absolute": -155,
+        "percentage": -0.1505,
+        "direction": "unfavorable"
+      }
+    ],
+    "expected_driver_family": [
+      "Demand & Volume",
+      "Clinic Capacity & Operations",
+      "External Disruption"
+    ],
+    "driver_roles": {
+      "primary": "Demand & Volume",
+      "contributing": [
+        "Clinic Capacity & Operations"
+      ],
+      "upstream_context": [
+        "External Disruption"
+      ]
+    },
+    "timing_classification": {
+      "classification": "temporary",
+      "recurring": false,
+      "structural": false,
+      "forecast_horizon_end": "2026-12"
+    },
+    "epistemic_state": [
+      {
+        "subject": "Weather closed the clinic for two days",
+        "state": "observed_fact"
+      },
+      {
+        "subject": "Reduced clinic capacity contributed to lower visits",
+        "state": "supported_driver"
+      }
+    ],
+    "human_review_requirement": {
+      "required": true,
+      "analyst_status_at_system_output": "pending",
+      "gold_human_action": "confirm",
+      "allowed_actions": [
+        "confirm",
+        "reject",
+        "request_more_evidence"
+      ]
+    },
+    "forbidden_conclusion": [
+      "Weather is the primary driver of the revenue variance.",
+      "The closure caused 100% of the revenue decline."
+    ],
+    "expected_question": [
+      "Did deferred visits return in June, or were they lost?"
+    ],
+    "assumption_change_proposal": {
+      "action": "scenario_test",
+      "assumption": "Patient visit volume",
+      "rationale": "Test a temporary May shortfall with possible June recovery."
+    },
+    "contribution_estimate": null,
+    "success_criteria": {
+      "successful_investigation": true,
+      "successfully_explained_variance_before_human_review": false,
+      "successfully_explained_variance_after_gold_human_review": true
+    }
+  }
+}
