@@ -6,6 +6,7 @@ import sys
 
 from provider_fpa.engine import investigate
 from provider_fpa.loading import load_datasets
+from provider_fpa.narrative import generate_narrative
 from provider_fpa.presentation import investigation_payload
 
 
@@ -20,13 +21,22 @@ def main() -> int:
     investigation.add_argument('--type', default='financial_variance', choices=[
         'financial_variance', 'operational_metric_variance', 'forecast_assumption_variance',
     ])
+    narrative = commands.add_parser('narrative')
+    narrative.add_argument('--inputs', required=True)
+    narrative.add_argument('--clinic', required=True)
+    narrative.add_argument('--month', required=True)
+    narrative.add_argument('--target', required=True)
+    narrative.add_argument('--type', default='financial_variance', choices=[
+        'financial_variance', 'operational_metric_variance', 'forecast_assumption_variance',
+    ])
     benchmark = commands.add_parser('benchmark')
     benchmark.add_argument('--directory', required=True)
     args = parser.parse_args()
     try:
-        if args.command == 'investigate':
+        if args.command in {'investigate', 'narrative'}:
             result = investigate(load_datasets(args.inputs), args.clinic, args.month, args.target, args.type)
-            output = investigation_payload(result)
+            output = (generate_narrative(result).to_dict() if args.command == 'narrative'
+                      else investigation_payload(result))
             status = 0
         else:
             # Gold access exists only in this evaluator command, not investigation.

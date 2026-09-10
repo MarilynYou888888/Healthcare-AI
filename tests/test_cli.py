@@ -35,6 +35,19 @@ class InvestigationCliTests(unittest.TestCase):
         self.assertEqual(report['passed_cases'], 10)
         self.assertEqual(report['passed_dimensions'], 70)
 
+    def test_narrative_emits_fallback_management_commentary(self):
+        process = self.run_cli('narrative', '--inputs', 'data/synthetic_benchmark/inputs',
+                               '--clinic', 'CL004', '--month', '2026-06', '--target', 'REV_NET_PATIENT')
+        self.assertEqual(process.returncode, 0, process.stderr)
+        result = json.loads(process.stdout)
+        self.assertEqual(result['provider'], 'deterministic-fallback')
+        self.assertEqual([s['title'] for s in result['sections']], [
+            'Executive Summary', 'Key Variances', 'Supported Drivers',
+            'Evidence Gaps / Unresolved Drivers', 'Questions for Operations',
+            'Forecast Considerations', 'Human Review Required',
+        ])
+        self.assertTrue(result['human_review_required'])
+
     def test_invalid_investigation_has_nonzero_exit(self):
         process = self.run_cli('investigate', '--inputs', 'data/synthetic_benchmark/inputs',
                                '--clinic', 'UNKNOWN', '--month', '2026-05', '--target', 'REV_NET_PATIENT')
