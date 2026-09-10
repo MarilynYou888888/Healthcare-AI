@@ -13,6 +13,29 @@ SEED = "20260907"
 
 
 class SyntheticBenchmarkCliTests(unittest.TestCase):
+    def test_scenario_revenue_rates_reconcile_after_overrides(self):
+        from decimal import Decimal
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(self.run_generator(root).returncode, 0)
+            with (root / 'inputs/financial_values.csv').open() as handle:
+                financial = list(csv.DictReader(handle))
+            with (root / 'inputs/operational_values.csv').open() as handle:
+                operational = {(r['clinic_id'], r['month'], r['metric_id']): r for r in csv.DictReader(handle)}
+            for row in financial:
+                if row['account_id'] != 'REV_NET_PATIENT':
+                    continue
+                visits = operational.get((row['clinic_id'], row['month'], 'PATIENT_VISITS'))
+                if visits is None:  # C08 is deliberately missing its visit feed.
+                    self.assertEqual((row['clinic_id'], row['month']), ('CL004', '2026-07'))
+                    continue
+                rate = operational[row['clinic_id'], row['month'], 'NET_REVENUE_PER_VISIT']
+                for financial_field, operating_field in [('actual_value', 'actual_value'), ('forecast_value', 'expected_value')]:
+                    with self.subTest(clinic=row['clinic_id'], month=row['month'], field=financial_field):
+                        self.assertEqual(Decimal(row[financial_field]),
+                                         Decimal(visits[operating_field]) * Decimal(rate[operating_field]))
+
     def run_generator(self, output_dir: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [

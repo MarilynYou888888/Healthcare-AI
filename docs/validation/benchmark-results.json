@@ -1,0 +1,148 @@
+{
+  "passed_cases": 10,
+  "total_cases": 10,
+  "passed_dimensions": 70,
+  "total_dimensions": 70,
+  "cases": [
+    {
+      "case_id": "C01",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C02",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C03",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C04",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C05",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C06",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C07",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C08",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C09",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    },
+    {
+      "case_id": "C10",
+      "passed": true,
+      "dimensions": {
+        "observed_variance": true,
+        "expected_driver_family": true,
+        "driver_roles": true,
+        "timing_classification": true,
+        "epistemic_state": true,
+        "human_review_requirement": true,
+        "forbidden_conclusions": true
+      },
+      "mismatches": []
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import csv
 import json
 import random
 from copy import deepcopy
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -641,6 +642,22 @@ def build_input_rows(seed: int) -> dict[str, list[dict]]:
             actual_value=values[0],
             expected_value=values[1],
         )
+
+    # Scenario overrides must update the entire revenue = visits * rate bridge.
+    # Reconcile only scenarios that explicitly override visits; C08 deliberately
+    # has no usable visit input and must not receive a derived/imputed value.
+    operating_lookup = {
+        (row['clinic_id'], row['month'], row['metric_id']): row
+        for row in operational_rows
+    }
+    for (clinic_id, month, account_id), (actual, forecast) in financial_overrides.items():
+        visit_key = (clinic_id, month, 'PATIENT_VISITS')
+        if account_id != 'REV_NET_PATIENT' or visit_key not in operational_overrides:
+            continue
+        visits = operating_lookup[visit_key]
+        rate = operating_lookup[clinic_id, month, 'NET_REVENUE_PER_VISIT']
+        rate['actual_value'] = Decimal(actual) / Decimal(visits['actual_value'])
+        rate['expected_value'] = Decimal(forecast) / Decimal(visits['expected_value'])
 
     operational_rows = [
         row for row in operational_rows

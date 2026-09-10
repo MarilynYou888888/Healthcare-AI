@@ -4,7 +4,7 @@ CL001,2026-03,PROVIDER_AVAILABLE_DAYS,Provider available days,18,20,provider_day
 CL001,2026-03,PROVIDER_PTO_DAYS,Provider PTO days,2,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL001,2026-03,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL001,2026-03,OVERTIME_HOURS,Overtime hours,38,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL001,2026-03,NET_REVENUE_PER_VISIT,Net revenue per visit,194,195,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL001,2026-03,NET_REVENUE_PER_VISIT,Net revenue per visit,195,195,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL001,2026-03,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL001,2026-04,PATIENT_VISITS,Patient visits,916,905,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL001,2026-04,PROVIDER_AVAILABLE_DAYS,Provider available days,20,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
@@ -53,35 +53,35 @@ CL002,2026-04,PROVIDER_AVAILABLE_DAYS,Provider available days,16,20,provider_day
 CL002,2026-04,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-04,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL002,2026-04,OVERTIME_HOURS,Overtime hours,44,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL002,2026-04,NET_REVENUE_PER_VISIT,Net revenue per visit,197,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL002,2026-04,NET_REVENUE_PER_VISIT,Net revenue per visit,198,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-04,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-05,PATIENT_VISITS,Patient visits,776,970,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL002,2026-05,PROVIDER_AVAILABLE_DAYS,Provider available days,16,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-05,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-05,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL002,2026-05,OVERTIME_HOURS,Overtime hours,41,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL002,2026-05,NET_REVENUE_PER_VISIT,Net revenue per visit,197,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL002,2026-05,NET_REVENUE_PER_VISIT,Net revenue per visit,198,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-05,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-06,PATIENT_VISITS,Patient visits,780,975,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL002,2026-06,PROVIDER_AVAILABLE_DAYS,Provider available days,16,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-06,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-06,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL002,2026-06,OVERTIME_HOURS,Overtime hours,44,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL002,2026-06,NET_REVENUE_PER_VISIT,Net revenue per visit,197,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL002,2026-06,NET_REVENUE_PER_VISIT,Net revenue per visit,198,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-06,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-07,PATIENT_VISITS,Patient visits,784,980,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL002,2026-07,PROVIDER_AVAILABLE_DAYS,Provider available days,16,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-07,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-07,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL002,2026-07,OVERTIME_HOURS,Overtime hours,43,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL002,2026-07,NET_REVENUE_PER_VISIT,Net revenue per visit,199,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL002,2026-07,NET_REVENUE_PER_VISIT,Net revenue per visit,198,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-07,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-08,PATIENT_VISITS,Patient visits,788,985,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL002,2026-08,PROVIDER_AVAILABLE_DAYS,Provider available days,16,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-08,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-08,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL002,2026-08,OVERTIME_HOURS,Overtime hours,40,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL002,2026-08,NET_REVENUE_PER_VISIT,Net revenue per visit,197,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL002,2026-08,NET_REVENUE_PER_VISIT,Net revenue per visit,198,198,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL002,2026-08,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL003,2026-03,PATIENT_VISITS,Patient visits,1031,1020,visits,synthetic:operations_dashboard_v1,2026-09-07T00:00:00Z
 CL003,2026-03,PROVIDER_AVAILABLE_DAYS,Provider available days,20,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
@@ -151,7 +151,7 @@ CL004,2026-06,PROVIDER_AVAILABLE_DAYS,Provider available days,20,20,provider_day
 CL004,2026-06,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL004,2026-06,CLINIC_CLOSURE_DAYS,Clinic closure days,0,0,clinic_days,synthetic:operations_calendar_v1,2026-09-07T00:00:00Z
 CL004,2026-06,OVERTIME_HOURS,Overtime hours,37,40,hours,synthetic:workforce_summary_v1,2026-09-07T00:00:00Z
-CL004,2026-06,NET_REVENUE_PER_VISIT,Net revenue per visit,203,204,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
+CL004,2026-06,NET_REVENUE_PER_VISIT,Net revenue per visit,204,204,USD_per_visit,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL004,2026-06,COMMERCIAL_PAYER_MIX,Commercial payer mix,0.45,0.45,proportion,synthetic:revenue_cycle_summary_v1,2026-09-07T00:00:00Z
 CL004,2026-07,PROVIDER_AVAILABLE_DAYS,Provider available days,20,20,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
 CL004,2026-07,PROVIDER_PTO_DAYS,Provider PTO days,0,0,provider_days,synthetic:provider_capacity_summary_v1,2026-09-07T00:00:00Z
