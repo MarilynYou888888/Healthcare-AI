@@ -1,8 +1,8 @@
+import {mountScenarioModel} from './scenario-view.js';
 'use strict';
 const $ = id => document.getElementById(id);
 const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(Number(value));
 const number = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value));
-const names = {capacity:'Available visit capacity',visits:'Expected visits',revenue:'Net patient revenue',labor:'Variable labor expense',supplies:'Variable supply expense',variable_expense:'Total variable expense',contribution:'Contribution margin',operating_income:'Modeled clinic operating income'};
 function node(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
 function metricValue(m,compact=false){
   if(m.value===null)return 'Not disclosed';
@@ -11,24 +11,6 @@ function metricValue(m,compact=false){
   return compact && Number(m.value)>1e6 ? (Number(m.value)/1e6).toFixed(3)+'M' : number(m.value);
 }
 async function getJSON(path){const response=await fetch(path);if(!response.ok)throw new Error('Unable to load validated local data.');return response.json();}
-function renderBaseline(b){
-  if(b.data_kind!=='synthetic')throw new Error('Expected synthetic baseline.');
-  $('month').textContent=new Date(b.month+'-01T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  const assumptions=$('assumptions');assumptions.replaceChildren();
-  for(const a of b.assumptions){
-    const value=a.unit==='USD'?currency(a.value):a.unit==='ratio'?number(Number(a.value)*100)+'%':a.unit==='multiplier'?Number(a.value).toFixed(2)+'×':a.id==='provider_fte'?Number(a.value).toFixed(1):number(a.value);
-    const row=node('div',undefined,'assumption');row.append(node('dt',a.name),node('dd',value));assumptions.append(row);
-  }
-  $('visits').textContent=number(b.outputs.visits);$('revenue').textContent=currency(b.outputs.revenue);$('income').textContent=currency(b.outputs.operating_income);
-  const financial=$('financial-rows');financial.replaceChildren();
-  for(const key of ['capacity','labor','supplies','variable_expense','contribution']){
-    const row=node('div',undefined,'financial-row'+(['variable_expense','contribution'].includes(key)?' total':''));
-    row.append(node('span',names[key]),node('strong',key==='capacity'?number(b.outputs[key]):currency(b.outputs[key])));financial.append(row);
-  }
-  const fixed=node('div',undefined,'financial-row');fixed.append(node('span','Fixed clinic expense'),node('strong',currency(b.assumptions.find(a=>a.id==='fixed_expense').value)));financial.append(fixed);
-  for(const [key,formula] of Object.entries(b.formulas)){const el=node('div',undefined,'formula');el.append(node('strong',names[key]),node('span',formula));$('formulas').append(el);}
-  $('baseline-status').textContent='✓ Validated inputs · deterministic model';
-}
 let requestVersion=0;
 async function selectCompany(ticker){
   const version=++requestVersion;
@@ -60,5 +42,5 @@ async function selectCompany(ticker){
 }
 document.querySelectorAll('[data-company]').forEach(button=>button.addEventListener('click',()=>selectCompany(button.dataset.company)));
 $('sources-button').addEventListener('click',()=>{const show=$('source-panel').hidden;$('source-panel').hidden=!show;$('sources-button').setAttribute('aria-expanded',String(show));$('sources-button').textContent=show?'Close source register ↑':'Inspect sources & definitions ↗';});
-getJSON('/api/baseline').then(renderBaseline).catch(()=>{$('baseline-status').textContent='Baseline unavailable — check input validation';$('baseline-status').classList.add('error');});
+getJSON('/api/baseline').then(mountScenarioModel).catch(()=>{$('scenario-status').textContent='Baseline unavailable — check synthetic input validation';$('scenario-status').classList.add('error');$('reset-scenario').disabled=true;});
 selectCompany('HCA');

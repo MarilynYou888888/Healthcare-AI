@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 Approval: Ticket content and dependency order approved by user; finalized with the two requested clarifications.
-Execution gate: Implementation remains on hold until explicitly authorized. This status indicates specification readiness, not permission to start coding.
+Execution gate: Explicitly authorized for Ticket 2 only. Stop for user review before Ticket 3.
 
 ## Parent
 
@@ -49,3 +49,14 @@ No authentication, databases, enterprise permissions, PHI, EHR integrations, RAG
 ## Comments
 
 User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Implementation has not started.
+
+
+### Approved implementation clarification
+
+Scenario Model and Executive Summary are two presentations of the same deterministic model. Ticket 2 provides the detailed editable analyst view and one revisioned, immutable ScenarioResult shared by later consumers. Ticket 3 adds commentary/review; Ticket 5 polishes Executive Summary and navigation. No additional tickets or spec reopening.
+
+Workbook reference inspected read-only: `Hospital_FP&A_Hiring_Manager_Portfolio_EN.xlsx` in the supplied Desktop directory; a separate `(2)` copy was not available. Reuse explicit input-cell affordance (Assumptions!B5/B11/B16), traceable operating builds (Revenue!B5), and result-linked management views (HM_Dashboard!A3/E3/I3). Do not import hospital formulas, backfilled historical values, multiple years, or workbook narratives.
+
+Implementation rationale: move Ticket 1's synthetic arithmetic from Python into one browser Decimal module to meet no-round-trip recalculation. Remove the Python formula implementation, preserve the nine formulas and 28-significant-digit/half-even policy, and run baseline/reference regression tests through the authoritative engine. Public benchmark loading stays Python and independent. Shared state holds draft inputs, immutable baseline, current result revision, changed drivers, last valid snapshot, and review eligibility. No summary or narrative duplicates arithmetic.
+
+Approved test seams: deterministic scenario result, session state transitions, and browser input-to-output behavior, as specified in this ticket's test list.

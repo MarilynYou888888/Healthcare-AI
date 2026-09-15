@@ -8,7 +8,7 @@ from provider_fpa.benchmark import load_company
 from provider_fpa.scenario import load_baseline
 
 WEB = Path(__file__).resolve().parents[1] / 'web'
-ASSETS = {'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
+ASSETS = {'/scenario-view.js':('scenario-view.js','text/javascript'),'/scenario.js':('scenario.js','text/javascript'),'/vendor/decimal.mjs':('vendor/decimal.mjs','text/javascript'),'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
 
 
 class Handler(BaseHTTPRequestHandler):
