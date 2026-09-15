@@ -1,4 +1,4 @@
-# Healthcare Provider FP&A Copilot — hybrid-data, scenario-first portfolio specification
+# Healthcare Provider FP&A Copilot — HCA + Tenet hybrid-data, scenario-first portfolio specification
 
 Status: needs-info
 Approval: Revised proposal awaiting user approval. Earlier variance-first approval does not approve this revision. Do not create/revise tickets, recover code or implement before approval.
@@ -172,7 +172,7 @@ The latest request's phrase “AI-generated business commentary” conflicts wit
 
 Example fallback wording, populated from computed fields:
 
-“Under these synthetic assumptions, reducing effective provider FTE from 4.0 to 3.5 lowers expected visits by 12.5%, with utilization, productivity and reimbursement held constant. Modeled monthly revenue decreases by $34,749.00. Variable labor decreases by $9,801.00 and supplies by $3,207.60, partly offsetting the revenue loss. With fixed expense unchanged, modeled clinic operating income decreases by $21,740.40. Would coverage or demand constraints alter these assumptions? This hypothetical clinic scenario does not represent HCA operations or an approved forecast change.”
+“Under these synthetic assumptions, reducing effective provider FTE from 4.0 to 3.5 lowers expected visits by 12.5%, with utilization, productivity and reimbursement held constant. Modeled monthly revenue decreases by $34,749.00. Variable labor decreases by $9,801.00 and supplies by $3,207.60, partly offsetting the revenue loss. With fixed expense unchanged, modeled clinic operating income decreases by $21,740.40. Would coverage or demand constraints alter these assumptions? This hypothetical clinic scenario does not represent HCA or Tenet operations or an approved forecast change.”
 
 Numbers are formatted from deterministic fields, not recomputed in text generation. Do not attribute multi-input changes to a single driver or invent a decomposition; identify all changed assumptions and report their joint effect. If the result is invalid or stale, withhold current commentary/review. Preserve an optional guarded narrative interface without adding an API integration requirement.
 
@@ -194,7 +194,7 @@ Target recording: 85 seconds; all actions are visible and reproducible.
 
 | Time | Screen action | Narration / takeaway |
 | --- | --- | --- |
-| 0–8 s | Open Scenario Modeling; point to PUBLIC HCA FY2025 reference and SYNTHETIC clinic inputs plus offline disclosure. | “Public HCA filings provide context; these editable clinic assumptions are synthetic. The copilot links operating assumptions to financial performance.” |
+| 0–8 s | Open Scenario Modeling; point to PUBLIC HCA + Tenet FY2025 references and SYNTHETIC clinic inputs plus offline disclosure. | “Public HCA and Tenet filings provide context; these editable clinic assumptions are synthetic. The copilot links operating assumptions to financial performance.” |
 | 8–18 s | Show the 4.0 FTE baseline and formula trace. | “The primary workflow is a governed what-if model: inputs are editable; financial outputs are calculated.” |
 | 18–30 s | Change only Provider FTE from 4.0 to 3.5. | “One assumption changes. I do not edit visits, revenue or expenses.” |
 | 30–43 s | Point to visits, revenue, variable labor, variable supplies, total variable expense, contribution margin and monthly impact updating. | “At unchanged utilization, revenue falls $34.7K; labor and supplies offset $13.0K, leaving $21.7K of modeled operating downside.” |
@@ -222,10 +222,10 @@ The first 55 seconds explain user, problem, dependent calculations, interpretati
 - A12: Demo runs without a live API key, external healthcare APIs, database, authentication, real PHI or persistent browser state. Offline narrative is sufficient only with explicit disclosure, subject to mode confirmation in section 8.
 - A13: Public metrics are immutable, source-linked and typed separately from synthetic inputs; scenario edits, benchmark selection and narration cannot mutate them.
 - A14: Each public metric retains company, period, unit, definition, source document/URL/type, source locator and transformation lineage; missing/unverified values never become invented zeroes.
-- A15: UI distinguishes public actuals from editable synthetic inputs; no clinic assumption or scenario is labeled HCA internal data. No public admissions/occupancy/cost ratio silently populates a clinic driver.
+- A15: UI distinguishes public actuals from editable synthetic inputs; no clinic assumption or scenario is labeled HCA or Tenet internal data. No HCA or Tenet public admissions/occupancy/cost ratio silently populates a clinic driver.
 - A16: Public loader supports a common schema for additional genuinely supplied companies, but displays only supplied/verified companies. Derived benchmark metrics are not mislabeled as reported.
 - A17: Primary panel figures reconcile to the filing; percentage scales, payer-mix denominator, segment scope and net-income attribution remain correct. The nine-driver graph separately updates labor and supplies.
-- A18: Public benchmark unavailability affects only reference display; scenario calculation still works and no benchmark is fabricated. Required HCA reference must be available in the completed recording build.
+- A18: Public benchmark unavailability affects only reference display; scenario calculation still works and no benchmark is fabricated. Required HCA and Tenet references must be available in the completed recording build.
 
 ### Proposed test boundaries for approval
 
@@ -283,16 +283,16 @@ User-supplied product/discovery conclusions govern scope; retained domain/ADR do
 
 Maintain two independently identified data layers:
 
-- **Public benchmark data:** HCA Healthcare FY2025 Annual Report/Form 10-K and the supplied workbook extraction. Read-only financial, operating, admission payer-mix and segment metrics; reference context only. FY2024/FY2023 comparisons can remain in the data but do not require extra UI.
-- **Synthetic planning/investigation data:** analyst-editable clinic assumptions, computed scenario outputs and synthetic variance cases. They are not HCA internal budgets, staffing, forecasts or patient data.
+- **Public benchmark data:** HCA Healthcare FY2025 Annual Report/Form 10-K and supplied workbook extraction, plus Tenet Healthcare Corporation FY2025 Form 10-K and any genuinely supplied normalized extraction. Read-only financial, operating, admission payer-mix and segment metrics; reference context only. FY2024/FY2023 comparisons can remain in the data but do not require extra UI.
+- **Synthetic planning/investigation data:** analyst-editable clinic assumptions, computed scenario outputs and synthetic variance cases. They are not HCA or Tenet internal budgets, staffing, forecasts or patient data.
 
-No second public company dataset was found in the current repository inventory. Support future supplied/explicitly sourced providers through the common schema, but do not create a fake company row or benchmark. Selecting a company is optional UI until more than one exists. Do not average incomparable company metrics automatically.
+Two public companies are now explicitly sourced: HCA Healthcare (HCA) and Tenet Healthcare Corporation (THC). The supplied Tenet PDF and canonical SEC filing authorize Tenet as the second benchmark; a normalized Tenet dataset is not yet present in the inspected working tree and must be produced or validated during later approved ingestion. Require a HCA/Tenet selector using one common read-only interface. Do not fabricate missing values, additional companies or comparable histories. Do not average incomparable company metrics automatically.
 
-Public benchmarks can motivate relevant cost categories and give enterprise-level context. They cannot establish a numerical “reasonable clinic range” from one company/year without comparable clinic-level definitions. In particular, equivalent admissions are not visits, inpatient occupancy is not clinic appointment utilization, and total salaries/benefits are not variable labor alone. No hospital-total-to-clinic allocation by hospital count, FTE, beds or revenue share is authorized.
+Public benchmarks can motivate relevant cost categories and give enterprise-level context. They cannot establish a numerical “reasonable clinic range” from corporate/segment data alone without comparable clinic-level definitions. In particular, equivalent admissions are not visits, inpatient occupancy is not clinic appointment utilization, and total salaries/benefits are not variable labor alone. No hospital-total-to-clinic allocation by hospital count, FTE, beds or revenue share is authorized.
 
-Each synthetic assumption needs an assumption ID, value/unit, synthetic origin, rationale, optional benchmark references and a calibration method/status. For current baseline values the status is **designer-selected; public-context-informed; not numerically validated by HCA**. A benchmark-linked ratio may explain context, but is not a calibration formula unless a valid, documented comparable method exists.
+Each synthetic assumption needs an assumption ID, value/unit, synthetic origin, rationale, optional benchmark references and a calibration method/status. For current baseline values the status is **designer-selected; public-context-informed; not numerically validated by HCA or Tenet**. A benchmark-linked ratio may explain context, but is not a calibration formula unless a valid, documented comparable method exists.
 
-Use the requested calibration language only with its meaning made explicit: “Synthetic clinic-level planning assumptions calibrated to public healthcare provider context; not estimates of HCA clinic operations.” The concise badge should simply say “Synthetic clinic-level planning assumptions.” Do not claim these supplied baseline values were empirically derived from HCA. This limitation is part of the project's credibility, not missing data to fill with invented claims.
+Use the requested calibration language only with its meaning made explicit: “Synthetic clinic-level planning assumptions calibrated to public healthcare provider context; not estimates of HCA or Tenet clinic operations.” The concise badge should simply say “Synthetic clinic-level planning assumptions.” Do not claim these supplied baseline values were empirically derived from HCA or Tenet. This limitation is part of the project's credibility, not missing data to fill with invented claims.
 
 ## 14. Public Benchmark Data Model
 
@@ -305,15 +305,15 @@ Use one normalized record contract across the four public metric groups. Raw ext
 | metric_id, metric_name, metric_definition | Stable metric identity and exact meaning/denominator; distinguish total net income from income attributable to HCA. |
 | value, unit | Normalized finite decimal or explicit unavailable status; USD absolute values, counts and ratios have distinct units. |
 | raw_value, raw_unit, scale | Preserve $mm and percent representations before normalization; USD millions multiply by 1,000,000 once. |
-| metric_group, scope, segment, payer_category, population_basis | Financial/operating/payer/segment group, consolidated versus segment scope, category and denominator. No duplicate consolidated and segment summation. |
-| source_document, source_url, source_type | HCA FY2025 Annual Report/Form 10-K, canonical public link, Annual Report or SEC Form 10-K. Workbook is a user-supplied extraction intermediary, not HCA-issued internal data. |
+| metric_group, scope, business_segment, reporting_basis, payer_category, population_basis, notes | Financial/operating/payer/segment group, Consolidated or named segment, same-hospital/continuing-operations/total-company basis, category and denominator. Preserve explanatory notes and no duplicate consolidated/segment summation. |
+| source_document, source_url, source_type | Company-specific FY2025 Annual Report/Form 10-K, canonical public link, Annual Report or SEC Form 10-K. Workbook is a user-supplied extraction intermediary, not HCA-issued internal data. |
 | source_locator, extraction_reference | Printed page/table/footnote and workbook sheet/cell; retain document-specific page numbering. |
 | provenance_kind, parent_metric_ids, derivation | Reported versus derived; derived ratios keep formula and exact source inputs. |
 | validation_status, source_version | Verified/needs verification/unavailable, document hash or accession and extraction version. Only verified metrics appear as established public values. |
 
-Identity includes company, period, metric, scope/category and source version. Duplicates or conflicting values fail explicitly. Missing values do not become zero. The public-metric schema is separate from ScenarioInput; no generic editable “metric value” collection shared between the two.
+Identity includes company, period, metric, business segment, reporting basis, scope/category and source version. Missing records carry null value plus a missing reason (not disclosed, not comparable, not yet verified); do not backsolve from growth percentages or other periods. Duplicates or conflicting values fail explicitly. Missing values do not become zero. The public-metric schema is separate from ScenarioInput; no generic editable “metric value” collection shared between the two.
 
-Payer_Mix is **share of admissions**, not revenue share or reimbursement rate. The workbook's 0.73 is a fraction displayed as 73%, despite a percent-like unit label. Preserve admission-share categories and sums subject to source rounding. Keep reported 43.5% salaries/revenue distinct from the exactly derived 32,859 / 75,600 ≈ 43.4643%; do not falsely give reported values extra precision.
+The supplied HCA Payer_Mix is **share of admissions**, not revenue share or reimbursement rate. Tenet payer tables may describe admission mix or patient-service revenue; preserve the source-specific denominator and do not map those measures to one undifferentiated payer share. The workbook's 0.73 is a fraction displayed as 73%, despite a percent-like unit label. Preserve admission-share categories and sums subject to source rounding. Keep reported 43.5% salaries/revenue distinct from the exactly derived 32,859 / 75,600 ≈ 43.4643%; do not falsely give reported values extra precision.
 
 Segment data must retain National, Atlantic and American Group identities and Adjusted Segment EBITDA definition. The supplied segment extract omits Corporate and other; those three revenue rows are not the consolidated total. Missing corporate/reconciliation rows must be disclosed or explicitly sourced from the filing, never manufactured to make a table add up. Adjusted Segment EBITDA is not the synthetic clinic's operating income.
 
@@ -338,27 +338,27 @@ Canonical primary source: https://www.sec.gov/Archives/edgar/data/860730/0001193
 
 Public annual report: https://s23.q4cdn.com/949900249/files/doc_financials/2024/ar/HCA-2025-Annual-Report-to-Shareholders-FINAL.pdf
 
-Every transformation retains input lineage and unit conversion. Derived metrics retain formula, parent metric IDs, period and scope. Public corrections are controlled source updates, never editable app assumptions. Freeze local verified extracts for recording reliability; loading the demo must not require a live SEC/network request. No source files are copied or transformed into application data during this specification task.
+Every transformation retains input lineage and unit conversion. Derived metrics retain formula, parent metric IDs, period and scope. Public corrections are controlled source updates, never editable app assumptions. Freeze local verified extracts for recording reliability; loading the demo must not require a live SEC/network request. No source files are copied or transformed into application data during this specification task. Tenet source-specific findings are recorded in section 19.
 
 ## 16. Public / synthetic separation and organization
 
 Use separate public benchmark loading, synthetic scenario calculation, investigation and narrative responsibilities. The benchmark loader produces read-only contextual records; the scenario engine accepts only synthetic assumptions and model policy. Narrative receives these as separately labeled objects and may cite public context without blending values. A benchmark cannot promote a synthetic driver to Supported or Analyst-Confirmed Cause.
 
-The proposed public data area is grouped by company, with financial, operating, payer and segment records plus source metadata. The synthetic area contains clinic baseline/scenario inputs and variance fixtures. This captures the user's proposed organization without requiring a sweeping rename of the existing investigation package. Preserve historical Phase 3/4 contracts where compatible; moving all modules is not necessary to establish the data boundary.
+The proposed public data area has separate HCA and Tenet company groups, with financial, operating, payer and segment records plus source metadata. The synthetic area contains clinic baseline/scenario inputs and variance fixtures. This captures the user's proposed organization without requiring a sweeping rename of the existing investigation package. Preserve historical Phase 3/4 contracts where compatible; moving all modules is not necessary to establish the data boundary.
 
 During later approved work, keep supplied raw documents immutable, normalize public records in their own loader and preserve existing synthetic benchmark fixtures and gold isolation. A company-agnostic schema is enough extensibility; no plugin registry, database or ingestion platform is required.
 
 ## 17. Benchmark-panel UX and narrative disclosure
 
-Place a compact Public Benchmark card near the Scenario Modeling heading or below the main comparison; it must not push the editable FTE and dependent outputs out of the recording viewport. Show company and period with a **PUBLIC — READ-ONLY — SOURCE-LINKED** label. Include the four headline metrics and expandable definitions/sources. Public numbers have no editable controls; selecting a reference period/company cannot modify scenario state.
+Place a compact Public Benchmark card near the Scenario Modeling heading or below the main comparison; it must not push the editable FTE and dependent outputs out of the recording viewport. Show company and period with a **PUBLIC — READ-ONLY — SOURCE-LINKED** label and a required **Benchmark Company: HCA Healthcare | Tenet Healthcare** selector. HCA shows revenue, salaries/benefits, equivalent admissions, occupancy and supplies/revenue. Tenet shows consolidated net operating revenue, both segment revenues, same-hospital adjusted admissions/outpatient visits, and segment-scoped cost/Adjusted EBITDA ratios. Keep four or five headline cards visible, with additional details expanded. Every metric includes its applicable basis and source; Tenet segment ratio details identify the selected segment. Public numbers have no editable controls; selecting a reference period/company cannot modify scenario state.
 
-The assumptions panel carries **SYNTHETIC — EDITABLE — WHAT-IF MODEL**. The generated outputs carry **SYNTHETIC SCENARIO OUTPUT**. Labels supplement color. This distinction also appears when investigation is open; all C01/C04/C03 facts remain synthetic case evidence, not HCA incidents.
+The assumptions panel carries **SYNTHETIC — EDITABLE — WHAT-IF MODEL**. The generated outputs carry **SYNTHETIC SCENARIO OUTPUT**. Labels supplement color. This distinction also appears when investigation is open; all C01/C04/C03 facts remain synthetic case evidence, not HCA or Tenet incidents.
 
 Expandable disclosure:
 
-“This portfolio demonstration uses publicly available company financial and operating data for benchmark context. Clinic-level budgets, provider staffing assumptions, forecasts, and scenario inputs are synthetic because these internal FP&A inputs are not publicly disclosed. Public benchmarks inform context; they do not establish HCA clinic-level assumptions. This project is not affiliated with, sponsored by or endorsed by HCA Healthcare and uses no PHI or proprietary planning-system access.”
+“This portfolio demonstration uses publicly available company financial and operating data for benchmark context. Clinic-level budgets, provider staffing assumptions, forecasts, and scenario inputs are synthetic because these internal FP&A inputs are not publicly disclosed. Public benchmark data is sourced from HCA Healthcare and Tenet Healthcare FY2025 public filings. Public benchmarks inform context; they do not establish company-specific clinic assumptions. This project is not affiliated with, sponsored by or endorsed by HCA Healthcare or Tenet Healthcare and uses no PHI or proprietary planning-system access.”
 
-Commentary may state, with a source reference, that salaries and benefits are a large cost category in HCA's public data. It must qualify this as consolidated-company context and must not equate that figure to synthetic variable labor. No claims that a scenario depicts actual HCA staffing, payer contracts, forecasts, locations or performance. Public context remains optional to the narrative and is omitted if unverified or irrelevant; it never changes the calculation.
+Commentary may state, with a source reference, that salaries and benefits are a large cost category in HCA's public data. It must qualify this as consolidated-company context and must not equate that figure to synthetic variable labor. No claims that a scenario depicts actual HCA or Tenet staffing, payer contracts, forecasts, locations or performance. Public context from either company remains optional to the narrative and is omitted if unverified or irrelevant; it never changes the calculation.
 
 ## 18. Hybrid acceptance tests and recording additions
 
@@ -368,11 +368,72 @@ In addition to A01–A18:
 2. Check synthetic input/output provenance and identity end-to-end, including reset, case handoff and commentary.
 3. Switch benchmark context while holding scenario inputs fixed; numerical scenario results are identical. Remove/unavailable benchmark context; scenario still computes with an honest reference-unavailable state.
 4. FTE 4.0→3.5 reproduces every value in section 6, including separate labor and supply. Reimbursement-factor edits change revenue, contribution and income but not capacity, visits, labor or supplies. Other single-driver dependency tests remain required.
-5. Narration cannot write public or scenario data. Reject text presenting synthetic assumptions as HCA facts or turning admission shares into clinic reimbursement assumptions.
+5. Narration cannot write public or scenario data. Reject text presenting synthetic assumptions as HCA or Tenet facts or turning admission shares into clinic reimbursement assumptions.
 6. Verify source fields/locators survive import, unit normalization, derived-ratio calculation, display and any future output serialization. Test $mm conversion, ratio display and total-versus-attributable net income.
 7. Test payer-mix denominators, consolidated/segment keys and incomplete segment scope. Duplicate or conflicting records are not silently overwritten. Missing public metrics are not zero-filled.
-8. Browser checks verify visible PUBLIC/SYNTHETIC labels, read-only public fields, source links, editable synthetic fields and offline commentary disclosure. Check that the HCA company label is never used as the synthetic clinic identity.
-9. Verify the same schema can load another genuinely supplied company's records without HCA-specific arithmetic. Current production/demo fixture contains only HCA; no fabricated second company. A purely synthetic schema test fixture, if needed, is isolated from public/demo data and explicitly labeled test-only.
-10. Record the revised 85-second flow: 0–10s public-vs-synthetic disclosure; 10–20s baseline; 20–30s edit only FTE; 30–45s capacity/visits/revenue/labor/supplies/margin/income/impact; 45–60s commentary and deterministic-first explanation; 60–75s C04 refusal; 75–85s human review. Make HCA sourcing and the clinic's synthetic nature understandable within the first ten seconds.
+8. Browser checks verify visible PUBLIC/SYNTHETIC labels, read-only public fields, source links, editable synthetic fields and offline commentary disclosure. Check that neither HCA nor Tenet company identity is used as the synthetic clinic identity.
+9. Verify actual HCA and Tenet records load through the same normalized interface, retaining different metric definitions, periods and reporting bases. No fake company fixture appears as public/demo data. Test absent historical Tenet records remaining missing rather than derived or copied from HCA.
+10. Record the revised 85-second flow: 0–10s public-vs-synthetic disclosure; 10–20s baseline; 20–30s edit only FTE; 30–45s capacity/visits/revenue/labor/supplies/margin/income/impact; 45–60s commentary and deterministic-first explanation; 60–75s C04 refusal; 75–85s human review. Make HCA/Tenet sourcing and the clinic's synthetic nature understandable within the first ten seconds.
 
 The financial fixture calculations were independently checked during spec preparation. No application tests, data-loader implementation or UI have been created. Public verification of the complete workbook belongs to the later approved data intake work; raw source files remain unchanged.
+
+
+## 19. Tenet FY2025 source findings and comparability rules
+
+Primary source: [Tenet Healthcare Corporation FY2025 Form 10-K](https://www.sec.gov/Archives/edgar/data/70318/000007031826000012/thc-20251231.htm). The supplied 136-page PDF was inspected read-only. Printed p.49/local PDF p.53 contains continuing-operations consolidated results; printed p.50/local p.54 has segment financials; printed p.51/local p.55 has same-hospital statistics; printed p.114/local p.118 has Adjusted EBITDA reconciliation. Keep document-specific locators and filing identity.
+
+| Public FY2025 metric | Value | Reporting basis |
+| --- | ---: | --- |
+| Net operating revenues | $21.310B | Consolidated, continuing operations |
+| Salaries, wages and benefits | $8.705B | Consolidated, continuing operations |
+| Supplies | $3.780B | Consolidated, continuing operations |
+| Other operating expenses, net | $4.523B | Consolidated, continuing operations |
+| Depreciation and amortization | $0.863B | Consolidated, continuing operations |
+| Operating income | $3.508B | Consolidated, continuing operations |
+| Hospital Operations revenue | $16.138B | Total segment, continuing operations |
+| Ambulatory Care revenue | $5.172B | Total segment, continuing operations |
+| Adjusted admissions | 842,992 | Hospital Operations, same-hospital annual basis |
+| Outpatient total visits | 5,356,692 | Hospital Operations, same-hospital annual basis |
+| Same-hospital count | 47 | Annual comparison cohort; not total corporate hospital count |
+| Utilization of licensed beds | 50.8% | Same-hospital, licensed-bed denominator |
+
+These inspected values are acceptance references, not a completed normalized dataset. Full ingestion must verify every displayed metric including net-income attribution and any payer categories against the source. Missing 2023 operating values remain missing if no comparable disclosed series is supplied; do not derive a series from quarterly statistics, growth percentages or changed hospital cohorts.
+
+For segment cost comparisons, use matching full-segment continuing-operations numerators and denominators:
+
+| Segment | Revenue ($mm) | Labor ($mm) | Supplies ($mm) | Adjusted EBITDA ($mm) | Derived labor/revenue | Derived supplies/revenue | Derived Adjusted EBITDA margin |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Hospital Operations | 16,138 | 7,440 | 2,405 | 2,540 | 46.10% | 14.90% | 15.74% |
+| Ambulatory Care | 5,172 | 1,265 | 1,375 | 2,026 | 24.46% | 26.59% | 39.17% |
+
+Ratios above are deterministic derivatives of reported values; they are not directly reported at this precision. Retain parent references and formulas. Adjusted EBITDA includes the filing's adjustments and equity earnings; do not recompute it as revenue minus only labor, supplies and other expense, or equate it with clinic contribution margin/operating income.
+
+Tenet's same-hospital revenue is $15.936B and same-hospital labor is $7.382B. They must not be substituted into full-segment ratios using $16.138B revenue. Likewise 47 same-hospital cohort hospitals differ from the period-end total of 50 hospitals described elsewhere in the filing. Preserve both only under distinct identities/bases.
+
+HCA occupancy uses beds in service, including admitted/observation patients; Tenet's disclosed utilization uses licensed beds on its stated cohort. HCA equivalent admissions and Tenet adjusted admissions retain separate metric IDs/definitions unless a documented comparability assessment permits a grouping. A shared schema does not prove identical economic meaning. Do not compute cross-company per-admission revenue by combining full-segment revenue with a narrower same-hospital volume population.
+
+Tenet discloses hospital net patient-service revenue by payer separately from other revenue. Preserve that revenue denominator and distinguish it from any admission payer mix. Do not merge charity with uninsured or managed Medicare with Medicare based solely on label similarity. Source-defined category mapping is recorded; unsupported category/year combinations remain null with a reason.
+
+Financial/operating/payer/segment records for both companies use the same output schema but company-specific extraction mappings. Cross-company cost-structure and hospital-versus-ambulatory context may be displayed with scope notes; no ranking or “reasonable clinic range” is inferred from unmatched populations. Prior-year presentation/reclassification notes remain attached to the applicable records.
+
+## 20. Implementation inventory for later approval — no tickets yet
+
+**Reusable after selective recovery:** Phase 3 investigation loading, arithmetic, review rules, evidence/source lineage, driver/timing classifications and evaluator; Phase 4 guarded investigation narrative/fallback architecture and compatible tests. Retain C01, C04, C03 and ten-case regression. Recover only after implementation authorization, inspect against this revised spec, rerun the complete suite and report conflicts before changing business logic. Current working tree has no recovered application implementation.
+
+**New scenario components:** nine-assumption synthetic baseline; deterministic capacity/visits/net-revenue/labor/supply/margin/income dependency calculator; immutable baseline versus editable scenario snapshots; reactive web assumptions/results workspace; scenario-specific fallback commentary and session review; the minimal investigation-to-related-assumption handoff. These must not reinterpret observed actuals as hypothetical model inputs or depend on benchmark totals.
+
+**Required public benchmark loaders:**
+
+- HCA adapter for supplied structured workbook/data plus verified filing definitions: financial, operating, admission payer-mix and segment records, with source metadata.
+- Tenet adapter for the supplied Form 10-K and any subsequently supplied normalized tables: consolidated and segment financials, disclosed operating bases, payer measures and Adjusted EBITDA definitions. Verify normalized inputs against the filing; absence of a prebuilt CSV is not permission to invent rows.
+- Shared validation/read-only interface for company, period, business segment, reporting basis, metric, unit, source document/URL/type and notes; retain null reasons, definitions, raw scale and derivations. One compact company selector consumes this interface without mutating scenario inputs.
+
+Organize public datasets into separate HCA and Tenet groups, each with financial/operating/payer/segment data and metadata. Keep synthetic scenario assumptions and variance cases separately. Preserve a separate benchmark loader, scenario engine, investigation engine and narrative boundary. The user's suggested directory layout is an organizational target, not a requirement for a disruptive move of working historical modules.
+
+**Deferred:** live company APIs and EHR integrations; real clinic data; additional companies; automated recurring SEC ingestion; a universal filing parser; normalization of undisclosed history; multi-period scenario forecasting; detailed payer contracts; live LLM generation unless separately approved; authentication, databases, browser persistence, PHI, RAG, multi-user collaboration and production deployment architecture.
+
+**Acceptance additions:** HCA and Tenet records retain complete lineage after transformation; absent history stays null with reason; public records are read-only; synthetic inputs are editable; one FTE edit updates all descendants; baseline and public values do not mutate; narrative cannot write financial state; no synthetic value is presented as either company's actual internal data; both companies share the normalized interface; the existing investigation contracts remain intact. Test company switching and missing-context states separately from scenario recalculation.
+
+**Recording:** within the opening ten seconds, show both company names in the selector and the synthetic-input label. Select one benchmark, demonstrate the FTE edit and financial cascade, show disclosed offline commentary, then C04 and human review. Switching HCA/Tenet must leave numerical scenario results unchanged. Benchmark source links are available, but no live page fetch is needed during recording. Retain exact planning expectations 1,425.60→1,247.40; optional whole-visit formatting is 1,426→1,247, not 1,248. Calculations never use rounded display counts.
+
+The spec is still proposed, not approved for execution. No implementation tickets are created or revised by this update, and supplied documents remain untouched. Earlier variance-first tickets must not be executed as the current product specification.
