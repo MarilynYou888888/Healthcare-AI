@@ -163,3 +163,11 @@ class ScenarioTests(unittest.TestCase):
         self.assertTrue(result['shared'])
         self.assertLess(result['oldRevision'],result['newRevision'])
         self.assertEqual(result['protectedBaseline'],'88923.2')
+
+    def test_shared_store_edits_and_reset_keep_visible_cells_in_sync(self):
+        from playwright.sync_api import expect
+        self.page.evaluate('async () => {const {scenarioStore} = await import("/scenario-view.js"); scenarioStore.edit("provider_fte","3.5");}')
+        expect(self.page.locator('#input-provider_fte')).to_have_value('3.5', timeout=1000)
+        self.page.evaluate('async () => {const {scenarioStore} = await import("/scenario-view.js"); scenarioStore.reset();}')
+        expect(self.page.locator('#input-provider_fte')).to_have_value('4.0', timeout=1000)
+        expect(self.page.locator('#scenario-impact')).to_have_text('$0.00')

@@ -45,10 +45,7 @@ export function mountScenarioModel(baseline) {
     const cells = ['baseline-value','scenario-value','delta-value','percent-value'].map(cls => node('td','—',cls));
     row.append(title,...cells); $('financial-rows').append(row); rows.set(metric.id,{row,cells,unit:metric.unit});
   }
-  $('reset-scenario').addEventListener('click', () => {
-    for (const [id, {input}] of inputs) input.value = inputValue(baseline.assumptions[id], ASSUMPTIONS[id].unit);
-    scenarioStore.reset();
-  });
+  $('reset-scenario').addEventListener('click', () => scenarioStore.reset());
   scenarioStore.subscribe(state => {
     const result = state.result ?? state.last_valid;
     const stale = state.status !== 'valid';
@@ -60,6 +57,12 @@ export function mountScenarioModel(baseline) {
     if (state.errors.model) $('scenario-status').textContent += ' '+state.errors.model;
     const changed = new Set(result.changed_drivers.map(d => d.id));
     for (const [id,{input,error,row}] of inputs) {
+      const unit = ASSUMPTIONS[id].unit;
+      // Preserve the active edit/caret; synchronize when another consumer changes state.
+      if (modelInput(input.value, unit) !== state.draft[id]) {
+        try { input.value = inputValue(state.draft[id], unit); }
+        catch { input.value = state.draft[id]; }
+      }
       input.setAttribute('aria-invalid',String(Boolean(state.errors[id])));
       error.textContent = state.errors[id] ?? '';
       row.classList.toggle('changed',!stale && changed.has(id));
