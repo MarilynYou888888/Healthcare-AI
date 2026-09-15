@@ -1,15 +1,16 @@
-# Healthcare Provider FP&A Copilot — HCA + Tenet hybrid-data, scenario-first portfolio specification
+# Healthcare Provider FP&A Copilot — Product Specification
 
 Status: needs-info
-Approval: Revised proposal awaiting user approval. Earlier variance-first approval does not approve this revision. Do not create/revise tickets, recover code or implement before approval.
-Date: 2026-09-15
+Version: Consolidated 14-section proposal, 2026-09-15
+Approval: Awaiting explicit approval of the revised scenario-first hybrid-data scope. No tickets or implementation authorized.
 Product: Healthcare Provider FP&A Copilot
-Primary MVP demo: Driver-Based Scenario Modeling
-Secondary module: Evidence-Aware Variance Investigation
+Primary capability: Driver-Based Scenario Modeling
+Secondary capability: Evidence-Aware Variance Investigation
+Data: HCA FY2025 public benchmarks + Tenet FY2025 public benchmarks + synthetic clinic planning/investigation data
 
-This revision follows the user's latest hybrid-data strategy and product clarification, with earlier discovery and compatible evidence boundaries retained. It supersedes the previous variance-first scope for review. Existing tickets are provisional and no longer represent the proposed primary experience; they are unchanged in this task. Previous specification versions remain in Git history.
+This specification consolidates the user's latest product and data decisions into the requested 14-section structure. It supersedes earlier scope descriptions for review; historical versions and provisional tickets remain in Git. Supplied discovery conclusions govern business context; public filings govern public metrics. Synthetic clinic assumptions are not internal HCA or Tenet data.
 
-## 1. Revised Product Vision
+## 1. Product Vision
 
 Healthcare Provider FP&A Copilot connects financial performance with operational context while preserving analyst judgment. It uses a hybrid dataset: real public company benchmarks for reference context and separately labeled synthetic clinic planning inputs for computation. Its portfolio experience connects two questions: **“What happens if an assumption changes?”** through Driver-Based Scenario Modeling, and **“What happened, and why?”** through Evidence-Aware Variance Investigation.
 
@@ -17,21 +18,15 @@ The primary audience is a healthcare provider FP&A / financial analyst; the recr
 
 The business hypothesis is faster, more transparent exploration and communication of financial implications. No measured ROI, customer adoption, clinical realism or forecast accuracy is claimed from synthetic examples.
 
-## 2. Revised MVP definition and user problem
+The portfolio deliverable is an interactive web application whose central message is: **Deterministic calculations first. AI interpretation second. Human judgment last.** Scenario Modeling is the primary demo, not the entire product vision.
 
-The required deliverable is a **working interactive web application suitable for a 60–90 second screen recording**. A CLI, static dashboard, specification or rendered mockup alone cannot satisfy it.
+## 2. Primary User
 
-The default landing workspace is Scenario Modeling for one synthetic Clinic-Month. An analyst changes one upstream assumption, preferably Provider FTE from 4.0 to 3.5. All dependent financial outputs recalculate automatically and visibly, a comparison with an immutable baseline updates, commentary describes the modeled implication, and the analyst reviews the scenario.
+**Healthcare Provider FP&A / Financial Analyst.** The analyst investigates financial performance, evaluates operating assumptions, prepares management commentary and retains responsibility for decisions.
 
-The experience resembles a governed FP&A spreadsheet: explicit assumptions, inspectable formulas, a fixed baseline, read-only dependent outputs and no hidden model calculations in an LLM. Analysts should not manually propagate changes through capacity, visits, revenue and expense cells.
+The healthcare finance hiring manager is the recruiting audience. Within 60 seconds, that audience should understand the user, manual business problem, financial dependency model, interpretation limits and role of human review.
 
-Customer discovery previously identified operational context validation and commentary drafting as manual work. The new primary modeling capability is a user-directed product expansion, not a claim that discovery validated these exact formulas. The secondary investigation module retains those discovery findings and evidence controls.
-
-### End-to-end workflow
-
-Baseline Scenario → user changes one driver → deterministic recalculation → baseline/scenario comparison → financial impact → bounded commentary → analyst scenario review.
-
-Secondary workflow: Closed Month actual vs Latest Approved Forecast → Variance → Supporting Evidence → Operating Driver → commentary → human cause review.
+The MVP demonstrates the candidate's ability to turn prior work experience and customer-discovery insights into a clear, testable product. It does not claim that public corporate data reveals internal clinic budgets or that synthetic demo outcomes prove real business ROI.
 
 ### User stories
 
@@ -51,235 +46,33 @@ Secondary workflow: Closed Month actual vs Latest Approved Forecast → Variance
 14. As a portfolio presenter, I want an API-independent, resettable demo, so that I can reliably record it.
 15. As a healthcare finance hiring manager, I want to see one edit drive multiple financial outputs, so that I can assess the candidate's modeling and business judgment quickly.
 
-## 3. Editable scenario drivers
+## 3. Product Architecture
 
-Use nine numeric assumptions, reflecting the requested split of variable labor/supply costs and a simple reimbursement sensitivity. No detailed payer-contract engine or dozens of assumptions.
+### A. Driver-Based Scenario Modeling — primary
 
-| Driver | Synthetic baseline | Units / validity |
-| --- | ---: | --- |
-| Provider FTE | 4.0 | Effective productive FTE; finite and nonnegative. |
-| Clinic operating days | 22 | Integer 0 through selected month's calendar days. |
-| Visits per provider day | 18 | Available slots per effective FTE-day; finite and nonnegative. |
-| Utilization | 90% | Fraction in [0,1], displayed as percent. |
-| Base net revenue per visit | $195 | USD per expected visit; finite and nonnegative. |
-| Variable labor cost per visit | $55 | USD per expected visit; finite and nonnegative. |
-| Variable supply cost per visit | $18 | USD per expected visit; finite and nonnegative. |
-| Fixed monthly clinic expense | $85,000 | USD per month; finite and nonnegative. |
-| Payer / reimbursement factor | 1.00× | Dimensionless finite nonnegative relative sensitivity; 1.00 leaves base net rate unchanged. Not a disclosed payer mix or collection probability. |
+The required deliverable is a **working interactive web application suitable for a 60–90 second screen recording**. A CLI, static dashboard, specification or rendered mockup alone cannot satisfy it.
 
-These are **Synthetic clinic-level planning assumptions** selected for demonstration. Public-company benchmarks inform cost-category context, not a mathematical estimate of HCA clinic economics. The reimbursement factor is a deliberate scenario overlay on the already-net base rate; it is not a second deduction of contractual allowances. No public payer-mix percentage automatically sets this factor.
+The default landing workspace is Scenario Modeling for one synthetic Clinic-Month. An analyst changes one upstream assumption, preferably Provider FTE from 4.0 to 3.5. All dependent financial outputs recalculate automatically and visibly, a comparison with an immutable baseline updates, commentary describes the modeled implication, and the analyst reviews the scenario.
 
-Provider FTE is an effective productive-capacity assumption, not a headcount/payroll contract. All effective FTE share the same days and productivity assumption. Lower FTE does not automatically reduce salaries or fixed expense. At unchanged unit costs, variable labor and supply expenses change only through expected visits. Fixed expense does not automatically fall with FTE; the cost categories must not double-count variable labor or supplies. This is a simplified operating model, not a staffing optimizer.
+The experience resembles a governed FP&A spreadsheet: explicit assumptions, inspectable formulas, a fixed baseline, read-only dependent outputs and no hidden model calculations in an LLM. Analysts should not manually propagate changes through capacity, visits, revenue and expense cells.
 
-The baseline remains immutable during edits; reset restores it. Multiple driver edits may be supported using the same calculation path, but the primary recording changes only FTE. Every scenario starts from a complete copy of baseline assumptions. Label baseline “Synthetic planning baseline,” not an authenticated approved forecast.
+Customer discovery previously identified operational context validation and commentary drafting as manual work. The new primary modeling capability is a user-directed product expansion, not a claim that discovery validated these exact formulas. The secondary investigation module retains those discovery findings and evidence controls.
 
-## 4. Deterministic dependency graph
+### B. Evidence-Aware Variance Investigation — secondary
 
-```mermaid
-flowchart LR
-    F[Provider FTE] --> C[Visit capacity]
-    D[Clinic days] --> C
-    P[Slots per provider day] --> C
-    C --> V[Expected visits]
-    U[Utilization] --> V
-    N[Base net revenue per visit] --> Q[Effective net rate]
-    Y[Reimbursement factor] --> Q
-    V --> R[Modeled net patient revenue]
-    Q --> R
-    V --> L[Variable labor]
-    LC[Labor cost per visit] --> L
-    V --> S[Variable supplies]
-    SC[Supply cost per visit] --> S
-    L --> E[Total variable expense]
-    S --> E
-    R --> M[Contribution margin]
-    E --> M
-    M --> O[Modeled clinic operating income]
-    X[Fixed monthly expense] --> O
-    O --> I[Scenario minus baseline impact]
-    B[Baseline operating income] --> I
-    H[Public benchmarks: read-only] -. context only .-> UI[Reference panel / labeled commentary]
-```
+Answer “What happened, and why?” using the existing synthetic investigation workflow and evidence controls. Scenario Modeling instead answers “What happens if an assumption changes?” A hypothetical scenario must not be presented as an observed cause.
 
+### Connected workflow and responsibility boundaries
 
-Every valid edit triggers this graph in dependency order. Only descendants of a changed assumption change; a revenue-per-visit change cannot change visits. The baseline and scenario use the same deterministic function. No editable downstream output, LLM call, network fetch or manual calculate-each-cell step participates in the calculation.
+Actual performance misses forecast → investigate evidence → identify a supported operating driver → open a related scenario assumption → analyst edits the assumption → deterministic financial recalculation → bounded interpretation → analyst review.
 
-## 5. Formulas and calculation responsibilities
+The related-assumption handoff retains origin context but does not assign a numeric FTE change from a PTO event or modify a forecast automatically. C04 remains unresolved and offers further investigation rather than a fabricated causal scenario.
 
-| Output | Deterministic relationship |
-| --- | --- |
-| Available visit capacity | Provider FTE × clinic days × visits per provider day |
-| Expected visits | Available visit capacity × utilization fraction |
-| Effective net revenue per visit | Base net revenue per visit × payer/reimbursement factor |
-| Modeled net patient revenue | Expected visits × effective net revenue per visit |
-| Variable labor expense | Expected visits × variable labor cost per visit |
-| Variable supply expense | Expected visits × variable supply cost per visit |
-| Total variable expense | Variable labor expense + variable supply expense |
-| Contribution margin | Modeled net patient revenue − total variable expense |
-| Modeled clinic operating income | Contribution margin − fixed clinic operating expense |
-| Monthly forecast impact | Scenario modeled operating income − baseline modeled operating income |
-| Absolute change for each output | Scenario output − baseline output |
-| Percentage change | (Scenario − baseline) / baseline × 100, when baseline is positive; otherwise N/A with reason |
+Separate public benchmark loading, synthetic scenario calculation, investigation and narrative responsibilities. Public benchmarks feed reference context only. Scenario and investigation results have distinct typed identities, input snapshots and review states. No benchmark selector or narrative action can write to either financial calculation result.
 
-Use the standard contribution-margin definition before fixed costs. Because the input is a net realized rate, label its product **modeled net patient revenue**, not gross charges or gross patient revenue. This clarifies the example formula name in the request without inventing gross-to-net adjustments. The alternative expression subtracting fixed expense is labeled modeled operating income. Do not present it as consolidated GAAP operating income: excluded items include corporate allocations, interest, tax and any costs outside the nine-input model. “Forecast impact” means hypothetical one-month model impact against the synthetic baseline, not an updated approved forecast or automatic annualization.
+## 4. Hybrid Data Strategy
 
-Use decimal-safe arithmetic and preserve internal precision through dependencies. Round only display values: USD to cents, percentage changes to two decimals, expected visits up to two decimals. Fractional expected visits are valid planning expectations, not individual encounters. Displaying an integer must not feed rounding back into revenue; prefer showing the fractional expectation where necessary.
-
-Reject NaN, infinity, negative inputs, invalid days and utilization outside bounds. Clearing a field shows a draft validation state; do not convert blank to zero. During invalid input, show the last valid results explicitly as stale and disable review; never mix snapshots. Zero volume is allowed: revenue/variable cost/contribution are zero and modeled operating income equals negative fixed expense.
-
-All synthetic assumptions, output units, baseline ID, Clinic-Month, changed-driver list and calculation revision form a structured ScenarioResult. Commentary and review reference this exact revision. No case ID or demo answer is substituted for calculations.
-
-## 6. Scenario outputs and reconciled example
-
-Use the newly supplied synthetic baseline, replacing the prior 45-slot/$32 unit-cost example. With FTE as the sole changed input and reimbursement factor held at 1.00×:
-
-| Output | Baseline FTE 4.0 | Scenario FTE 3.5 | Change |
-| --- | ---: | ---: | ---: |
-| Available capacity | 1,584 | 1,386 | −198 (−12.50%) |
-| Expected visits | 1,425.60 | 1,247.40 | −178.20 (−12.50%) |
-| Modeled net patient revenue | $277,992.00 | $243,243.00 | −$34,749.00 |
-| Variable labor expense | $78,408.00 | $68,607.00 | −$9,801.00 |
-| Variable supply expense | $25,660.80 | $22,453.20 | −$3,207.60 |
-| Total variable expense | $104,068.80 | $91,060.20 | −$13,008.60 |
-| Contribution margin | $173,923.20 | $152,182.80 | −$21,740.40 |
-| Fixed monthly expense | $85,000.00 | $85,000.00 | $0.00 |
-| Modeled clinic operating income | $88,923.20 | $67,182.80 | −$21,740.40 |
-| Monthly scenario / forecast impact | $0.00 | −$21,740.40 | Hypothetical downside |
-
-Public values are not operands in these calculations. Switching a benchmark company/period cannot change any row above. All baseline and scenario values remain synthetic, including clinic identity and forecast inputs.
-
-Show absolute and percentage differences for outputs where meaningful. Red/green must consider business meaning: lower variable expense is a modeled cost reduction, while lower operating income is downside. Include words/icons rather than color alone. Reduced expense does not claim realizable payroll savings beyond the unit-cost assumption.
-
-## 7. Webpage interaction design
-
-Default navigation: **Scenario Modeling** (primary) and **Variance Investigation** (secondary), under Healthcare Provider FP&A Copilot. Use one professional desktop workspace optimized for screen recording, not separate driver-specific pages.
-
-Left: editable assumptions with units, baseline values, changed-input highlighting and reset. Right: baseline/scenario/delta table or cards showing capacity, visits, revenue, variable labor, variable supplies, total variable expense, contribution margin, fixed expense, operating income and a prominent monthly impact. Below: formula trace, **AI Scenario Commentary** with conspicuous generation-mode disclosure, and Human Review.
-
-On a valid input edit, recalculate automatically without a Calculate button. Proposed target: visible coherent update within 200 ms after a committed valid edit on the demo machine, measured separately from typing/debounce. No LLM or network latency on this path. Inputs, outputs and commentary update to one revision together; an old result cannot masquerade as current.
-
-Provide keyboard-editable numeric fields, visible focus, explicit units, readable currency, compact help, sensible precision and clear validation messages. A slider is optional, not necessary. Keep the main driver edit and key financial outputs visible together on a 1440×900 reference viewport. Important disclosure must remain visible rather than hidden in a tooltip.
-
-Scenario review uses session-only actions: **Reviewed — retain baseline**, **Request further investigation**, **Mark for forecast-assumption review**. None updates an approved forecast. Editing an assumption invalidates prior review for that scenario revision. There is no “confirm cause” action in a hypothetical scenario; cause review belongs to investigation. In-memory session state only; reset/session end discards it. No localStorage/sessionStorage or persistence guarantee across reload.
-
-## 8. AI interpretation responsibilities and mode decision
-
-The narrative layer consumes validated ScenarioResult; it explains changed assumptions, downstream movements, magnitude, conditional implications and analyst questions. It cannot perform authoritative arithmetic, modify outputs, invent assumptions, predict occurrence or update a forecast.
-
-Approved prior constraint retained as the proposed default: **offline deterministic fallback, no API key required**. Heading may remain AI Scenario Commentary to communicate the architectural layer, but adjacent visible text must state **“Offline demo — deterministic commentary; no live LLM used.”** Do not describe this displayed text as actually AI-generated in recordings or portfolio claims.
-
-The latest request's phrase “AI-generated business commentary” conflicts with this earlier explicit offline decision if meant literally. This revision proposes the reliable offline behavior, and asks for confirmation before approval; genuine live generation would be a separate scope choice. It is not silently assumed or implemented.
-
-Example fallback wording, populated from computed fields:
-
-“Under these synthetic assumptions, reducing effective provider FTE from 4.0 to 3.5 lowers expected visits by 12.5%, with utilization, productivity and reimbursement held constant. Modeled monthly revenue decreases by $34,749.00. Variable labor decreases by $9,801.00 and supplies by $3,207.60, partly offsetting the revenue loss. With fixed expense unchanged, modeled clinic operating income decreases by $21,740.40. Would coverage or demand constraints alter these assumptions? This hypothetical clinic scenario does not represent HCA or Tenet operations or an approved forecast change.”
-
-Numbers are formatted from deterministic fields, not recomputed in text generation. Do not attribute multi-input changes to a single driver or invent a decomposition; identify all changed assumptions and report their joint effect. If the result is invalid or stale, withhold current commentary/review. Preserve an optional guarded narrative interface without adding an API integration requirement.
-
-## 9. Relationship to Evidence-Aware Variance Investigation
-
-Retain the existing secondary contract: one Closed Month actual versus Latest Approved Forecast, deterministic review rules, facts and evidence separated from conclusions, source lineage, seven Driver Families, and Candidate/Supported/Rejected/Unresolved/Analyst-Confirmed boundaries. Only human review can confirm a supported cause. Keep the configurable 50% horizon threshold as a disclosed demo heuristic, not a universal healthcare FP&A standard. Recurrence is separate from Temporary/Structural timing.
-
-Preserve C01 (supported explanation), C04 (unresolved/no invented cause), C03 (upstream context versus direct financial driver), with remaining cases as regression coverage in the same workflow. C01 primary Demand & Volume and contributing Provider Availability remain distinct. C03 weather is upstream, clinic capacity contributes, volume is primary. C04 must not invent reduced availability or temporary recovery.
-
-Connection: a reviewed supported driver may offer **Explore related assumption**. This opens Scenario Modeling with an origin reference and a highlighted related field, but no automatic assumption change. For Provider Availability, highlight effective Provider FTE; a PTO event does not itself provide an approved numeric FTE conversion. The analyst enters the hypothetical value. Unresolved C04 offers further investigation, not a prefilled causal scenario.
-
-Scenario baseline assumptions are separate synthetic planning inputs, not derived from benchmark gold answers or retroactively asserted to equal C01 financial records. Show that distinction when navigating. Never mix the scenario baseline with the investigation's Latest Approved Forecast. This small handoff connects the product story without building a new forecast system.
-
-Investigation retains four session actions: confirm cause, reject cause, keep unresolved, request further investigation. Switching modules preserves only current-session context; a scenario review does not confirm an investigation cause and vice versa.
-
-## 10. Exact 60–90 second recruiting demo flow
-
-Target recording: 85 seconds; all actions are visible and reproducible.
-
-| Time | Screen action | Narration / takeaway |
-| --- | --- | --- |
-| 0–8 s | Open Scenario Modeling; point to PUBLIC HCA + Tenet FY2025 references and SYNTHETIC clinic inputs plus offline disclosure. | “Public HCA and Tenet filings provide context; these editable clinic assumptions are synthetic. The copilot links operating assumptions to financial performance.” |
-| 8–18 s | Show the 4.0 FTE baseline and formula trace. | “The primary workflow is a governed what-if model: inputs are editable; financial outputs are calculated.” |
-| 18–30 s | Change only Provider FTE from 4.0 to 3.5. | “One assumption changes. I do not edit visits, revenue or expenses.” |
-| 30–43 s | Point to visits, revenue, variable labor, variable supplies, total variable expense, contribution margin and monthly impact updating. | “At unchanged utilization, revenue falls $34.7K; labor and supplies offset $13.0K, leaving $21.7K of modeled operating downside.” |
-| 43–55 s | Show AI Scenario Commentary and offline label. | “Interpretation follows the deterministic results. This demo uses a disclosed deterministic fallback, not a live model. It cannot change the forecast.” |
-| 55–70 s | Switch to Variance Investigation, select C04, open evidence and unresolved state. | “Investigation asks what happened and why. Here the evidence does not support a cause, so the system refuses to invent one.” |
-| 70–85 s | Select Keep unresolved or Request further investigation; show Human Review state. | “The analyst owns the decision. Calculations first, interpretation second, human judgment last.” |
-
-The first 55 seconds explain user, problem, dependent calculations, interpretation boundaries and retained analyst authority. C01 and C03 are available for a longer follow-up, not extra mandatory steps crowding this recording. A separate optional walkthrough shows C01 → related assumption → scenario → analyst review.
-
-## 11. Acceptance criteria, test strategy and definition of done
-
-### Acceptance criteria
-
-- A01: A running interactive web application opens with Scenario Modeling primary and Variance Investigation secondary, correctly branded and visibly synthetic/offline.
-- A02: Editing only FTE 4.0→3.5 yields every value in the reconciled example without manual downstream editing; baseline remains unchanged.
-- A03: Each of nine inputs has correct dependency behavior. Changing fixed expense changes operating income/impact but not contribution margin; changing unit revenue does not change visits; changing utilization affects visits and downstream financials but not available capacity.
-- A04: Formula inspection, units, rounding and N/A percentage behavior are explicit. Invalid inputs cannot produce current-looking results or actionable review.
-- A05: Valid edits update the coherent output snapshot within the proposed 200 ms target on the recording machine, independent of network/model availability.
-- A06: Commentary references the current computed revision, shows changed assumptions and conditional implications, and cannot modify results or claim certainty. No obsolete text after an edit.
-- A07: Scenario review is session-only and tied to the exact assumptions; further edits require new review. No approved forecast is mutated.
-- A08: C04 retains unresolved cause/timing and refuses fabricated availability explanations. C01 and C03 preserve their documented driver roles and human confirmation boundary.
-- A09: Related-assumption navigation preserves source context but does not infer numeric FTE from PTO, change assumptions automatically or mix scenario and investigation baselines.
-- A10: Full investigation regression covers ten cases and forbidden conclusions; gold outputs never enter the analysis or narrative inputs.
-- A11: The timed 60–90 second screen-recordable flow demonstrates the one-input cascade, commentary, C04 and human review. Record actual rehearsal evidence; do not claim hiring-manager validation without conducting it.
-- A12: Demo runs without a live API key, external healthcare APIs, database, authentication, real PHI or persistent browser state. Offline narrative is sufficient only with explicit disclosure, subject to mode confirmation in section 8.
-- A13: Public metrics are immutable, source-linked and typed separately from synthetic inputs; scenario edits, benchmark selection and narration cannot mutate them.
-- A14: Each public metric retains company, period, unit, definition, source document/URL/type, source locator and transformation lineage; missing/unverified values never become invented zeroes.
-- A15: UI distinguishes public actuals from editable synthetic inputs; no clinic assumption or scenario is labeled HCA or Tenet internal data. No HCA or Tenet public admissions/occupancy/cost ratio silently populates a clinic driver.
-- A16: Public loader supports a common schema for additional genuinely supplied companies, but displays only supplied/verified companies. Derived benchmark metrics are not mislabeled as reported.
-- A17: Primary panel figures reconcile to the filing; percentage scales, payer-mix denominator, segment scope and net-income attribution remain correct. The nine-driver graph separately updates labor and supplies.
-- A18: Public benchmark unavailability affects only reference display; scenario calculation still works and no benchmark is fabricated. Required HCA and Tenet references must be available in the completed recording build.
-
-### Proposed test boundaries for approval
-
-Introduce one small public deterministic scenario calculation boundary: complete valid assumptions in, ScenarioResult out. This is genuinely new functionality; do not force hypothetical planning assumptions into the historical actual-versus-forecast InvestigationResult. Retain historical investigation and guarded narrative boundaries for the secondary module.
-
-Scenario tests use independent expected-value fixtures, all nine single-driver dependency checks, multi-edit joint output, identity/reset, zero values, invalid inputs, baseline-zero/negative percentage handling and internal precision. Verify financial identities and that only dependency descendants move. Test no-op inputs returning the baseline and fixed-cost changes leaving contribution margin unchanged.
-
-Narrative tests verify current-snapshot numbers, conditional language, no invented assumptions or attribution and clear offline identity. Human tests exercise scenario actions separately from the four investigation actions, stale-review invalidation and session reset.
-
-A focused browser suite changes one input and checks every dependent output, input validation, reset, navigation/handoff, C04 refusal and review state. Record actual recalculation latency on the demo machine. Run the complete selectively recovered test suite and full ten-case evaluator before integration and again after changes. Historical reports are prior art, not current passing evidence.
-
-### Definition of done
-
-After specification approval and later implementation authorization: a runnable, visually clear web demo satisfies A01–A18; all reported tests were actually executed; the primary 85-second workflow can be recorded without hidden edits or network dependencies; model assumptions/formulas, public lineage and synthetic limitations are inspectable; human actions stay session-only and do not update forecasts. A written demo script alone does not count as completion. The present task delivers only this specification, not the application or recording.
-
-## 12. Existing-code reuse, conflicts and approval decisions
-
-The current checkout contains documents and benchmark data, not runnable application code. Historical snapshot 40e4829 contains Phase 3, Phase 4, tests and the prior Streamlit UI. Nothing is recovered in this task.
-
-| Historical asset | Reuse assessment |
-| --- | --- |
-| Decimal parsing and variance arithmetic | Reuse finite-number/precision conventions and applicable comparison helpers. Historical fields mean actual/comparator, so do not mislabel scenario outputs as actuals; a thin new scenario contract is required. |
-| Phase 3 loading, engine, review, evidence, drivers, timing | Preserve as secondary investigation baseline. Inspect against the revised spec and rerun tests after approved recovery. No replacement of business logic to serve the scenario UI. |
-| Source lineage and human-confirmation boundaries | Reuse for investigation; scenario assumptions/review need separate snapshot references, not fictitious observed evidence. |
-| Phase 4 guarded narrative architecture | Reuse separation of deterministic results from interpretation, injected transport testing and fallback/guard patterns. Its current NarrativeInput requires an InvestigationResult; it is not a drop-in scenario commentary generator. Add a narrow scenario formatter/adapter only after approval. |
-| Existing benchmark inputs and evaluator | Retain ten-case investigation regression and C01/C04/C03; do not force new scenario baseline numbers into old cases or change gold fixtures to fit the recording. |
-| Historical tests | Recover compatible tests, execute full suite and inspect failures. No historical test currently proves reactive scenario modeling. |
-| Historical Streamlit UI | Inspect later for reusable display patterns only. Its existence is not evidence of the required editable dependency model or recording-ready layout; framework selection remains an implementation choice. |
-
-The scenario graph, immutable baseline/scenario state, reactive web workspace and scenario-specific commentary/review are new requirements. Preserve existing investigation architecture rather than rebuild it. Report any recovered business-logic conflict before changing it.
-
-Existing ADRs and terminology describe an investigation-only first MVP and exclude forecast/budget workflows. This proposal deliberately expands the demo to a **bounded hypothetical one-month scenario calculator** while still excluding actual forecast editing, budgets and production forecasting. That is a documented scope change, not permission to silently rewrite ADRs, glossary or historical code. Any later documentation alignment must distinguish scenario-vs-baseline deltas from actual-vs-approved-forecast variances.
-
-### Decisions proposed for user approval
-
-1. Use the nine synthetic inputs and reconciled 1,425.60→1,247.40 visit example, with $85,000 fixed monthly expense and a 1.00× reimbursement factor. These are synthetic demonstration assumptions, not industry benchmarks.
-2. Use conventional contribution margin before fixed expense and separately labeled modeled operating income/one-month impact.
-3. Retain the previously approved offline-default commentary with explicit disclosure. If “AI-generated” is intended literally, resolve that change before approval; no live generation is assumed.
-4. Approve the new scenario public test boundary alongside preserved investigation/narrative boundaries, the 200 ms interaction target and current-session scenario review actions.
-
-After approval, revisit ticket structure around the primary scenario outcome. Do not execute the existing variance-first five tickets unchanged. No tickets are created or modified here; no code recovery, implementation, dependency installation or deployment is authorized by this revision.
-
-## Non-goals and future scope
-
-No authentication, databases, browser persistence, enterprise permissions, external healthcare APIs, PHI, RAG, multi-user collaboration, production deployment architecture, real-data mapping, dozens of assumptions, optimization, Monte Carlo simulation, payroll engine, multi-period forecasts, consolidated statements or approved-forecast writes. Live LLM generation remains optional future scope unless explicitly changed.
-
-Future opportunities include richer forecast review, budget-versus-actual analysis, management reporting, operational KPI review and market/reimbursement context. They are not designed in detail or required for this recruiting demo.
-
-## Reference basis
-
-User-supplied product/discovery conclusions govern scope; retained domain/ADR documents and historical Phase 3/4 source govern compatible analytical behavior. The choice of upstream assumptions driving operational/financial outputs follows driver-based planning practice ([Anaplan](https://www.anaplan.com/resources/papers/driver-based-budgeting/)). Contribution margin excludes fixed costs; modeled operating income subtracts them separately ([Corporate Finance Institute](https://corporatefinanceinstitute.com/resources/accounting/contribution-margin-overview/)). These references inform modeling structure, not claims that the synthetic parameters represent healthcare benchmarks.
-
-
-## 13. Hybrid Dataset Strategy and calibration limits
+### A. HCA public benchmark / B. Tenet public benchmark / C. Synthetic clinic planning data
 
 Maintain two independently identified data layers:
 
@@ -294,7 +87,7 @@ Each synthetic assumption needs an assumption ID, value/unit, synthetic origin, 
 
 Use the requested calibration language only with its meaning made explicit: “Synthetic clinic-level planning assumptions calibrated to public healthcare provider context; not estimates of HCA or Tenet clinic operations.” The concise badge should simply say “Synthetic clinic-level planning assumptions.” Do not claim these supplied baseline values were empirically derived from HCA or Tenet. This limitation is part of the project's credibility, not missing data to fill with invented claims.
 
-## 14. Public Benchmark Data Model
+### Common public benchmark schema
 
 Use one normalized record contract across the four public metric groups. Raw extracted values remain preserved alongside normalized values; the loader never accepts scenario overrides.
 
@@ -317,7 +110,7 @@ The supplied HCA Payer_Mix is **share of admissions**, not revenue share or reim
 
 Segment data must retain National, Atlantic and American Group identities and Adjusted Segment EBITDA definition. The supplied segment extract omits Corporate and other; those three revenue rows are not the consolidated total. Missing corporate/reconciliation rows must be disclosed or explicitly sourced from the filing, never manufactured to make a table add up. Adjusted Segment EBITDA is not the synthetic clinic's operating income.
 
-## 15. Source validation findings and lineage requirements
+### HCA source verification and public reference values
 
 Inspected supplied sources read-only: HCA_2025_Public_Dataset.xlsx (README, Income_Statement, Operating_Metrics, Payer_Mix, Segments, Scenario_Seed) and the 163-page browser-print HCA 10-K PDF. Verified headline financial and operating numbers against the corresponding filing text. Full extraction-row verification remains a later ingestion acceptance task, not a claim completed here.
 
@@ -338,47 +131,9 @@ Canonical primary source: https://www.sec.gov/Archives/edgar/data/860730/0001193
 
 Public annual report: https://s23.q4cdn.com/949900249/files/doc_financials/2024/ar/HCA-2025-Annual-Report-to-Shareholders-FINAL.pdf
 
-Every transformation retains input lineage and unit conversion. Derived metrics retain formula, parent metric IDs, period and scope. Public corrections are controlled source updates, never editable app assumptions. Freeze local verified extracts for recording reliability; loading the demo must not require a live SEC/network request. No source files are copied or transformed into application data during this specification task. Tenet source-specific findings are recorded in section 19.
+Every transformation retains input lineage and unit conversion. Derived metrics retain formula, parent metric IDs, period and scope. Public corrections are controlled source updates, never editable app assumptions. Freeze local verified extracts for recording reliability; loading the demo must not require a live SEC/network request. No source files are copied or transformed into application data during this specification task. Tenet source-specific findings follow in this section.
 
-## 16. Public / synthetic separation and organization
-
-Use separate public benchmark loading, synthetic scenario calculation, investigation and narrative responsibilities. The benchmark loader produces read-only contextual records; the scenario engine accepts only synthetic assumptions and model policy. Narrative receives these as separately labeled objects and may cite public context without blending values. A benchmark cannot promote a synthetic driver to Supported or Analyst-Confirmed Cause.
-
-The proposed public data area has separate HCA and Tenet company groups, with financial, operating, payer and segment records plus source metadata. The synthetic area contains clinic baseline/scenario inputs and variance fixtures. This captures the user's proposed organization without requiring a sweeping rename of the existing investigation package. Preserve historical Phase 3/4 contracts where compatible; moving all modules is not necessary to establish the data boundary.
-
-During later approved work, keep supplied raw documents immutable, normalize public records in their own loader and preserve existing synthetic benchmark fixtures and gold isolation. A company-agnostic schema is enough extensibility; no plugin registry, database or ingestion platform is required.
-
-## 17. Benchmark-panel UX and narrative disclosure
-
-Place a compact Public Benchmark card near the Scenario Modeling heading or below the main comparison; it must not push the editable FTE and dependent outputs out of the recording viewport. Show company and period with a **PUBLIC — READ-ONLY — SOURCE-LINKED** label and a required **Benchmark Company: HCA Healthcare | Tenet Healthcare** selector. HCA shows revenue, salaries/benefits, equivalent admissions, occupancy and supplies/revenue. Tenet shows consolidated net operating revenue, both segment revenues, same-hospital adjusted admissions/outpatient visits, and segment-scoped cost/Adjusted EBITDA ratios. Keep four or five headline cards visible, with additional details expanded. Every metric includes its applicable basis and source; Tenet segment ratio details identify the selected segment. Public numbers have no editable controls; selecting a reference period/company cannot modify scenario state.
-
-The assumptions panel carries **SYNTHETIC — EDITABLE — WHAT-IF MODEL**. The generated outputs carry **SYNTHETIC SCENARIO OUTPUT**. Labels supplement color. This distinction also appears when investigation is open; all C01/C04/C03 facts remain synthetic case evidence, not HCA or Tenet incidents.
-
-Expandable disclosure:
-
-“This portfolio demonstration uses publicly available company financial and operating data for benchmark context. Clinic-level budgets, provider staffing assumptions, forecasts, and scenario inputs are synthetic because these internal FP&A inputs are not publicly disclosed. Public benchmark data is sourced from HCA Healthcare and Tenet Healthcare FY2025 public filings. Public benchmarks inform context; they do not establish company-specific clinic assumptions. This project is not affiliated with, sponsored by or endorsed by HCA Healthcare or Tenet Healthcare and uses no PHI or proprietary planning-system access.”
-
-Commentary may state, with a source reference, that salaries and benefits are a large cost category in HCA's public data. It must qualify this as consolidated-company context and must not equate that figure to synthetic variable labor. No claims that a scenario depicts actual HCA or Tenet staffing, payer contracts, forecasts, locations or performance. Public context from either company remains optional to the narrative and is omitted if unverified or irrelevant; it never changes the calculation.
-
-## 18. Hybrid acceptance tests and recording additions
-
-In addition to A01–A18:
-
-1. Attempt scenario edits and benchmark interactions; public records and their source metadata remain unchanged. No public-value setter is exposed to scenario controls.
-2. Check synthetic input/output provenance and identity end-to-end, including reset, case handoff and commentary.
-3. Switch benchmark context while holding scenario inputs fixed; numerical scenario results are identical. Remove/unavailable benchmark context; scenario still computes with an honest reference-unavailable state.
-4. FTE 4.0→3.5 reproduces every value in section 6, including separate labor and supply. Reimbursement-factor edits change revenue, contribution and income but not capacity, visits, labor or supplies. Other single-driver dependency tests remain required.
-5. Narration cannot write public or scenario data. Reject text presenting synthetic assumptions as HCA or Tenet facts or turning admission shares into clinic reimbursement assumptions.
-6. Verify source fields/locators survive import, unit normalization, derived-ratio calculation, display and any future output serialization. Test $mm conversion, ratio display and total-versus-attributable net income.
-7. Test payer-mix denominators, consolidated/segment keys and incomplete segment scope. Duplicate or conflicting records are not silently overwritten. Missing public metrics are not zero-filled.
-8. Browser checks verify visible PUBLIC/SYNTHETIC labels, read-only public fields, source links, editable synthetic fields and offline commentary disclosure. Check that neither HCA nor Tenet company identity is used as the synthetic clinic identity.
-9. Verify actual HCA and Tenet records load through the same normalized interface, retaining different metric definitions, periods and reporting bases. No fake company fixture appears as public/demo data. Test absent historical Tenet records remaining missing rather than derived or copied from HCA.
-10. Record the revised 85-second flow: 0–10s public-vs-synthetic disclosure; 10–20s baseline; 20–30s edit only FTE; 30–45s capacity/visits/revenue/labor/supplies/margin/income/impact; 45–60s commentary and deterministic-first explanation; 60–75s C04 refusal; 75–85s human review. Make HCA/Tenet sourcing and the clinic's synthetic nature understandable within the first ten seconds.
-
-The financial fixture calculations were independently checked during spec preparation. No application tests, data-loader implementation or UI have been created. Public verification of the complete workbook belongs to the later approved data intake work; raw source files remain unchanged.
-
-
-## 19. Tenet FY2025 source findings and comparability rules
+### Tenet source verification and reporting bases
 
 Primary source: [Tenet Healthcare Corporation FY2025 Form 10-K](https://www.sec.gov/Archives/edgar/data/70318/000007031826000012/thc-20251231.htm). The supplied 136-page PDF was inspected read-only. Printed p.49/local PDF p.53 contains continuing-operations consolidated results; printed p.50/local p.54 has segment financials; printed p.51/local p.55 has same-hospital statistics; printed p.114/local p.118 has Adjusted EBITDA reconciliation. Keep document-specific locators and filing identity.
 
@@ -416,13 +171,300 @@ Tenet discloses hospital net patient-service revenue by payer separately from ot
 
 Financial/operating/payer/segment records for both companies use the same output schema but company-specific extraction mappings. Cross-company cost-structure and hospital-versus-ambulatory context may be displayed with scope notes; no ranking or “reasonable clinic range” is inferred from unmatched populations. Prior-year presentation/reclassification notes remain attached to the applicable records.
 
-## 20. Implementation inventory for later approval — no tickets yet
+### Physical and logical separation
 
-**Reusable after selective recovery:** Phase 3 investigation loading, arithmetic, review rules, evidence/source lineage, driver/timing classifications and evaluator; Phase 4 guarded investigation narrative/fallback architecture and compatible tests. Retain C01, C04, C03 and ten-case regression. Recover only after implementation authorization, inspect against this revised spec, rerun the complete suite and report conflicts before changing business logic. Current working tree has no recovered application implementation.
+Use separate public benchmark loading, synthetic scenario calculation, investigation and narrative responsibilities. The benchmark loader produces read-only contextual records; the scenario engine accepts only synthetic assumptions and model policy. Narrative receives these as separately labeled objects and may cite public context without blending values. A benchmark cannot promote a synthetic driver to Supported or Analyst-Confirmed Cause.
 
-**New scenario components:** nine-assumption synthetic baseline; deterministic capacity/visits/net-revenue/labor/supply/margin/income dependency calculator; immutable baseline versus editable scenario snapshots; reactive web assumptions/results workspace; scenario-specific fallback commentary and session review; the minimal investigation-to-related-assumption handoff. These must not reinterpret observed actuals as hypothetical model inputs or depend on benchmark totals.
+The proposed public data area has separate HCA and Tenet company groups, with financial, operating, payer and segment records plus source metadata. The synthetic area contains clinic baseline/scenario inputs and variance fixtures. This captures the user's proposed organization without requiring a sweeping rename of the existing investigation package. Preserve historical Phase 3/4 contracts where compatible; moving all modules is not necessary to establish the data boundary.
 
-**Required public benchmark loaders:**
+During later approved work, keep supplied raw documents immutable, normalize public records in their own loader and preserve existing synthetic benchmark fixtures and gold isolation. A company-agnostic schema is enough extensibility; no plugin registry, database or ingestion platform is required.
+
+## 5. Scenario Model
+
+### Editable Drivers
+
+Use nine numeric assumptions, reflecting the requested split of variable labor/supply costs and a simple reimbursement sensitivity. No detailed payer-contract engine or dozens of assumptions.
+
+| Driver | Synthetic baseline | Units / validity |
+| --- | ---: | --- |
+| Provider FTE | 4.0 | Effective productive FTE; finite and nonnegative. |
+| Clinic operating days | 22 | Integer 0 through selected month's calendar days. |
+| Visits per provider day | 18 | Available slots per effective FTE-day; finite and nonnegative. |
+| Utilization | 90% | Fraction in [0,1], displayed as percent. |
+| Base net revenue per visit | $195 | USD per expected visit; finite and nonnegative. |
+| Variable labor cost per visit | $55 | USD per expected visit; finite and nonnegative. |
+| Variable supply cost per visit | $18 | USD per expected visit; finite and nonnegative. |
+| Fixed monthly clinic expense | $85,000 | USD per month; finite and nonnegative. |
+| Payer / reimbursement factor | 1.00× | Dimensionless finite nonnegative relative sensitivity; 1.00 leaves base net rate unchanged. Not a disclosed payer mix or collection probability. |
+
+These are **Synthetic clinic-level planning assumptions** selected for demonstration. Public-company benchmarks inform cost-category context, not a mathematical estimate of HCA clinic economics. The reimbursement factor is a deliberate scenario overlay on the already-net base rate; it is not a second deduction of contractual allowances. No public payer-mix percentage automatically sets this factor.
+
+Provider FTE is an effective productive-capacity assumption, not a headcount/payroll contract. All effective FTE share the same days and productivity assumption. Lower FTE does not automatically reduce salaries or fixed expense. At unchanged unit costs, variable labor and supply expenses change only through expected visits. Fixed expense does not automatically fall with FTE; the cost categories must not double-count variable labor or supplies. This is a simplified operating model, not a staffing optimizer.
+
+The baseline remains immutable during edits; reset restores it. Multiple driver edits may be supported using the same calculation path, but the primary recording changes only FTE. Every scenario starts from a complete copy of baseline assumptions. Label baseline “Synthetic planning baseline,” not an authenticated approved forecast.
+
+### Dependency Graph
+
+```mermaid
+flowchart LR
+    F[Provider FTE] --> C[Visit capacity]
+    D[Clinic days] --> C
+    P[Slots per provider day] --> C
+    C --> V[Expected visits]
+    U[Utilization] --> V
+    N[Base net revenue per visit] --> Q[Effective net rate]
+    Y[Reimbursement factor] --> Q
+    V --> R[Modeled net patient revenue]
+    Q --> R
+    V --> L[Variable labor]
+    LC[Labor cost per visit] --> L
+    V --> S[Variable supplies]
+    SC[Supply cost per visit] --> S
+    L --> E[Total variable expense]
+    S --> E
+    R --> M[Contribution margin]
+    E --> M
+    M --> O[Modeled clinic operating income]
+    X[Fixed monthly expense] --> O
+    O --> I[Scenario minus baseline impact]
+    B[Baseline operating income] --> I
+    H[Public benchmarks: read-only] -. context only .-> UI[Reference panel / labeled commentary]
+```
+
+
+Every valid edit triggers this graph in dependency order. Only descendants of a changed assumption change; a revenue-per-visit change cannot change visits. The baseline and scenario use the same deterministic function. No editable downstream output, LLM call, network fetch or manual calculate-each-cell step participates in the calculation.
+
+### Deterministic Formulas
+
+| Output | Deterministic relationship |
+| --- | --- |
+| Available visit capacity | Provider FTE × clinic days × visits per provider day |
+| Expected visits | Available visit capacity × utilization fraction |
+| Effective net revenue per visit | Base net revenue per visit × payer/reimbursement factor |
+| Modeled net patient revenue | Expected visits × effective net revenue per visit |
+| Variable labor expense | Expected visits × variable labor cost per visit |
+| Variable supply expense | Expected visits × variable supply cost per visit |
+| Total variable expense | Variable labor expense + variable supply expense |
+| Contribution margin | Modeled net patient revenue − total variable expense |
+| Modeled clinic operating income | Contribution margin − fixed clinic operating expense |
+| Monthly forecast impact | Scenario modeled operating income − baseline modeled operating income |
+| Absolute change for each output | Scenario output − baseline output |
+| Percentage change | (Scenario − baseline) / baseline × 100, when baseline is positive; otherwise N/A with reason |
+
+Use the standard contribution-margin definition before fixed costs. Because the input is a net realized rate, label its product **modeled net patient revenue**, not gross charges or gross patient revenue. This clarifies the example formula name in the request without inventing gross-to-net adjustments. The alternative expression subtracting fixed expense is labeled modeled operating income. Do not present it as consolidated GAAP operating income: excluded items include corporate allocations, interest, tax and any costs outside the nine-input model. “Forecast impact” means hypothetical one-month model impact against the synthetic baseline, not an updated approved forecast or automatic annualization.
+
+Use decimal-safe arithmetic and preserve internal precision through dependencies. Round only display values: USD to cents, percentage changes to two decimals, expected visits up to two decimals. Fractional expected visits are valid planning expectations, not individual encounters. Displaying an integer must not feed rounding back into revenue; prefer showing the fractional expectation where necessary.
+
+Reject NaN, infinity, negative inputs, invalid days and utilization outside bounds. Clearing a field shows a draft validation state; do not convert blank to zero. During invalid input, show the last valid results explicitly as stale and disable review; never mix snapshots. Zero volume is allowed: revenue/variable cost/contribution are zero and modeled operating income equals negative fixed expense.
+
+All synthetic assumptions, output units, baseline ID, Clinic-Month, changed-driver list and calculation revision form a structured ScenarioResult. Commentary and review reference this exact revision. No case ID or demo answer is substituted for calculations.
+
+### Outputs — FTE 4.0 → 3.5
+
+Use the newly supplied synthetic baseline, replacing the prior 45-slot/$32 unit-cost example. With FTE as the sole changed input and reimbursement factor held at 1.00×:
+
+| Output | Baseline FTE 4.0 | Scenario FTE 3.5 | Change |
+| --- | ---: | ---: | ---: |
+| Available capacity | 1,584 | 1,386 | −198 (−12.50%) |
+| Expected visits | 1,425.60 | 1,247.40 | −178.20 (−12.50%) |
+| Modeled net patient revenue | $277,992.00 | $243,243.00 | −$34,749.00 |
+| Variable labor expense | $78,408.00 | $68,607.00 | −$9,801.00 |
+| Variable supply expense | $25,660.80 | $22,453.20 | −$3,207.60 |
+| Total variable expense | $104,068.80 | $91,060.20 | −$13,008.60 |
+| Contribution margin | $173,923.20 | $152,182.80 | −$21,740.40 |
+| Fixed monthly expense | $85,000.00 | $85,000.00 | $0.00 |
+| Modeled clinic operating income | $88,923.20 | $67,182.80 | −$21,740.40 |
+| Monthly scenario / forecast impact | $0.00 | −$21,740.40 | Hypothetical downside |
+
+Public values are not operands in these calculations. Switching a benchmark company/period cannot change any row above. All baseline and scenario values remain synthetic, including clinic identity and forecast inputs.
+
+Show absolute and percentage differences for outputs where meaningful. Red/green must consider business meaning: lower variable expense is a modeled cost reduction, while lower operating income is downside. Include words/icons rather than color alone. Reduced expense does not claim realizable payroll savings beyond the unit-cost assumption.
+
+### Structured output contract
+
+ScenarioResult contains Clinic-Month, synthetic baseline ID, complete baseline/scenario assumptions, changed drivers, outputs with units, absolute/percentage differences, validation state and revision. Commentary and analyst review bind to the same revision. Monetary impact is hypothetical for one month; there is no annualization or approved-forecast write.
+
+## 6. Variance Investigation
+
+Retain the existing secondary contract: one Closed Month actual versus Latest Approved Forecast, deterministic review rules, facts and evidence separated from conclusions, source lineage, seven Driver Families, and Candidate/Supported/Rejected/Unresolved/Analyst-Confirmed boundaries. Only human review can confirm a supported cause. Keep the configurable 50% horizon threshold as a disclosed demo heuristic, not a universal healthcare FP&A standard. Recurrence is separate from Temporary/Structural timing.
+
+Preserve C01 (supported explanation), C04 (unresolved/no invented cause), C03 (upstream context versus direct financial driver), with remaining cases as regression coverage in the same workflow. C01 primary Demand & Volume and contributing Provider Availability remain distinct. C03 weather is upstream, clinic capacity contributes, volume is primary. C04 must not invent reduced availability or temporary recovery.
+
+Connection: a reviewed supported driver may offer **Explore related assumption**. This opens Scenario Modeling with an origin reference and a highlighted related field, but no automatic assumption change. For Provider Availability, highlight effective Provider FTE; a PTO event does not itself provide an approved numeric FTE conversion. The analyst enters the hypothetical value. Unresolved C04 offers further investigation, not a prefilled causal scenario.
+
+Scenario baseline assumptions are separate synthetic planning inputs, not derived from benchmark gold answers or retroactively asserted to equal C01 financial records. Show that distinction when navigating. Never mix the scenario baseline with the investigation's Latest Approved Forecast. This small handoff connects the product story without building a new forecast system.
+
+Investigation retains four session actions: confirm cause, reject cause, keep unresolved, request further investigation. Switching modules preserves only current-session context; a scenario review does not confirm an investigation cause and vice versa.
+
+### Evidence and driver taxonomy
+
+Preserve Observed Fact, Supporting Evidence, Operating Driver and Conclusion as distinct concepts. Each analytical assertion retains a Source Reference and its scope. Public corporate context cannot support or confirm a fictional clinic's cause.
+
+Driver Families: Demand & Volume; Provider Availability; Clinic Capacity & Operations; Revenue Realization; Workforce & Operating Expense; Accounting & Timing; External Disruption. Other, Unresolved and Data Quality Issue remain explicit fallbacks. Primary means the most direct supported financial mechanism; contributing means supported secondary/upstream mechanism; external context does not bypass the direct mechanism.
+
+### Epistemic States
+
+| State | Meaning |
+| --- | --- |
+| Candidate Driver | Plausible mechanism with insufficient evidence. |
+| Supported Driver | Coherent mechanism and supporting evidence, not human confirmation. |
+| Analyst-Confirmed Cause | Supported Driver explicitly confirmed by an analyst. |
+| Rejected Driver | Contradicted by evidence or rejected by an analyst. |
+| Unresolved Driver | Evidence cannot support or reject the explanation. |
+
+Missing evidence is not negative evidence. Numerical alignment alone does not prove causality. Contribution estimates require quantitative support; unknown values stay unknown. The deterministic layer owns evidence and classification states; narrative cannot promote them.
+
+### Human Review
+
+Within the current session: confirm cause, reject cause, keep unresolved, request further investigation. Only Supported Drivers can be confirmed. Keep the original system result distinguishable from human review. No persistence or authenticated audit trail is claimed.
+
+A Successful Investigation may correctly remain unresolved. Successfully Explained Variance additionally requires human confirmation and no undisclosed material unresolved issue that could change the conclusion. These measures must remain separate.
+
+## 7. AI Layer
+
+### Allowed
+
+Explain validated changes, magnitude, conditional business implications and questions for operations. Reference public company context only with company/period/basis/source labels and without treating it as clinic evidence.
+
+### Forbidden
+
+Calculate authoritative financial numbers; overwrite public data, assumptions or outputs; invent assumptions or sources; assign causal/timing/evidence states; predict that a scenario will occur; confirm causes; update an approved forecast; present synthetic values as HCA/Tenet internal facts.
+
+### Execution mode and narrative contract
+
+The narrative layer consumes validated ScenarioResult; it explains changed assumptions, downstream movements, magnitude, conditional implications and analyst questions. It cannot perform authoritative arithmetic, modify outputs, invent assumptions, predict occurrence or update a forecast.
+
+Approved prior constraint retained as the proposed default: **offline deterministic fallback, no API key required**. Heading may remain AI Scenario Commentary to communicate the architectural layer, but adjacent visible text must state **“Offline demo — deterministic commentary; no live LLM used.”** Do not describe this displayed text as actually AI-generated in recordings or portfolio claims.
+
+The MVP uses the previously approved offline default. “AI Layer” names the controlled interpretation boundary; this demo does not claim live AI generation. A real model connection remains future scope unless explicitly authorized.
+
+Example fallback wording, populated from computed fields:
+
+“Under these synthetic assumptions, reducing effective provider FTE from 4.0 to 3.5 lowers expected visits by 12.5%, with utilization, productivity and reimbursement held constant. Modeled monthly revenue decreases by $34,749.00. Variable labor decreases by $9,801.00 and supplies by $3,207.60, partly offsetting the revenue loss. With fixed expense unchanged, modeled clinic operating income decreases by $21,740.40. Would coverage or demand constraints alter these assumptions? This hypothetical clinic scenario does not represent HCA or Tenet operations or an approved forecast change.”
+
+Numbers are formatted from deterministic fields, not recomputed in text generation. Do not attribute multi-input changes to a single driver or invent a decomposition; identify all changed assumptions and report their joint effect. If the result is invalid or stale, withhold current commentary/review. Preserve an optional guarded narrative interface without adding an API integration requirement.
+
+## 8. Web UX
+
+Default navigation: **Scenario Modeling** (primary) and **Variance Investigation** (secondary), under Healthcare Provider FP&A Copilot. Use one professional desktop workspace optimized for screen recording, not separate driver-specific pages.
+
+Left: editable assumptions with units, baseline values, changed-input highlighting and reset. Right: baseline/scenario/delta table or cards showing capacity, visits, revenue, variable labor, variable supplies, total variable expense, contribution margin, fixed expense, operating income and a prominent monthly impact. Below: formula trace, **AI Scenario Commentary** with conspicuous generation-mode disclosure, and Human Review.
+
+On a valid input edit, recalculate automatically without a Calculate button. Proposed target: visible coherent update within 200 ms after a committed valid edit on the demo machine, measured separately from typing/debounce. No LLM or network latency on this path. Inputs, outputs and commentary update to one revision together; an old result cannot masquerade as current.
+
+Provide keyboard-editable numeric fields, visible focus, explicit units, readable currency, compact help, sensible precision and clear validation messages. A slider is optional, not necessary. Keep the main driver edit and key financial outputs visible together on a 1440×900 reference viewport. Important disclosure must remain visible rather than hidden in a tooltip.
+
+Scenario review uses session-only actions: **Reviewed — retain baseline**, **Request further investigation**, **Mark for forecast-assumption review**. None updates an approved forecast. Editing an assumption invalidates prior review for that scenario revision. There is no “confirm cause” action in a hypothetical scenario; cause review belongs to investigation. In-memory session state only; reset/session end discards it. No localStorage/sessionStorage or persistence guarantee across reload.
+
+### Public benchmark panel and data disclosure
+
+Place a compact Public Benchmark card near the Scenario Modeling heading or below the main comparison; it must not push the editable FTE and dependent outputs out of the recording viewport. Show company and period with a **PUBLIC — READ-ONLY — SOURCE-LINKED** label and a required **Benchmark Company: HCA Healthcare | Tenet Healthcare** selector. HCA shows revenue, salaries/benefits, equivalent admissions, occupancy and supplies/revenue. Tenet shows consolidated net operating revenue, both segment revenues, same-hospital adjusted admissions/outpatient visits, and segment-scoped cost/Adjusted EBITDA ratios. Keep four or five headline cards visible, with additional details expanded. Every metric includes its applicable basis and source; Tenet segment ratio details identify the selected segment. Public numbers have no editable controls; selecting a reference period/company cannot modify scenario state.
+
+The assumptions panel carries **SYNTHETIC — EDITABLE — WHAT-IF MODEL**. The generated outputs carry **SYNTHETIC SCENARIO OUTPUT**. Labels supplement color. This distinction also appears when investigation is open; all C01/C04/C03 facts remain synthetic case evidence, not HCA or Tenet incidents.
+
+Expandable disclosure:
+
+“This portfolio demonstration uses publicly available company financial and operating data for benchmark context. Clinic-level budgets, provider staffing assumptions, forecasts, and scenario inputs are synthetic because these internal FP&A inputs are not publicly disclosed. Public benchmark data is sourced from HCA Healthcare and Tenet Healthcare FY2025 public filings. Public benchmarks inform context; they do not establish company-specific clinic assumptions. This project is not affiliated with, sponsored by or endorsed by HCA Healthcare or Tenet Healthcare and uses no PHI or proprietary planning-system access.”
+
+Commentary may state, with a source reference, that salaries and benefits are a large cost category in HCA's public data. It must qualify this as consolidated-company context and must not equate that figure to synthetic variable labor. No claims that a scenario depicts actual HCA or Tenet staffing, payer contracts, forecasts, locations or performance. Public context from either company remains optional to the narrative and is omitted if unverified or irrelevant; it never changes the calculation.
+
+## 9. 60–90 sec Recruiting Demo
+
+Target a reproducible **85-second screen recording**. No API key or live public-filing request is needed during the recording.
+
+| Time | On-screen action | Business message |
+| --- | --- | --- |
+| 0–10 s | Open Healthcare Provider FP&A Copilot; show HCA/Tenet selector and synthetic inputs label. | Public-company economics provide context; clinic planning inputs are synthetic. |
+| 10–20 s | Show baseline, FTE 4.0 and formula trace. | An explicit dependency model connects operating assumptions to financial results. |
+| 20–30 s | Change only Provider FTE to 3.5. | No downstream value is manually edited. |
+| 30–45 s | Show capacity, visits, revenue, labor, supplies, margin, operating income and impact. | Revenue falls $34,749; variable expense falls $13,008.60; operating-income downside is $21,740.40. |
+| 45–60 s | Show AI Scenario Commentary and offline disclosure. | Calculations are deterministic. The interpretation layer does not calculate or alter outputs; this demo uses a deterministic fallback. |
+| 60–75 s | Open Variance Investigation and C04. | Insufficient evidence remains unresolved; the system does not invent a cause. |
+| 75–85 s | Select Keep unresolved or Request further investigation. | Deterministic calculations → interpretation → human analyst judgment. |
+
+C01 and C03 remain available for a longer follow-up, including investigation → related assumption → scenario. The first 60 seconds must communicate the user, business pain, public/synthetic separation, interactive financial cascade and human authority.
+
+Display exact expected visits 1,425.60 → 1,247.40; optional rounded display is 1,426 → 1,247. No model output is computed from rounded screen values. Benchmark switching leaves scenario outputs unchanged.
+
+## 10. Acceptance Criteria
+
+- A01: A running interactive web application opens with Scenario Modeling primary and Variance Investigation secondary, correctly branded and visibly synthetic/offline.
+- A02: Editing only FTE 4.0→3.5 yields every value in the reconciled example without manual downstream editing; baseline remains unchanged.
+- A03: Each of nine inputs has correct dependency behavior. Changing fixed expense changes operating income/impact but not contribution margin; changing unit revenue does not change visits; changing utilization affects visits and downstream financials but not available capacity.
+- A04: Formula inspection, units, rounding and N/A percentage behavior are explicit. Invalid inputs cannot produce current-looking results or actionable review.
+- A05: Valid edits update the coherent output snapshot within the proposed 200 ms target on the recording machine, independent of network/model availability.
+- A06: Commentary references the current computed revision, shows changed assumptions and conditional implications, and cannot modify results or claim certainty. No obsolete text after an edit.
+- A07: Scenario review is session-only and tied to the exact assumptions; further edits require new review. No approved forecast is mutated.
+- A08: C04 retains unresolved cause/timing and refuses fabricated availability explanations. C01 and C03 preserve their documented driver roles and human confirmation boundary.
+- A09: Related-assumption navigation preserves source context but does not infer numeric FTE from PTO, change assumptions automatically or mix scenario and investigation baselines.
+- A10: Full investigation regression covers ten cases and forbidden conclusions; gold outputs never enter the analysis or narrative inputs.
+- A11: The timed 60–90 second screen-recordable flow demonstrates the one-input cascade, commentary, C04 and human review. Record actual rehearsal evidence; do not claim hiring-manager validation without conducting it.
+- A12: Demo runs without a live API key, external healthcare APIs, database, authentication, real PHI or persistent browser state. Offline narrative satisfies MVP requirements when disclosed as specified in section 7.
+- A13: Public metrics are immutable, source-linked and typed separately from synthetic inputs; scenario edits, benchmark selection and narration cannot mutate them.
+- A14: Each public metric retains company, period, unit, definition, source document/URL/type, source locator and transformation lineage; missing/unverified values never become invented zeroes.
+- A15: UI distinguishes public actuals from editable synthetic inputs; no clinic assumption or scenario is labeled HCA or Tenet internal data. No HCA or Tenet public admissions/occupancy/cost ratio silently populates a clinic driver.
+- A16: Public loader supports a common schema for additional genuinely supplied companies, but displays only supplied/verified companies. Derived benchmark metrics are not mislabeled as reported.
+- A17: Primary panel figures reconcile to the filing; percentage scales, payer-mix denominator, segment scope and net-income attribution remain correct. The nine-driver graph separately updates labor and supplies.
+- A18: Public benchmark unavailability affects only reference display; scenario calculation still works and no benchmark is fabricated. Required HCA and Tenet references must be available in the completed recording build.
+
+## 11. Testing
+
+Introduce one small public deterministic scenario calculation boundary: complete valid assumptions in, ScenarioResult out. This is genuinely new functionality; do not force hypothetical planning assumptions into the historical actual-versus-forecast InvestigationResult. Retain historical investigation and guarded narrative boundaries for the secondary module.
+
+Scenario tests use independent expected-value fixtures, all nine single-driver dependency checks, multi-edit joint output, identity/reset, zero values, invalid inputs, baseline-zero/negative percentage handling and internal precision. Verify financial identities and that only dependency descendants move. Test no-op inputs returning the baseline and fixed-cost changes leaving contribution margin unchanged.
+
+Narrative tests verify current-snapshot numbers, conditional language, no invented assumptions or attribution and clear offline identity. Human tests exercise scenario actions separately from the four investigation actions, stale-review invalidation and session reset.
+
+A focused browser suite changes one input and checks every dependent output, input validation, reset, navigation/handoff, C04 refusal and review state. Record actual recalculation latency on the demo machine. Run the complete selectively recovered test suite and full ten-case evaluator before integration and again after changes. Historical reports are prior art, not current passing evidence.
+
+### Hybrid-data and UI verification
+
+Verify A01–A18 through the following behavior checks:
+
+1. Attempt scenario edits and benchmark interactions; public records and their source metadata remain unchanged. No public-value setter is exposed to scenario controls.
+2. Check synthetic input/output provenance and identity end-to-end, including reset, case handoff and commentary.
+3. Switch benchmark context while holding scenario inputs fixed; numerical scenario results are identical. Remove/unavailable benchmark context; scenario still computes with an honest reference-unavailable state.
+4. FTE 4.0→3.5 reproduces every value in section 5, including separate labor and supply. Reimbursement-factor edits change revenue, contribution and income but not capacity, visits, labor or supplies. Other single-driver dependency tests remain required.
+5. Narration cannot write public or scenario data. Reject text presenting synthetic assumptions as HCA or Tenet facts or turning admission shares into clinic reimbursement assumptions.
+6. Verify source fields/locators survive import, unit normalization, derived-ratio calculation, display and any future output serialization. Test $mm conversion, ratio display and total-versus-attributable net income.
+7. Test payer-mix denominators, consolidated/segment keys and incomplete segment scope. Duplicate or conflicting records are not silently overwritten. Missing public metrics are not zero-filled.
+8. Browser checks verify visible PUBLIC/SYNTHETIC labels, read-only public fields, source links, editable synthetic fields and offline commentary disclosure. Check that neither HCA nor Tenet company identity is used as the synthetic clinic identity.
+9. Verify actual HCA and Tenet records load through the same normalized interface, retaining different metric definitions, periods and reporting bases. No fake company fixture appears as public/demo data. Test absent historical Tenet records remaining missing rather than derived or copied from HCA.
+
+
+Public benchmark tests must preserve each company's source lineage and basis, reject conflicting duplicates, retain missing historical values and distinguish reported versus derived ratios. Use actual supplied HCA/Tenet records under the same interface. Do not fabricate public-company fixtures.
+
+The complete recovered suite and ten-case evaluation must be executed again after integration. Test results in Git history are not current validation. During this specification-only task, no application suite is claimed to have run.
+
+## 12. Non-goals
+
+No authentication, databases, browser persistence, enterprise permissions, external healthcare APIs, PHI, RAG, multi-user collaboration, production deployment architecture, real-data mapping, dozens of assumptions, optimization, Monte Carlo simulation, payroll engine, multi-period forecasts, consolidated statements or approved-forecast writes. Live LLM generation remains optional future scope unless explicitly changed.
+
+Future opportunities include richer forecast review, budget-versus-actual analysis, management reporting, operational KPI review and market/reimbursement context. They are not designed in detail or required for this recruiting demo.
+
+No implementation ticket generation or code recovery during this specification revision. Current provisional tickets are not authority for execution. No real-data clinic calibration claim, automatic public-to-clinic allocation, or invented comparable history. No mandatory video editing/export service: the application must support a polished recording and a demonstrated rehearsal.
+
+## 13. Existing Code Reuse
+
+The current checkout contains documents and benchmark data, not runnable application code. Historical snapshot 40e4829 contains Phase 3, Phase 4, tests and the prior Streamlit UI. Nothing is recovered in this task.
+
+| Historical asset | Reuse assessment |
+| --- | --- |
+| Decimal parsing and variance arithmetic | Reuse finite-number/precision conventions and applicable comparison helpers. Historical fields mean actual/comparator, so do not mislabel scenario outputs as actuals; a thin new scenario contract is required. |
+| Phase 3 loading, engine, review, evidence, drivers, timing | Preserve as secondary investigation baseline. Inspect against the revised spec and rerun tests after approved recovery. No replacement of business logic to serve the scenario UI. |
+| Source lineage and human-confirmation boundaries | Reuse for investigation; scenario assumptions/review need separate snapshot references, not fictitious observed evidence. |
+| Phase 4 guarded narrative architecture | Reuse separation of deterministic results from interpretation, injected transport testing and fallback/guard patterns. Its current NarrativeInput requires an InvestigationResult; it is not a drop-in scenario commentary generator. Add a narrow scenario formatter/adapter only after approval. |
+| Existing benchmark inputs and evaluator | Retain ten-case investigation regression and C01/C04/C03; do not force new scenario baseline numbers into old cases or change gold fixtures to fit the recording. |
+| Historical tests | Recover compatible tests, execute full suite and inspect failures. No historical test currently proves reactive scenario modeling. |
+| Historical Streamlit UI | Inspect later for reusable display patterns only. Its existence is not evidence of the required editable dependency model or recording-ready layout; framework selection remains an implementation choice. |
+
+The scenario graph, immutable baseline/scenario state, reactive web workspace and scenario-specific commentary/review are new requirements. Preserve existing investigation architecture rather than rebuild it. Report any recovered business-logic conflict before changing it.
+
+Existing ADRs and terminology describe an investigation-only first MVP and exclude forecast/budget workflows. This proposal deliberately expands the demo to a **bounded hypothetical one-month scenario calculator** while still excluding actual forecast editing, budgets and production forecasting. That is a documented scope change, not permission to silently rewrite ADRs, glossary or historical code. Any later documentation alignment must distinguish scenario-vs-baseline deltas from actual-vs-approved-forecast variances.
+
+### Required new components and public loaders
+
+New work is limited to the deterministic scenario engine, immutable baseline/editable scenario state, reactive web workspace, scenario-specific offline commentary/session review, compact company selector and minimal related-assumption handoff.
 
 - HCA adapter for supplied structured workbook/data plus verified filing definitions: financial, operating, admission payer-mix and segment records, with source metadata.
 - Tenet adapter for the supplied Form 10-K and any subsequently supplied normalized tables: consolidated and segment financials, disclosed operating bases, payer measures and Adjusted EBITDA definitions. Verify normalized inputs against the filing; absence of a prebuilt CSV is not permission to invent rows.
@@ -430,10 +472,26 @@ Financial/operating/payer/segment records for both companies use the same output
 
 Organize public datasets into separate HCA and Tenet groups, each with financial/operating/payer/segment data and metadata. Keep synthetic scenario assumptions and variance cases separately. Preserve a separate benchmark loader, scenario engine, investigation engine and narrative boundary. The user's suggested directory layout is an organizational target, not a requirement for a disruptive move of working historical modules.
 
-**Deferred:** live company APIs and EHR integrations; real clinic data; additional companies; automated recurring SEC ingestion; a universal filing parser; normalization of undisclosed history; multi-period scenario forecasting; detailed payer contracts; live LLM generation unless separately approved; authentication, databases, browser persistence, PHI, RAG, multi-user collaboration and production deployment architecture.
+Selective recovery was approved as a strategy, but implementation remains gated on approval of this revised specification. After recovery, inspect against the spec, rerun the full test suite and report conflicts before changing business logic. Preserve historical modules where compatible; a directory reorganization is not a reason for a broad rewrite.
 
-**Acceptance additions:** HCA and Tenet records retain complete lineage after transformation; absent history stays null with reason; public records are read-only; synthetic inputs are editable; one FTE edit updates all descendants; baseline and public values do not mutate; narrative cannot write financial state; no synthetic value is presented as either company's actual internal data; both companies share the normalized interface; the existing investigation contracts remain intact. Test company switching and missing-context states separately from scenario recalculation.
+## 14. Definition of Done
 
-**Recording:** within the opening ten seconds, show both company names in the selector and the synthetic-input label. Select one benchmark, demonstrate the FTE edit and financial cascade, show disclosed offline commentary, then C04 and human review. Switching HCA/Tenet must leave numerical scenario results unchanged. Benchmark source links are available, but no live page fetch is needed during recording. Retain exact planning expectations 1,425.60→1,247.40; optional whole-visit formatting is 1,426→1,247, not 1,248. Calculations never use rounded display counts.
+The MVP is complete only when all of the following are demonstrated:
 
-The spec is still proposed, not approved for execution. No implementation tickets are created or revised by this update, and supplied documents remain untouched. Earlier variance-first tickets must not be executed as the current product specification.
+1. A runnable interactive web application presents Scenario Modeling as primary and Variance Investigation as secondary under Healthcare Provider FP&A Copilot.
+2. Both HCA and Tenet FY2025 public references are source-linked, read-only and correctly labeled with their reporting bases. Required displayed metrics are verified; unavailable history stays missing.
+3. One edit, FTE 4.0 → 3.5, updates every dependent output to the independently checked section 5 values without downstream editing. Baseline and public data remain unchanged.
+4. Commentary uses the current validated result, clearly discloses offline deterministic generation and cannot modify financial state. No API key is required.
+5. Scenario and investigation review remain distinct, in-memory and session-only. No action changes an approved forecast.
+6. C01, C04 and C03 retain their evidence/driver boundaries; the complete recovered and new tests and ten-case benchmark pass with actual recorded results.
+7. A timed 60–90 second rehearsal demonstrates the required workflow, legible disclosures and meaningful human review. A mockup, CLI or script alone does not satisfy delivery.
+8. Startup/reset/demo instructions and the model's financial assumptions, formulas, source lineage and limitations are documented. Portfolio claims distinguish synthetic demonstration from real-company data and do not claim production readiness, endorsement, live AI or measured ROI.
+9. The financial logic, source data and completed work have reversible Git history. No unresolved material defect or undisclosed acceptance failure is called complete.
+
+This document is the **new consolidated proposed spec**. Approval is still required before new tickets, selective code recovery or implementation. The earlier offline-default and session-only decisions remain in effect. Existing tickets, supplied filings/workbook and code are unchanged by this task.
+
+### Source references
+
+User-supplied product/discovery conclusions govern scope; retained domain/ADR documents and historical Phase 3/4 source govern compatible analytical behavior. The choice of upstream assumptions driving operational/financial outputs follows driver-based planning practice ([Anaplan](https://www.anaplan.com/resources/papers/driver-based-budgeting/)). Contribution margin excludes fixed costs; modeled operating income subtracts them separately ([Corporate Finance Institute](https://corporatefinanceinstitute.com/resources/accounting/contribution-margin-overview/)). These references inform modeling structure, not claims that the synthetic parameters represent healthcare benchmarks.
+
+[HCA FY2025 Form 10-K](https://www.sec.gov/Archives/edgar/data/860730/000119312526044769/hca-20251231.htm) · [Tenet FY2025 Form 10-K](https://www.sec.gov/Archives/edgar/data/70318/000007031826000012/thc-20251231.htm).
