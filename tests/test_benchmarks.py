@@ -55,3 +55,14 @@ class PublicBenchmarkTests(unittest.TestCase):
         self.assertTrue(all('admissions' in m.metric_definition for m in payers))
         tenet_payers=[m for m in load_company('THC').metrics if m.group=='payer_mix']
         self.assertTrue(all(m.unit=='USD' and 'not admission share' in m.metric_definition for m in tenet_payers))
+
+    def test_public_periods_distinguish_year_end_counts_from_annual_flows(self):
+        for ticker, count_id in [('HCA','HOSPITALS'),('THC','LICENSED_BEDS')]:
+            metrics=load_company(ticker).metrics
+            count=next(m for m in metrics if m.metric_id==count_id)
+            revenue=next(m for m in metrics if m.metric_id=='REVENUE')
+            self.assertEqual(count.payload()['period_type'],'instant')
+            self.assertEqual(count.payload()['period_start'],'2025-12-31')
+            self.assertEqual(revenue.payload()['period_type'],'duration')
+            self.assertEqual(revenue.payload()['period_start'],'2025-01-01')
+            self.assertEqual(revenue.payload()['period_end'],'2025-12-31')

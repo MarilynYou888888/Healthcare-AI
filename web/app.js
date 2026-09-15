@@ -33,7 +33,7 @@ let requestVersion=0;
 async function selectCompany(ticker){
   const version=++requestVersion;
   document.querySelectorAll('[data-company]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.company===ticker)));
-  $('benchmark-state').classList.remove('error');$('benchmark-state').textContent='Loading verified public references…';$('benchmark-cards').replaceChildren();$('source-rows').replaceChildren();$('benchmark-note').textContent='Reference context only';
+  $('benchmark-state').classList.remove('error');$('benchmark-state').textContent='Loading verified public references…';$('benchmark-cards').replaceChildren();$('source-rows').replaceChildren();$('company-notes').textContent='';$('benchmark-note').textContent='Reference context only';
   try{
     const company=await getJSON('/api/benchmarks/'+ticker);if(version!==requestVersion)return;
     const find=(id,seg='Consolidated')=>company.metrics.find(m=>m.metric_id===id && m.period==='FY2025' && m.business_segment===seg);
@@ -45,8 +45,9 @@ async function selectCompany(ticker){
       card.append(node('span',label,'name'),node('strong',metricValue(m,true)),node('small',m.reporting_basis+(m.provenance_kind==='derived'?' · derived':'')));$('benchmark-cards').append(card);
     }
     $('benchmark-note').textContent=company.company+' · FY2025 · Context only';
+    $('company-notes').textContent=company.notes;
     for(const m of company.metrics){
-      const tr=node('tr'),title=node('td',m.metric_name);title.append(node('small',m.period+' · '+m.provenance_kind));
+      const tr=node('tr'),title=node('td',m.metric_name);title.append(node('small',m.period+' · '+m.period_type+' · '+m.period_start+' to '+m.period_end+' · '+m.provenance_kind));
       const value=node('td',metricValue(m));value.append(node('small',m.unit));
       const scope=node('td',m.business_segment+' · '+m.reporting_basis);scope.append(node('small',m.metric_definition));if(m.missing_reason)scope.append(node('small',m.missing_reason));
       const source=node('td');const link=node('a',m.source_document);link.href=m.source_url;link.target='_blank';link.rel='noopener noreferrer';

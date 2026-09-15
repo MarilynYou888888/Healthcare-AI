@@ -1,6 +1,7 @@
 """Immutable, normalized public references. No scenario inputs are accepted here."""
 import csv
 import json
+from datetime import date
 from dataclasses import asdict, dataclass, replace
 from decimal import Decimal, InvalidOperation, localcontext
 from pathlib import Path
@@ -14,6 +15,9 @@ class Metric:
     company: str
     ticker: str
     period: str
+    period_start: str
+    period_end: str
+    period_type: str
     business_segment: str
     reporting_basis: str
     metric_id: str
@@ -57,7 +61,7 @@ class Company:
 def normalize_records(records):
     """Validate source records at the public ingestion boundary; never infer missing values."""
     output, seen = [], set()
-    required = ('company', 'ticker', 'period', 'business_segment', 'reporting_basis',
+    required = ('company', 'ticker', 'period', 'period_start', 'period_end', 'period_type', 'business_segment', 'reporting_basis',
                 'metric_id', 'metric_name', 'unit', 'raw_unit', 'metric_definition',
                 'source_document', 'source_url', 'source_type', 'source_locator',
                 'extraction_reference', 'source_sha256', 'provenance_kind', 'group')
@@ -67,6 +71,9 @@ def normalize_records(records):
             raise ValueError('Public record missing identity, definition or source lineage')
         if not row['source_url'].startswith('https://') or row['provenance_kind'] != 'reported':
             raise ValueError('Invalid public source or provenance')
+        start, end = date.fromisoformat(row['period_start']), date.fromisoformat(row['period_end'])
+        if row['period_type'] not in ('instant', 'duration') or start > end or (row['period_type'] == 'instant' and start != end):
+            raise ValueError('Invalid public reporting period')
         key = tuple(row[k] for k in ('ticker','period','metric_id','business_segment','reporting_basis'))
         if key in seen:
             raise ValueError('Duplicate or conflicting public metric')
@@ -95,7 +102,7 @@ def normalize_records(records):
 
 def derived_ratio(numerator, denominator, metric_id, name):
     """Ratios require the same company, period, segment and reporting population."""
-    fields = ('ticker','period','business_segment','reporting_basis','unit')
+    fields = ('ticker','period','period_start','period_end','period_type','business_segment','reporting_basis','unit')
     if any(getattr(numerator,k) != getattr(denominator,k) for k in fields):
         raise ValueError('Ratio inputs have incompatible scope or units')
     missing = numerator.value is None or denominator.value is None or denominator.value == 0

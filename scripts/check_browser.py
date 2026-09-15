@@ -28,6 +28,10 @@ with sync_playwright() as p:
     page.get_by_role('button', name='HCA Healthcare', exact=True).click()
     expect(page.locator('#benchmark-note')).to_contain_text('HCA Healthcare')
     assert page.locator('.model-grid').inner_text() == baseline
+    page.locator('#sources-button').click()
+    expect(page.locator('#company-notes')).to_contain_text('excludes Corporate and other')
+    expect(page.locator('#source-rows')).to_contain_text('instant · 2025-12-31')
+    page.locator('#sources-button').click()
     page.locator('.formula-section summary').click()
     expect(page.locator('#formulas')).to_contain_text('Provider FTE × clinic days')
     page.locator('.formula-section summary').click()
