@@ -1,26 +1,42 @@
 # 01: Data Intake & Validation
 
-Status: ready-for-agent
+Status: needs-info
+Review state: Draft ticket for user review; milestone direction and parent specification approved. Implementation has not been authorized.
 
-**What to build:** 用户打开网站后可主动载入合成演示数据，检查输入状态，并选择 Clinic-Month 进入后续工作流。用最小可用的数据入口贯通界面、读取和校验。
+## Parent
 
-**Blocked by:** None (can start immediately)
+[Approved Healthcare Provider FP&A Copilot specification](../spec-proposed.md), approved 2026-09-15. This ticket supersedes the earlier provisional content; prior versions remain in Git history.
+
+**What to build:** Open Healthcare Provider FP&A Copilot, explicitly load the synthetic dataset, inspect validation results and select a Clinic-Month using a recovered, verified analytical baseline.
+
+**Blocked by:** None; implementation authorization is still required.
 
 ## Acceptance criteria
 
-- [ ] 默认无数据状态解释所需输入；一键载入演示数据，页面持续标明 Synthetic Benchmark，不显示冒充真实数据的结果。
-- [ ] 支持现有 benchmark 的五类逻辑输入：Clinic、Financial Value、Operational Value、Operating Event、Review Rule；可通过符合已知契约的 CSV 导入同类合成数据，不实现客户文件适配或通用字段映射器。
-- [ ] 检查 Clinic 引用、Calendar Month、必要字段、重复记录、单位、币种与 Source Reference；错误定位到输入记录。结构性错误阻止导入；可表达的数值缺失保留为不可用并进入后续 Data Quality Issue 展示。
-- [ ] 用户能选择有效 Clinic-Month 并看到数据来源、有效性及可用比较基准；不猜测真实关账状态或预测批准信息。
-- [ ] 聚合数据边界明确，不接受超出契约的个人级标识；无数据库、账户系统或外部数据连接。
-- [ ] 通过公开输入入口验证成功载入、无数据、重复／无效输入和故意缺失数据场景；不修改保留的 benchmark 标准答案。
+- [ ] Selectively recover the historical Phase 3 deterministic investigation engine, Phase 4 guarded narrative layer and compatible tests from Git history rather than rebuild. Historical snapshot 40e4829 is a candidate baseline; inspect contents before recovery and avoid restoring the old UI indiscriminately.
+- [ ] Before integration, inspect recovered behavior against the approved specification and rerun the complete recovered test suite. Record actual commands/results and failures; old reports do not count as current verification.
+- [ ] Report any conflicts before changing business logic, including threshold equality or narrative guard behavior. Preserve only compatible code; document any proposed business-logic correction and its reason before applying it. No broad engine redesign.
+- [ ] Present the product name Healthcare Provider FP&A Copilot and MVP subtitle Evidence-aware clinic-month variance investigation. Default empty state explains the demo; selecting synthetic data is explicit.
+- [ ] Load the five known logical input groups and show validation/source status. Use known synthetic inputs only; no real-data mapping or generalized uploader is needed.
+- [ ] Validate identity, months, duplicates, units, references and sources. Structural errors block loading; representable missing operating values remain unavailable for Data Quality Issue behavior. Do not substitute zero.
+- [ ] Display available Clinic-Month selections and the disclosed synthetic comparison basis. No invented production approval metadata or personal-level identifiers.
+- [ ] Verify loading, empty state, malformed records and the intentional missing-input benchmark through public input behavior. Recovery and UI foundation are one bounded milestone; if recovery reveals a major conflict, report it rather than expanding scope silently.
 
-## Parent and agreed scope
+## Requirement coverage
 
-Parent: Provider FP&A 网站重建规格（同一 feature 的 spec）。
+FR01–FR03 foundations; AC03, AC07, AC08 foundations.
 
-2026-09-14 用户已确认将原九项拆分收敛为五个 outcome-oriented milestones，以求职 portfolio 和今晚 demo 为目标。优先贯通 clinic-month → variance → evidence → driver → AI commentary → human review。本文记录最新范围；原规格与需求文档保持不变。
+## Shared constraints
 
-今晚不做真实数据集成、复杂权限、数据库或生产级架构。使用明确标记的合成数据；真实数据适配及业务验收延期。各类 driver 场景是同一 investigation workflow 的 benchmark cases，不建独立 UI features。不要恢复旧实现或从旧测试报告推断新实现已经通过验收。
+Product Vision: **Healthcare Provider FP&A Copilot**.
+MVP: **Evidence-aware clinic-month variance investigation**.
+Workflow: **clinic-month → variance → evidence → driver → AI commentary → human review**.
+Primary recruiting cases: **C01 supported; C04 unresolved/refusal; C03 upstream versus direct driver**.
 
-每项交付应包含可演示的用户行为和对应验证；不拆成前端、后端、数据库等水平任务。保留领域术语和证据边界；在编辑前及工作完成后保存 Git 提交。
+The offline fallback is the approved default and fully satisfies MVP narration when accurately disclosed. Live generation is optional future scope. Review is session-only. Driver-specific scenarios are benchmark cases within one workflow. No real-data integration, PHI, RAG, external healthcare APIs, database, authentication, browser-local persistence or production infrastructure. Preserve compatible Phase 3/4 architecture and report conflicts before modifying business logic.
+
+Use reversible Git snapshots before edits and working commits after verification. Test observable behavior using the public investigation/narrative boundaries and focused UI checks, not implementation layout. No code recovery or implementation begins until explicitly authorized by the user.
+
+## Comments
+
+2026-09-15: Regenerated under the approved five-milestone plan and resolved product decisions. Awaiting review of ticket detail and dependencies; no task is claimed or implemented.

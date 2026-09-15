@@ -1,11 +1,11 @@
-# Healthcare Provider FP&A Copilot — proposed product and MVP specification
+# Healthcare Provider FP&A Copilot — approved product and MVP specification
 
-Status: needs-info
-Approval: Proposed; awaiting explicit user approval. Not authorized for ticketing or implementation.
-Date: 2026-09-14
+Status: ready-for-agent
+Approval: Specification approved on 2026-09-15. Ticket drafting authorized; implementation remains on hold pending explicit user instruction.
+Date: 2026-09-15
 Initial MVP: Evidence-aware clinic-month variance investigation
 
-This proposal uses the user's supplied grill-with-docs conclusions as the source of truth, followed by compatible domain definitions and ADRs. No separate grill-with-docs transcript was found in the current checkout; discovery findings below are attributed to the user's account, not invented interview quotations or independently verified research. Earlier rebuild tickets are provisional planning artifacts, not requirements. Existing documents and tickets remain unchanged.
+This approved specification uses the user's supplied grill-with-docs conclusions as the source of truth, followed by compatible domain definitions and ADRs. No separate grill-with-docs transcript was found in the current checkout; discovery findings below are attributed to the user's account, not invented interview quotations or independently verified research. Earlier rebuild tickets are provisional planning artifacts, not requirements. The earlier requirements remain historical context; the five milestone tickets are regenerated for review against this approved specification. No application implementation is authorized by this document status.
 
 ## 1. Product vision
 
@@ -52,8 +52,8 @@ Discovery shifted the original healthcare market-intelligence idea toward this r
 3. Open a Financial Variance in the rule-selected Review Queue; inspect actual, forecast, difference and direction.
 4. Inspect related operational facts and source-attributed events, including missing or contradictory evidence.
 5. Inspect deterministic driver family, role, evidence state, timing and unresolved questions.
-6. Generate management commentary from the validated investigation result; see whether it is model-generated or a deterministic fallback.
-7. Confirm or reject a supported cause, or request further evidence. Separately review an Assumption-Change Proposal and record final management interpretation.
+6. Generate management commentary using the validated deterministic fallback; disclose that the synthetic-data demonstration is offline and does not call a live LLM.
+7. Confirm or reject a supported cause, keep the investigation unresolved, or request further investigation. Assumption-Change Proposals remain advisory; separate proposal-approval and final-interpretation editing workflows are not required for this MVP.
 8. Keep the decision associated with this investigation; reset the demo without changing source data.
 
 A correctly unresolved investigation is a valid end state. No step automatically changes a forecast.
@@ -70,8 +70,8 @@ A correctly unresolved investigation is a valid end state. No step automatically
 | FR06 | Expose observed facts, evidence, supported and unresolved relationships, rejected candidates and source lineage in one workspace. |
 | FR07 | Show Primary Driver, Contributing Drivers and upstream context distinctly; show timing and its rationale. |
 | FR08 | Generate bounded commentary and disclose unavailable generation or rejected output; never silently relabel a template as AI. |
-| FR09 | Separate human cause review, proposal review and final interpretation; preserve the original system result for comparison. |
-| FR10 | Preserve lightweight demo review state across refresh with an explicit reset; no database or authentication. |
+| FR09 | Support confirm cause, reject cause, keep unresolved and request further investigation in the current session; preserve the original system result and distinguish human judgment. |
+| FR10 | Keep review state only in the current demo session with explicit reset; no browser storage, database, authentication or cross-session persistence. Refresh survival is not required. |
 | FR11 | Demonstrate C01, C04 and C03 through the same workflow; evaluate remaining scenarios as benchmark coverage. |
 
 ### User stories
@@ -93,8 +93,8 @@ A correctly unresolved investigation is a valid end state. No step automatically
 15. As a Provider FP&A Analyst, I want unresolved questions and questions for operations, so that I can continue the investigation.
 16. As a Provider FP&A Analyst, I want to know whether commentary came from AI or a fallback, so that I understand what the demonstration proves.
 17. As a Provider FP&A Analyst, I want explicit cause confirmation and rejection, so that final causal interpretation remains human.
-18. As a Provider FP&A Analyst, I want proposal review separate from forecast changes, so that accepting a recommendation cannot silently update a plan.
-19. As a Provider FP&A Analyst, I want to record my final interpretation, so that the AI draft is not mistaken for my decision.
+18. As a Provider FP&A Analyst, I want assumption proposals to remain advisory, so that reviewing an investigation cannot silently update a plan.
+19. As a Provider FP&A Analyst, I want my review action distinguished from the system output, so that a draft is not mistaken for my final management interpretation.
 20. As a Provider FP&A Analyst, I want review state tied to its original investigation, so that changing months cannot carry approval into another result.
 21. As a portfolio presenter, I want supported, unresolved and upstream-context examples, so that I can demonstrate judgment rather than only a happy path.
 22. As a healthcare finance hiring manager, I want the problem and responsibility boundaries explained within one minute, so that I can assess the candidate's business and analytical thinking.
@@ -126,7 +126,7 @@ Preserve the documented Phase 3 InvestigationResult and Phase 4 NarrativeOutput 
 | Contribution | Evidence-backed amount/allocation when supported; otherwise unknown. |
 | Proposal | Retain, scenario-test or reconsider/review an assumption; affected measure, rationale, supporting evidence, remaining questions and pending human status. |
 | Commentary | The seven documented sections, Clinic-Month, generation mode/provider, validation outcome and human-review status. |
-| Human review | Target investigation snapshot, action, rationale, time, demo reviewer label, cause/proposal status, and separately authored final interpretation. |
+| Human review | Target investigation snapshot, one of the four session review actions, rationale if supplied, time and resulting review state. No separate approval editor or persistent audit identity is required. |
 | Evaluation | Per-case dimension results, prohibited claims, and separate investigation/explanation success measures. Evaluation outputs are not inputs to the investigation. |
 
 If a preserved output lacks a needed demo field, add the minimum presentation/review metadata later with a documented reason; do not redesign deterministic analysis to accommodate a page layout.
@@ -143,6 +143,8 @@ The exact synthetic revenue bridge and controlled operating event vocabulary rem
 
 ## 11. AI responsibilities
 
+Approved MVP execution mode: the preserved deterministic fallback is the default narrative path, clearly disclosed with synthetic data. The guarded generative interface expresses the responsibility boundary and may remain in recovered code, but no live LLM call, API key or network access is required. Live generation is optional future scope.
+
 Convert a validated InvestigationResult into management-ready language: explain already-supported relationships, state evidence gaps, formulate unresolved questions/questions for operations and express forecast considerations without promoting them to approved changes.
 
 Preserve the seven Phase 4 sections: Executive Summary; Key Variances; Supported Drivers; Evidence Gaps / Unresolved Drivers; Questions for Operations; Forecast Considerations; Human Review Required.
@@ -155,11 +157,11 @@ Validation checks are necessary but do not prove arbitrary prose is semantically
 
 ## 12. Human-review responsibilities
 
-Only the analyst can confirm a Supported Driver as Analyst-Confirmed Cause, reject it, or request further investigation. Unsupported candidates cannot be confirmed merely by clicking a generic approve button; new evidence must first support the relationship.
+The current-session demonstration supports exactly four required review actions: **confirm cause**, **reject cause**, **keep unresolved**, and **request further investigation**. Confirmation promotes only a Supported Driver to Analyst-Confirmed Cause; an unsupported candidate cannot become confirmed through a generic approval button. Rejection records the analyst's decision without deleting original evidence. Keep unresolved retains the evidence gap without inventing a cause or timing. Request further investigation records the need for additional evidence without confirming the explanation.
 
-Proposal review is separate: accept the recommendation, reject it or request investigation. Actual forecast-assumption changes remain a human-owned downstream action outside the demo. Final management interpretation is an analyst-authored note/edited draft stored separately from the original AI output, never retroactively treated as a model conclusion.
+Assumption-Change Proposals remain advisory. Actual assumption changes and final management interpretation remain human responsibilities outside the automated workflow. A separate proposal approval interface or final narrative editor is not required for this recruiting MVP.
 
-Proposed demo persistence is current-browser local storage with reset, scoped to investigation/input snapshot. It is not authenticated approval or an enterprise audit trail. Replacing the dataset must not silently reuse earlier confirmation. Final selection of persistence behavior remains an approval item.
+Use in-memory session-only state scoped to the investigation/input snapshot. Include reset; ending or resetting the session discards review state. Refresh survival is not required and must not be promised. Do not add localStorage, sessionStorage, a database, authentication or production state management. Switching cases or replacing input data must not transfer a prior confirmation to an unrelated investigation.
 
 ## 13. Evidence / epistemic-state rules
 
@@ -186,7 +188,7 @@ Temporary requires a credible endpoint and expected normalization before the For
 
 Preserve remaining approved-forecast months and the explicitly labeled next-three-month fallback when no usable horizon exists; the historical implementation also falls back for an exhausted horizon. Multiple eligible conflicting horizons fail as ambiguous. A horizon fallback never supplies missing forecast financial values.
 
-The documented 50% threshold for a “material portion” is a demo implementation policy, not a discovery-validated business standard. Preserve pending approval and expose its limitation in technical notes, not as an industry fact. Event endpoints used as recovery evidence are limited to documented mechanisms.
+Retain the historical 50% forecast-horizon threshold as a configurable demo heuristic. It is a demo policy, not a universal healthcare FP&A standard or a discovery-validated business rule. Preserve its existing configurable parameter; a production implementation should make it configurable for the applicable business policy. No production configuration UI is required for this MVP. Event endpoints used as recovery evidence are limited to documented mechanisms.
 
 ## 16. Source-lineage requirements
 
@@ -212,9 +214,9 @@ In the first 60 seconds, visible copy plus narration must answer: who uses it; t
 - AC06: C03 treats weather as upstream context, capacity/closure as contributing and Demand & Volume as primary; it never attributes the entire shortfall to closure without support.
 - AC07: Gold answers are inaccessible to investigation and generation; evaluation remains separate.
 - AC08: All authoritative arithmetic, classifications and lineage are unchanged by commentary generation or human narrative editing.
-- AC09: AI output is validated and labeled; fallback is not advertised as live AI. Invalid causal claims do not reach the accepted commentary view.
-- AC10: Cause confirmation, proposal review and final interpretation are distinct; approvals do not alter source values or forecasts.
-- AC11: Reset and refresh behave as disclosed, with no cross-case stale approvals.
+- AC09: Offline fallback output is validated and labeled; it is not advertised as live AI. Invalid causal claims do not reach the accepted commentary view.
+- AC10: Confirm cause, reject cause, keep unresolved and request further investigation work in the current session; review does not alter source values or forecasts.
+- AC11: Reset/session end discards review state; there is no browser-local or cross-session persistence and no cross-case stale approval. Refresh survival is not required.
 - AC12: Ten-case results and narrative/browser test evidence are recorded from the actual implementation, not copied historical reports.
 
 ## 19. Benchmark / evaluation requirements
@@ -244,9 +246,9 @@ Retain the previously agreed end-to-end acceptance boundary and the historical p
 
 - Investigation contract tests: numeric precision, zero/missing denominator, strict thresholds, critical rules, overrides, identity isolation, invalid inputs, supported/unresolved relationships, timing and lineage; run the ten-case evaluator.
 - Narrative boundary tests: injected responses exercise compliant output, invented numbers/sources, role/state changes, unsupported certainty, C04 fabrication, C03 upstream confusion, missing transport and guardrail rejection. Include paraphrases rather than only exact forbidden strings.
-- Human-review tests: explicit transitions, rejection/further evidence, separate proposal decisions, unchanged source results, final note separation and stale-review prevention.
-- A small browser suite: C01 complete flow, C04 unresolved review, C03 causal separation, refresh/reset and generation failure states. Test visible behavior rather than CSS structure.
-- Live-model smoke test: if an authorized configured transport exists, record actual accepted output and generation mode separately from mocked tests. Without it, mark live-AI acceptance unverified.
+- Human-review tests: all four session actions, supported-only confirmation, unchanged source results, reset/session isolation and stale-review prevention. No persistence or separate proposal/editor workflow is required.
+- A small browser suite: C01 complete flow, C04 unresolved review, C03 causal separation, session reset and fallback-validation failure states. Test visible behavior rather than CSS structure.
+- Offline default: run the entire demo and fallback tests without an API key or network-dependent model call. Historical injected model-response tests may be retained to protect the guarded boundary. Live-model smoke tests and transport setup are not MVP requirements.
 - A timed presentation check validates the one-minute message and a short full demo. Narrative semantic review is explicit; regular-expression guards are not a proof of truthfulness.
 
 The preserved historical tests are prior art available in Git, not current passing tests. Rerun after approved recovery/integration. No application tests run during this specification-only task.
@@ -255,7 +257,7 @@ The preserved historical tests are prior art available in Git, not current passi
 
 ### First 60 seconds — proposed presenter script
 
-“Healthcare Provider FP&A Copilot helps healthcare finance analysts connect financial results with operational context. The first MVP investigates a clinic's monthly actual-versus-forecast variance. In my prior work and discovery conversations, calculating the difference was often easier than finding and validating the explanation across operating data and events. Here, deterministic logic calculates the numbers, selects review items and tracks evidence and driver states. AI turns supported results into draft management commentary and questions; it cannot invent causes, approve assumptions or change a forecast. The analyst reviews the evidence and owns the final interpretation. I'll show a supported explanation, an unresolved case and a weather-related case that separates upstream context from the direct financial driver.”
+“Healthcare Provider FP&A Copilot helps healthcare finance analysts connect financial results with operational context. The first MVP investigates a clinic's monthly actual-versus-forecast variance. In my prior work and discovery conversations, calculating the difference was often easier than finding and validating the explanation across operating data and events. Here, deterministic logic calculates the numbers, selects review items and tracks evidence and driver states. The narrative layer is designed to turn supported results into commentary and questions. This demo uses synthetic data and an offline deterministic fallback, not a live LLM. It cannot invent causes, approve assumptions or change a forecast. The analyst reviews the evidence and owns the final interpretation. I'll show a supported explanation, an unresolved case and a weather-related case that separates upstream context from the direct financial driver.”
 
 ### Demonstration sequence
 
@@ -269,7 +271,7 @@ These values are acceptance references for reviewers/presenters, never prompt co
 
 ## 22. Explicit non-goals
 
-No implementation or to-tickets execution before explicit approval. No production infrastructure, authentication, databases, external healthcare APIs, real PHI, RAG, real-data integration, generalized ETL, autonomous causal discovery or unnecessary model orchestration.
+Specification and ticket drafting are approved; implementation remains on hold until explicitly authorized. No production infrastructure, authentication, databases, external healthcare APIs, real PHI, RAG, real-data integration, generalized ETL, autonomous causal discovery or unnecessary model orchestration.
 
 No standalone UI features per driver case; no detailed design of future workflows; no full forecast editor, budget tool, automatic P&L adjustment, hospital/service-line analysis, historical as-of reconstruction or complex permissions. Do not redesign existing deterministic logic without a recorded incompatibility and reason. Do not treat provisional tickets as authority over this proposal.
 
@@ -285,7 +287,7 @@ The approved MVP is done when the same runnable workflow demonstrates all three 
 
 A finance audience can understand the purpose and controls in a timed one-minute introduction. A short reproducible demo guide records setup, sample selection, reset, generation fallback and limitations. Portfolio claims accurately distinguish discovery insight, designed behavior, tested behavior and unvalidated business value.
 
-A template-only demo may be demo-ready but must not be described as a verified live-AI product. Live generation remains an incomplete acceptance item until tested, unless the user explicitly approves a clearly labeled recorded/offline AI demonstration instead. No production deployment is required.
+An explicitly disclosed offline deterministic fallback demo fully satisfies the approved MVP narrative requirement. It must run without an API key and must not be described as live AI generation. Live LLM generation is an optional future enhancement, not an incomplete MVP acceptance item. No production deployment is required.
 
 ## Review appendix A — architecture preservation and compatibility
 
@@ -293,38 +295,40 @@ Current-state inspection found no application source or tests in the working tre
 
 | Finding | Relationship to this proposal | Required later treatment |
 | --- | --- | --- |
-| Historical Phase 3 structured investigation and Phase 4 validated narrative adapter/fallback | Compatible and preferred starting point. | Recover selectively from history after approval, revalidate, and avoid importing unwanted old UI behavior. |
+| Historical Phase 3 structured investigation and Phase 4 validated narrative adapter/fallback | Compatible and preferred starting point. | Recovery is approved for the later implementation stage: inspect against this specification, rerun the complete recovered test suite, retain only compatible code, and report conflicts before changing business logic. Avoid importing unwanted old UI behavior. |
 | No current runnable code | Conflicts with the premise of a currently working architecture, not with its design. | Establish the approved baseline before integration; historical reports are not current evidence. |
 | Earlier artifacts frame the work mainly as a variance website | Product framing is too narrow if used as the umbrella. | Use the new product/MVP distinction in eventual UI and portfolio copy. Existing artifacts stay untouched for review. |
 | Earlier ADR permits AI to propose/support drivers | Broader than the new deterministic-only classification boundary. | Treat this proposal's stricter MVP rule as controlling after approval; record the reason before any later ADR change. |
-| Historical narrative transport tested only through mocks | Does not establish live model generation. | Add only the minimal approved transport connection and distinguish live evidence from fallback. |
+| Historical narrative transport tested only through mocks | Does not establish live model generation. | Use the offline fallback by default; no live transport connection is required. Preserve compatible guarded adapter tests without adding live integration. |
 | Historical numeric/keyword guards | Useful but not semantic proof. | Preserve guards and add bounded narrative acceptance cases; no wholesale finance rewrite. |
 | Earlier provisional ticket proposes fallback on guardrail failure | Risks obscuring rejected substantive content; differs from Phase 4's documented behavior. | Preserve explicit rejection and label any separately chosen safe template. |
 | Historical generator uses >= while engine policy uses > | Inconsistent exact-threshold behavior; existing ten cases do not expose equality. | Keep strict > contract; add boundary verification and fix only if recovered behavior requires it. |
-| Historical 50% timing policy; exact USD bridge; controlled event vocabulary | Compatible bounded demo policies, not general finance standards. | Preserve and disclose limits, resolve timing policy approval below. |
-| Historical human-review helper lacks a persisted UI flow | Gap for full demo and final interpretation, not reason to replace analysis. | Add minimum local review presentation/state after approval. |
+| Historical 50% timing policy; exact USD bridge; controlled event vocabulary | Compatible bounded demo policies, not general finance standards. | Preserve and disclose limits; the configurable 50% demo heuristic is now approved. |
+| Historical human-review helper lacks the required session UI flow | Gap for full demo and final interpretation, not reason to replace analysis. | Add only the four approved session review actions during later implementation; no persistence. |
 | Legacy fixture approval/version metadata is limited | Insufficient for real-data ingestion; adequate only as disclosed synthetic setup. | Keep real integration deferred rather than fabricate production governance. |
 
-## Review appendix B — unresolved decisions
+## Review appendix B — approved decisions and implementation gate
 
-1. **Baseline recovery:** proposed approach is selective recovery of historical Phase 3/4 code and tests, preserving contracts and checking them anew. Confirm this approach in spec approval; nothing is restored now.
-2. **AI demonstration mode:** proposed target is live generation when a usable authorized connection exists, plus a disclosed fallback. Model/credentials are not verified. A recorded/offline alternative needs explicit acceptance before it counts toward live-AI-related completion.
-3. **Review persistence:** proposed browser-local state survives refresh and can reset; session-only review would simplify further but change the refresh acceptance criterion. No database in either case.
-4. **Timing policy:** retain the documented 50% material-horizon threshold for this bounded benchmark or deliberately replace it with a justified rule. Do not call it a customer-validated threshold.
+All four product decisions were resolved by the user on 2026-09-15:
 
-No additional customer interviews are required to draft this spec. The original grill-with-docs transcript was not found; supplied conclusions govern. The highest-level test boundary remains the one the user previously approved, with the preserved investigation and narrative public contracts beneath it.
+1. Selectively recover historical Phase 3/4 engine, guarded narrative layer and compatible tests rather than rebuild. After recovery, inspect against the approved specification, rerun the complete test suite and report conflicts before changing business logic. Recovery itself begins only when implementation is explicitly authorized.
+2. Default to the disclosed offline deterministic fallback with synthetic benchmark data. No live API key dependency. Live LLM generation is optional future scope and not required for MVP completion.
+3. Use session-only review: confirm cause, reject cause, keep unresolved, request further investigation. No database, authentication, browser-local persistence or production state management.
+4. Retain the historical configurable 50% forecast-horizon threshold as a demo heuristic, not a universal healthcare FP&A standard. Production use should allow business-specific configuration.
 
-## Review appendix C — what moves into to-tickets only after approval
+No unresolved product decision blocks drafting the five tickets. Code-specific compatibility findings must be reported after recovery and before any business-logic change. The original grill-with-docs transcript was not found; supplied conclusions govern. The previously approved highest-level acceptance boundary and historical public investigation/narrative contracts remain preferred.
 
-Pass the approved version of this proposal, resolved decisions, compatibility findings and acceptance IDs into a new to-tickets pass. Reconcile the provisional artifacts rather than execute them unchanged. Keep exactly the five agreed outcome milestones:
+## Review appendix C — approved input to to-tickets
 
-1. **Data Intake & Validation:** make the known synthetic dataset usable and inspectable through the demo entry point, preserving/recovering relevant baseline behavior. Own FR01–FR03 foundations and input checks.
+Use this approved specification, the resolved decisions, compatibility findings and acceptance IDs to regenerate the five provisional milestones for user review. Their content must reflect the offline default and session-only review. Ticket generation is authorized; ticket execution is not.
+
+1. **Data Intake & Validation:** selectively recover and verify the compatible Phase 3/4 baseline before exposing known synthetic input loading and validation. Record recovery conflicts before changing business logic. Own FR01–FR03 foundations.
 2. **Variance Review Workspace:** expose Clinic-Month actual-versus-forecast performance, typed variances, queue reasons and Analyst Override. Own FR03–FR05.
-3. **Evidence-Backed Investigation:** expose source lineage, states, driver roles and timing in one workflow. Prioritize C01, C04, C03; remaining driver cases extend benchmark coverage, not UI features. Own FR06–FR07.
-4. **AI Commentary + Human Review:** connect the validated narrative boundary, explicit generation/rejection modes, separate cause/proposal/final-interpretation review and lightweight demo state. Own FR08–FR10.
-5. **End-to-End Demo & Validation:** run all ten cases, narrative and browser acceptance, verify the primary demo sequence and one-minute explanation, and record honest portfolio evidence. Own FR11 and overall AC01–AC12/definition of done.
+3. **Evidence-Backed Investigation:** expose source lineage, states, driver roles and configurable demo timing in one workflow. Prioritize C01, C04, C03; remaining scenarios are benchmark coverage. Own FR06–FR07.
+4. **AI Commentary + Human Review:** expose guarded offline fallback commentary and the four session-only review actions. No live integration or persistence task. Own FR08–FR10.
+5. **End-to-End Demo & Validation:** run the complete suite and ten-case evaluation, verify the three primary demo scenarios and one-minute explanation, and record honest portfolio evidence. Own FR11 and overall AC01–AC12/definition of done.
 
-Each milestone must deliver observable behavior and its tests; dependency edges and any recovery work are to be scoped in that later ticketing pass. Do not create a sixth driver feature, real-data milestone or production-foundation task. Approval of this spec is the prerequisite, not something inferred from the prior provisional tickets.
+Each milestone delivers observable behavior and its tests. Do not create a sixth driver feature, real-data milestone or production-foundation task. Earlier ticket assumptions about live AI and persistent state are superseded. The user will review regenerated tickets before authorizing implementation.
 
 ## Reference basis
 

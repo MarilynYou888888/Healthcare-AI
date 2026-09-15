@@ -1,28 +1,43 @@
 # 03: Evidence-Backed Investigation
 
-Status: ready-for-agent
+Status: needs-info
+Review state: Draft ticket for user review; milestone direction and parent specification approved. Implementation has not been authorized.
 
-**What to build:** 用户从差异详情进入同一调查流程，沿证据追溯到有支持的经营驱动及其边界。先贯通一个有来源的 provider availability 案例，再扩展同一契约覆盖其他 benchmark cases。
+## Parent
+
+[Approved Healthcare Provider FP&A Copilot specification](../spec-proposed.md), approved 2026-09-15. This ticket supersedes the earlier provisional content; prior versions remain in Git history.
+
+**What to build:** From the selected variance, inspect sources, supported or unresolved drivers and timing in the same investigation workflow, prioritizing C01, C04 and C03.
 
 **Blocked by:** 02 — Variance Review Workspace
 
 ## Acceptance criteria
 
-- [ ] 在同一工作区分开展示 Observed Fact、Supporting Evidence、Operating Driver 与 Conclusion，每条关键事实／证据可追溯到具体 Source Reference。
-- [ ] 主展示案例贯通 clinic-month → variance → evidence → driver，说明直接 Primary Driver 和上游 Contributing Driver，不能用上游事件跳过直接经营机制。
-- [ ] 同一分析入口支持 provider availability、weather、labor、payer mix、accounting timing、seasonality、multiple drivers，以及无解释和数据质量场景；不为它们分别实现 UI 功能或独立分析入口。
-- [ ] 采用七类 Driver Family 及 Other、Unresolved、Data Quality Issue；保留 Candidate、Supported、Rejected、Unresolved 状态，不自动赋予 Analyst-Confirmed Cause。
-- [ ] 显示 Forecast Horizon 及 Temporary／Structural／Unresolved 判断依据；按 ADR 明示后备期间，Recurring Pattern 与结构性分开。无法判断时不补造结论。
-- [ ] 无定量证据时 Contribution Estimate 未知；多驱动无法排序时明确未解决。缺失证据不视为反证，并提供下一步调查问题。
-- [ ] 通过统一调查公共边界验证所用 benchmark cases 及禁止结论。Expected Answer Contract 仅供评估器读取；分析不能读取 gold 或依赖案例编号输出答案。
-- [ ] 优先完成主展示案例及一个未解决案例后接入下一里程碑，再补齐剩余案例；本里程碑关闭前仍需覆盖全部调查场景。
+- [ ] Expose the recovered public InvestigationResult rather than rebuilding classification rules for the UI. Facts, evidence, drivers, conclusions and Source References remain separately identifiable.
+- [ ] C01: show Demand & Volume as primary and Provider Availability as contributing; never claim PTO explains 100% of the revenue decline.
+- [ ] C04: show unresolved operating cause/timing, no supported primary cause, and evidence rejecting reduced provider availability; do not infer temporary recovery or fabricate a root cause.
+- [ ] C03: weather remains upstream context; Clinic Capacity & Operations contributes; Demand & Volume is the direct primary financial driver. No unsupported full attribution to weather or closure.
+- [ ] Preserve the seven Driver Families plus fallback states. Candidate, Supported, Rejected and Unresolved remain explicit; the system does not automatically assign Analyst-Confirmed Cause.
+- [ ] Preserve lineage to exact input records and available timestamps. Prevent cross-Clinic-Month contamination and distinguish retrospective snapshot evidence from as-of analysis.
+- [ ] Retain the historical configurable 50% forecast-horizon threshold as a demo heuristic; document that it is not a universal healthcare FP&A standard and production should support business-specific configuration. Preserve Temporary/Structural/Unresolved, separate recurrence and labeled fallback horizons.
+- [ ] Cover provider departure, labor, payer mix, accounting timing, seasonality, missing data and multiple drivers using the same benchmark entry point. These are regression cases, not separate UI features.
+- [ ] Run the ten-case deterministic evaluator, including forbidden conclusions, with gold data isolated from investigation. Unknown or unsupported evaluator checks must not silently pass. Keep C01/C04/C03 as the first visible paths.
 
-## Parent and agreed scope
+## Requirement coverage
 
-Parent: Provider FP&A 网站重建规格（同一 feature 的 spec）。
+FR06–FR07; AC04–AC08; seven-dimensional benchmark evaluation.
 
-2026-09-14 用户已确认将原九项拆分收敛为五个 outcome-oriented milestones，以求职 portfolio 和今晚 demo 为目标。优先贯通 clinic-month → variance → evidence → driver → AI commentary → human review。本文记录最新范围；原规格与需求文档保持不变。
+## Shared constraints
 
-今晚不做真实数据集成、复杂权限、数据库或生产级架构。使用明确标记的合成数据；真实数据适配及业务验收延期。各类 driver 场景是同一 investigation workflow 的 benchmark cases，不建独立 UI features。不要恢复旧实现或从旧测试报告推断新实现已经通过验收。
+Product Vision: **Healthcare Provider FP&A Copilot**.
+MVP: **Evidence-aware clinic-month variance investigation**.
+Workflow: **clinic-month → variance → evidence → driver → AI commentary → human review**.
+Primary recruiting cases: **C01 supported; C04 unresolved/refusal; C03 upstream versus direct driver**.
 
-每项交付应包含可演示的用户行为和对应验证；不拆成前端、后端、数据库等水平任务。保留领域术语和证据边界；在编辑前及工作完成后保存 Git 提交。
+The offline fallback is the approved default and fully satisfies MVP narration when accurately disclosed. Live generation is optional future scope. Review is session-only. Driver-specific scenarios are benchmark cases within one workflow. No real-data integration, PHI, RAG, external healthcare APIs, database, authentication, browser-local persistence or production infrastructure. Preserve compatible Phase 3/4 architecture and report conflicts before modifying business logic.
+
+Use reversible Git snapshots before edits and working commits after verification. Test observable behavior using the public investigation/narrative boundaries and focused UI checks, not implementation layout. No code recovery or implementation begins until explicitly authorized by the user.
+
+## Comments
+
+2026-09-15: Regenerated under the approved five-milestone plan and resolved product decisions. Awaiting review of ticket detail and dependencies; no task is claimed or implemented.
