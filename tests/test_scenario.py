@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from provider_fpa.web import Handler
 
 
-class ScenarioTests(unittest.TestCase):
+class BrowserModelCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
@@ -30,6 +30,11 @@ class ScenarioTests(unittest.TestCase):
 
     def evaluate(self, expression, argument=None):
         return self.page.evaluate('async args => { "use strict"; const [baseline, arg] = args; const model = await import("/scenario.js"); ' + expression + ' }', [self.baseline, argument])
+
+
+class ScenarioTests(BrowserModelCase):
+    def setUp(self):
+        self.page.get_by_role('tab',name='Scenario Model',exact=True).click()
 
     def test_one_fte_edit_produces_all_reference_outputs(self):
         result = self.evaluate('return model.scenarioResult(baseline, {...baseline.assumptions, provider_fte:"3.5"}, 1);')

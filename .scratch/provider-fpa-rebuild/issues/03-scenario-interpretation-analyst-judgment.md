@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 Approval: Ticket content and dependency order approved by user; finalized with the two requested clarifications.
-Execution gate: Implementation remains on hold until explicitly authorized. This status indicates specification readiness, not permission to start coding.
+Execution gate: User explicitly authorized Ticket 3 only. Stop for review before Ticket 4.
 
 ## Parent
 
@@ -50,3 +50,12 @@ No authentication, databases, enterprise permissions, PHI, EHR integrations, RAG
 ## Comments
 
 User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Implementation has not started.
+
+
+### Implementation clarification
+
+Approved addition: Executive Summary consumes the exact shared ScenarioResult. Four KPI cards (visits, revenue, contribution margin, operating income), a monthly impact section, comparison and expense detail, commentary and review form the page structure. Ticket 5 adds charts within these stable sections. No waterfall, donut, operating-margin derivation or graph calculation is introduced in Ticket 3. Calculation engine remains unchanged.
+
+Research: W3C APG tabs pattern (https://www.w3.org/WAI/ARIA/apg/patterns/tabs/) informs keyboard/ARIA navigation. Inspected historical `40e4829:provider_fpa/narrative.py`: frozen structured input/output, deterministic formatter, result-bound numeric context and explicit human-review boundaries. Adapt these patterns to a narrow scenario contract; do not reuse investigation actual/comparator labels or restore unrelated historical UI.
+
+Approved test seams: commentary from validated current result; revision-bound session review actions; synchronized browser model/summary interaction. Fallback accepts no external generated text and has no financial-write capability. Public benchmark attribution remains separate and source-linked; fallback commentary cites its synthetic baseline identity and result paths only.

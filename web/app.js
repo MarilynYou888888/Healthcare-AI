@@ -1,4 +1,5 @@
-import {mountScenarioModel} from './scenario-view.js';
+import {mountScenarioModel, scenarioStore} from './scenario-view.js';
+import {mountExecutiveSummary, setupNavigation} from './executive.js';
 'use strict';
 const $ = id => document.getElementById(id);
 const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(Number(value));
@@ -42,5 +43,6 @@ async function selectCompany(ticker){
 }
 document.querySelectorAll('[data-company]').forEach(button=>button.addEventListener('click',()=>selectCompany(button.dataset.company)));
 $('sources-button').addEventListener('click',()=>{const show=$('source-panel').hidden;$('source-panel').hidden=!show;$('sources-button').setAttribute('aria-expanded',String(show));$('sources-button').textContent=show?'Close source register ↑':'Inspect sources & definitions ↗';});
-getJSON('/api/baseline').then(mountScenarioModel).catch(()=>{$('scenario-status').textContent='Baseline unavailable — check synthetic input validation';$('scenario-status').classList.add('error');$('reset-scenario').disabled=true;});
+setupNavigation();
+getJSON('/api/baseline').then(baseline => { mountScenarioModel(baseline); mountExecutiveSummary(scenarioStore); }).catch(()=>{$('scenario-status').textContent='Baseline unavailable — check synthetic input validation';$('scenario-status').classList.add('error');$('reset-scenario').disabled=true;$('summary-reset').disabled=true;$('summary-status').textContent='Scenario unavailable — synthetic inputs could not be validated.';});
 selectCompany('HCA');

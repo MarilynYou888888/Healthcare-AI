@@ -10,6 +10,7 @@ with sync_playwright() as p:
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(os.environ.get('DEMO_URL', 'http://127.0.0.1:8501/'))
+    page.get_by_role('tab', name='Scenario Model', exact=True).click()
     income = page.locator('[data-output="operating_income"] .scenario-value')
     expect(income).to_have_text('$88,923.20')
     expect(page.locator('#benchmark-note')).to_contain_text('HCA Healthcare')
