@@ -114,3 +114,23 @@ class InterpretationTests(BrowserModelCase):
         expect(self.page.locator('#review-status')).to_have_text('Not reviewed for this revision.')
         self.assertEqual(self.page.evaluate('localStorage.length'),0)
         self.assertEqual(self.page.evaluate('sessionStorage.length'),0)
+
+    def test_offsetting_operating_edits_do_not_claim_cost_changes(self):
+        result=self.evaluate('''
+            const {interpret}=await import('/interpretation.js');
+            const store=model.createScenarioStore(baseline);
+            store.edit('provider_fte','2');
+            store.edit('visits_per_provider_day','36');
+            return interpret(store.snapshot());
+        ''')
+        self.assertNotIn('changed cost assumptions',' '.join(result['implications']))
+        self.assertIn('no net change',' '.join(result['implications']))
+
+    def test_revenue_downside_commentary_describes_variable_cost_offset(self):
+        result=self.evaluate('''
+            const {interpret}=await import('/interpretation.js');
+            const store=model.createScenarioStore(baseline);
+            store.edit('provider_fte','3.5');
+            return interpret(store.snapshot());
+        ''')
+        self.assertIn('partially offset by lower variable expense',' '.join(result['implications']))

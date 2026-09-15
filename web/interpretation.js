@@ -48,7 +48,15 @@ export function interpret(state) {
   if (result.changes.visits.amount !== '0') implications.push('In this model, visit volume drives revenue and variable labor and supply expense. Actual cost flexibility would require analyst validation.');
   if (result.assumption_changes.fixed_expense.amount === '0' && result.changes.visits.amount !== '0') implications.push('Fixed expense remains unchanged under this scenario, so it does not offset the volume change.');
   if (result.changed_drivers.some(d => ['net_revenue_per_visit','reimbursement_factor'].includes(d.id))) implications.push('The net-rate assumptions affect modeled revenue without changing visit capacity or volume.');
-  if (!implications.length && drivers.length) implications.push('The displayed impact follows the changed cost assumptions within this one-month model; feasibility and business interpretation remain for the analyst.');
+  if (result.changes.revenue.amount.startsWith('-') && result.changes.variable_expense.amount.startsWith('-')
+      && result.assumption_changes.fixed_expense.amount === '0' && result.impact.startsWith('-')) {
+    implications.push('Revenue downside is partially offset by lower variable expense under these assumptions.');
+  }
+  if (!implications.length && drivers.length) {
+    implications.push(metrics.length === 0
+      ? 'The changed assumptions produce no net change in the displayed outputs; offsetting operating inputs can preserve the same modeled result.'
+      : 'The displayed impact follows the changed assumptions within this one-month model; feasibility and business interpretation remain for the analyst.');
+  }
   return freeze({mode:'offline-deterministic-fallback', disclosure:DISCLOSURE, revision:result.revision,
     baseline_id:result.baseline_id, month:result.month, model_version:result.model_version,
     summary, drivers, metrics, implications,
