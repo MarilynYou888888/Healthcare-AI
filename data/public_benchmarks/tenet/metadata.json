@@ -1,0 +1,12 @@
+{
+  "company": "Tenet Healthcare",
+  "ticker": "THC",
+  "period": "FY2025",
+  "data_kind": "public_benchmark",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/70318/000007031826000012/thc-20251231.htm",
+  "source_document": "Tenet Healthcare FY2025 Form 10-K",
+  "source_sha256": "7c98c41fe55d385e00ca70e751bb52e24eee32b33da687769c36ed091842a43b",
+  "verified_on": "2026-09-15",
+  "verification": "Curated table/column mapping and numeric-token checks against supplied filing pages; selected FY2025 coverage.",
+  "notes": "Same-hospital volumes differ from full-segment financials. No inferred historical values."
+}

@@ -1,0 +1,12 @@
+{
+  "company": "HCA Healthcare",
+  "ticker": "HCA",
+  "period": "FY2025",
+  "data_kind": "public_benchmark",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/860730/000119312526044769/hca-20251231.htm",
+  "source_document": "HCA Healthcare FY2025 Form 10-K",
+  "source_sha256": "745013941dae788ae75df2aa429acba748e8d957e8ebdb7b3308bb245e1e11d4",
+  "verified_on": "2026-09-15",
+  "verification": "Curated table/column mapping and numeric-token checks against supplied filing pages; selected FY2025 coverage.",
+  "notes": "HCA admission mix is not revenue mix. Segment extract excludes Corporate and other."
+}

@@ -1,0 +1,13 @@
+{
+  "baseline_id": "SYN-CLINIC-001-v1",
+  "clinic": "Illustrative specialty clinic",
+  "month": "2026-09",
+  "data_kind": "synthetic",
+  "rationale": "Designer-selected clinic planning assumptions; public benchmarks inform cost-category context only. Not derived from HCA or Tenet internal data.",
+  "assumptions": {
+    "provider_fte": "4.0", "clinic_days": "22", "visits_per_provider_day": "18",
+    "utilization": "0.90", "net_revenue_per_visit": "195",
+    "labor_per_visit": "55", "supplies_per_visit": "18",
+    "fixed_expense": "85000", "reimbursement_factor": "1.00"
+  }
+}
