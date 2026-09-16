@@ -121,3 +121,20 @@ class PresentationTests(BrowserModelCase):
         expect(self.page.locator('#review-status')).to_have_text('Not reviewed for this revision.')
         self.page.get_by_role('tab',name='Variance Investigation',exact=True).click()
         expect(provider).to_contain_text('Session decision: Not reviewed')
+
+    def test_chart_scale_overflow_falls_back_without_changing_valid_model(self):
+        from playwright.sync_api import expect
+        self.page.reload()
+        self.page.evaluate('''async()=>{
+          const {scenarioStore}=await import('/scenario-view.js');
+          scenarioStore.edit('net_revenue_per_visit','7e304');
+          scenarioStore.edit('labor_per_visit','8e304');
+          scenarioStore.edit('supplies_per_visit','7e304');
+        }''')
+        for chart in ('income-bridge-chart','scenario-comparison-chart'):
+            expect(self.page.locator('#'+chart+' .chart-unavailable')).to_be_visible()
+            expect(self.page.locator('#'+chart+' .chart-scroll')).to_be_hidden()
+        self.assertEqual(self.page.evaluate('async()=>(await import("/scenario-view.js")).scenarioStore.snapshot().status'),'valid')
+        self.page.get_by_role('button',name='Reset to baseline',exact=True).click()
+        expect(self.page.locator('#income-bridge-chart .chart-unavailable')).to_be_hidden()
+        expect(self.page.locator('#income-bridge-chart .chart-scroll')).to_be_visible()

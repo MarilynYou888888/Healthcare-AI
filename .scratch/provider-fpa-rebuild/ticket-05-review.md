@@ -1,6 +1,6 @@
 # Ticket 5 validation and review
 
-Scope: final recruiting-demo presentation only. Fixed point: `1668c3c` (pre-edit snapshot). No financial formulas, investigation rules, source datasets, review boundaries or ScenarioResult contracts were changed.
+Scope: final recruiting-demo presentation only. Fixed point: `1668c3c` (pre-edit snapshot). Initial working commit: `f859ee1`; review command `git diff 1668c3c...f859ee1`, followed by a targeted review of the chart-range correction. No financial formulas, investigation rules, source datasets, review boundaries or ScenarioResult contracts were changed.
 
 ## Delivered outcome
 
@@ -15,7 +15,7 @@ Scope: final recruiting-demo presentation only. Fixed point: `1668c3c` (pre-edit
 
 ## Actual validation
 
-- Full suite: 114 tests passed, including recovered investigation, scenario/interpretation/session review, chart arithmetic/signs, edge cases, revision binding, tooltip keyboard behavior, trace propagation, benchmark lineage/missing data and demo reset.
+- Final full suite: 115 tests passed, including recovered investigation, scenario/interpretation/session review, chart arithmetic/signs, edge cases, revision binding, tooltip keyboard behavior, trace propagation, benchmark lineage/missing data and demo reset.
 - Benchmark: 10/10 cases and 70/70 dimensions passed.
 - Prior Ticket 1–4 browser scripts all passed, including offline scenario behavior, immutable public context, stale drafts, human-review invalidation, C01/C03 handoffs and C04 refusal.
 - With all presentation consumers mounted: max input-to-painted-frame latency 33.7 ms across ten edits; zero recalculation requests. Chart geometry transitions are separately 260 ms; authoritative numbers update before that visual interpolation completes. Local headless Chrome measurement, not a universal device claim.
@@ -30,8 +30,12 @@ The scenario cascade fits one recording screen; the summary, composition and tra
 
 ## Standards
 
-Independent review pending.
+No documented standards violations or material recruiting-demo defects. One nonblocking numeric edge case was corrected: extremely large finite positive/negative endpoints could overflow an axis span. Both renderers now validate the span before generating geometry, use the existing unavailable-scale state, and recover after reset. A browser regression reproduced the failure and then passed; model validity is preserved.
+
+Reviewer recheck: “No remaining findings from the Ticket 5 standards review.”
 
 ## Spec
 
-Independent review pending.
+No blocking findings. Five KPIs and all scenario visualizations use the same ScenarioResult; expense offsets, zero/negative/stale states, public lineage and session reset are correct. No financial formulas, assumptions or investigation rules changed. The automated 85-second timing remains explicitly distinct from spoken delivery or hiring-manager comprehension.
+
+Final findings: Standards 0 remaining (1 edge case resolved); Spec 0. No remaining worst issue on either axis.

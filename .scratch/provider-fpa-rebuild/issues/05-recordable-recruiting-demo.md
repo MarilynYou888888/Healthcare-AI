@@ -1,6 +1,6 @@
 # 05: Recordable Recruiting Demo
 
-Status: ready-for-agent
+Status: ready-for-human
 Approval: Ticket content and dependency order approved by user; finalized with the two requested clarifications.
 Execution gate: Ticket 5 explicitly authorized after Ticket 4 approval. Stop for user review after completion.
 
@@ -52,4 +52,4 @@ No authentication, databases, enterprise permissions, PHI, EHR integrations, RAG
 User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Ticket 5 implementation explicitly authorized in the subsequent user request.
 
 
-Ticket 5 visual clarifications implemented within the approved outcome: charcoal/gold system, shared-result charts, dependency trace, normalized public comparison, responsive layout and demo flow. [Validation and review](../ticket-05-review.md). Independent review pending.
+Ticket 5 visual clarifications implemented within the approved outcome: charcoal/gold system, shared-result charts, dependency trace, normalized public comparison, responsive layout and demo flow. [Validation and review](../ticket-05-review.md). Standards and specification review completed; one chart-range edge case fixed. Final suite: 115 tests; benchmark: 10/10 cases, 70/70 checks; timed UI rehearsal: 85.0 seconds. Stopped for user acceptance review.

@@ -40,8 +40,9 @@ function makeBridge() {
   const exact=node('details'),summary=node('summary','Inspect exact bridge values');const list=node('dl',undefined,'chart-data');exact.append(summary,list);c.root.append(exact);
   return (view,stale)=>{
     list.replaceChildren(...view.bridge.map(b=>{const row=node('div');row.append(node('dt',b.label),node('dd',formatValue(b.impact,'USD',!['baseline','scenario'].includes(b.id))));return row;}));
-    if(!c.update(view.revision,stale,view.bridge.flatMap(b=>[b.start,b.end])))return;
-    const d=domain(view.bridge.flatMap(b=>[Number(b.start),Number(b.end)]));
+    const values=view.bridge.flatMap(b=>[Number(b.start),Number(b.end)]);
+    const d=domain(values);
+    if(!c.update(view.revision,stale,[...values,d.span]))return;
     const y=value=>225-(value-d.min)/d.span*185;
     grid.replaceChildren(...[d.min,0,d.max].filter((v,i,a)=>a.indexOf(v)===i).flatMap(value=>[
       svgNode('line',{x1:65,x2:985,y1:y(value),y2:y(value),class:value===0?'zero-line':'grid-line'}),
@@ -95,8 +96,9 @@ function makeComparison() {
     const values=svgNode('text',{x:660,y:i*82+17,'text-anchor':'end',class:'chart-value'});group.append(label,values);c.svg.append(group);return {label,bars,values};
   });
   return (view,stale)=>{
-    if(!c.update(view.revision,stale,view.comparison.flatMap(r=>[r.baseline,r.scenario])))return;
-    const d=domain(view.comparison.flatMap(r=>[Number(r.baseline),Number(r.scenario)]));
+    const values=view.comparison.flatMap(r=>[Number(r.baseline),Number(r.scenario)]);
+    const d=domain(values);
+    if(!c.update(view.revision,stale,[...values,d.span]))return;
     const x=value=>8+(value-d.min)/d.span*644;
     set(zero,{x1:x(0),x2:x(0),y1:25,y2:232});
     view.comparison.forEach((row,i)=>{
