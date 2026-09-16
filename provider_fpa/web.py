@@ -9,7 +9,7 @@ from provider_fpa.scenario import load_baseline
 from provider_fpa.investigation import investigation_catalog, investigation_view, review_investigation
 
 WEB = Path(__file__).resolve().parents[1] / 'web'
-ASSETS = {'/investigation.js':('investigation.js','text/javascript'),'/executive.js':('executive.js','text/javascript'),'/interpretation.js':('interpretation.js','text/javascript'),'/scenario-view.js':('scenario-view.js','text/javascript'),'/scenario.js':('scenario.js','text/javascript'),'/vendor/decimal.mjs':('vendor/decimal.mjs','text/javascript'),'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
+ASSETS = {'/presentation.js':('presentation.js','text/javascript'),'/charts.js':('charts.js','text/javascript'),'/benchmark-view.js':('benchmark-view.js','text/javascript'),'/investigation.js':('investigation.js','text/javascript'),'/executive.js':('executive.js','text/javascript'),'/interpretation.js':('interpretation.js','text/javascript'),'/scenario-view.js':('scenario-view.js','text/javascript'),'/scenario.js':('scenario.js','text/javascript'),'/vendor/decimal.mjs':('vendor/decimal.mjs','text/javascript'),'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
 
 
 class Handler(BaseHTTPRequestHandler):

@@ -10,7 +10,7 @@ python3 -m provider_fpa.web
 
 Open http://localhost:8501/. Python 3.11+; no runtime packages, API keys or network connection required. Source links open the original SEC filings when internet is available. Stop with Ctrl-C.
 
-The app opens on Executive Summary. Switch to Scenario Model and edit Provider FTE 4.0 → 3.5; the calculation table, summary and offline commentary share one result revision. Record one of three session-only analyst decisions. Variance Investigation is available as the secondary workspace; chart polish remains Ticket 5. Recovered investigation rules and approved scenario formulas are preserved.
+The app opens on Executive Summary. Switch to Scenario Model and edit Provider FTE 4.0 → 3.5; the calculation table, summary and offline commentary share one result revision. Record one of three session-only analyst decisions. Variance Investigation is available as the secondary workspace; the Executive Summary now includes the income bridge, expense mix, financial comparisons and model trace. Recovered investigation rules and approved scenario formulas are preserved.
 
 ## Data and calculation boundaries
 
@@ -63,20 +63,20 @@ Review choices: Reviewed — retain baseline; Request further investigation; Mar
 
 Phase 4 reuse is limited to inspected result-bound immutable formatting and human-review patterns from historical commit `40e4829`. Investigation actual/comparator contracts and live-generation transports were not imported into the hypothetical scenario workflow.
 
-### Ticket 5 extension points
+### Shared presentation sections
 
-The page already has stable sections; add presentation renderers inside these without moving model state or recreating the page:
+Ticket 5 fills the original stable sections without moving model state or recreating the calculation engine:
 
-| Section | Existing content | Later chart mount |
+| Section | Existing content | Chart mount |
 |---|---|---|
-| `summary-kpis` | Four KPIs, baseline/scenario/deltas | Optional operating-margin KPI via a shared presentation adapter |
+| `summary-kpis` | Five KPIs, baseline/scenario/deltas | Operating-margin KPI via the shared presentation adapter |
 | `summary-impact` | Monthly income impact and endpoint values | `income-bridge-chart` |
 | `summary-analysis` / `summary-comparison` | Financial comparison values | `scenario-comparison-chart` |
 | `summary-analysis` / `summary-expenses` | Three expense categories | `expense-mix-chart` |
-| `summary-model-logic` | Hidden until trace is added | Dependency visualization from the existing GRAPH |
+| `summary-model-logic` | Expandable formula trace | Affected dependency path from the existing GRAPH |
 | `summary-commentary` / `summary-review` | Offline narrative and session decisions | Preserve revision binding |
 
-Empty chart mounts are hidden, with no fake visuals or artificial data. Later charts should consume the same immutable ScenarioResult through the store subscription. Any required bridge signs, expense shares or margin presentation measures belong in one shared presentation adapter, never inside individual chart components. Ticket 3 does not modify `web/scenario.js` or add these derived measures.
+`web/presentation.js` derives bridge signs, expense shares and margin presentation measures from the existing result. `web/charts.js` maps those values to SVG geometry and reads the existing GRAPH for trace relationships. Neither calls the financial calculator or writes to the store. The scenario calculation engine remains unchanged. Public comparison uses existing source-linked ratios through `web/benchmark-view.js`, never clinic assumptions.
 
 
 ## Variance Investigation (Ticket 4)
@@ -99,3 +99,8 @@ python3 -m provider_fpa benchmark --directory data/synthetic_benchmark
 ```
 
 The historical domain/ADR descriptions of variance as the initial MVP are retained as recovery context; the approved specification supersedes that product framing. Driver-Based Scenario Modeling remains the primary recruiting demo. No historical Streamlit UI or old production scaffolding was restored.
+
+
+## Record the recruiting demo
+
+See [the 85-second walkthrough and recording guide](docs/recruiting-demo.md). The charcoal/off-white/gold presentation includes responsive charts, keyboard tooltips, reduced-motion support and a complete demo-session reset. The reference recording viewport is 1440×900. Financial comparisons are one month, baseline versus scenario; no time-series data has been invented. Run `scripts/rehearse_recruiting_demo.py` for the timed browser rehearsal.

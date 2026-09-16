@@ -1,6 +1,7 @@
 import {mountScenarioModel, scenarioStore} from './scenario-view.js';
 import {mountExecutiveSummary, setupNavigation} from './executive.js';
 import {mountInvestigation} from './investigation.js';
+import {mountBenchmarkComparison} from './benchmark-view.js';
 'use strict';
 const $ = id => document.getElementById(id);
 const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(Number(value));
@@ -48,3 +49,7 @@ const openWorkspace = setupNavigation();
 mountInvestigation(openWorkspace);
 getJSON('/api/baseline').then(baseline => { mountScenarioModel(baseline); mountExecutiveSummary(scenarioStore); }).catch(()=>{$('scenario-status').textContent='Baseline unavailable — check synthetic input validation';$('scenario-status').classList.add('error');$('reset-scenario').disabled=true;$('summary-reset').disabled=true;$('summary-status').textContent='Scenario unavailable — synthetic inputs could not be validated.';});
 selectCompany('HCA');
+
+mountBenchmarkComparison();
+$('benchmark-jump').addEventListener('click',()=>{document.querySelector('.reference').scrollIntoView({block:'start'});$('benchmark-comparison-panel').open=true;});
+$('reset-demo').addEventListener('click',()=>window.location.reload());

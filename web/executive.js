@@ -1,5 +1,7 @@
 import {GRAPH, formatValue, formatPercent} from './scenario.js';
 import {createReviewSession, REVIEW_ACTIONS} from './interpretation.js';
+import {scenarioPresentation, tone} from './presentation.js';
+import {mountScenarioCharts} from './charts.js';
 const $ = id => document.getElementById(id);
 function node(tag, text, cls) {
   const element = document.createElement(tag);
@@ -10,6 +12,7 @@ function node(tag, text, cls) {
 export function setupNavigation() {
   const tabs = [$('tab-summary'),$('tab-model'),$('tab-investigation')];
   function activate(tab) {
+    window.scrollTo({top:0,behavior:'instant'});
     for (const item of tabs) {
       const active = item === tab;
       item.setAttribute('aria-selected',String(active)); item.tabIndex = active ? 0 : -1;
@@ -31,6 +34,7 @@ export function setupNavigation() {
     });
   });
   $('edit-model').addEventListener('click',() => { activate(tabs[1]); $('input-provider_fte')?.focus(); });
+  $('view-summary').addEventListener('click',()=>activate(tabs[0]));
   return view => activate($('tab-' + view));
 }
 
@@ -38,7 +42,8 @@ export function setupNavigation() {
 // ScenarioResult, with financial derivations kept out of renderers.
 export function mountExecutiveSummary(store) {
   const review = createReviewSession(store);
-  const metrics = GRAPH.filter(m => ['revenue','visits','contribution','operating_income'].includes(m.id));
+  const renderCharts = mountScenarioCharts();
+  const metrics = [...GRAPH.filter(m => ['revenue','visits','contribution','operating_income'].includes(m.id)),{id:'operating_margin',name:'Operating margin',unit:'ratio'}];
   const kpis = new Map();
   for (const metric of metrics) {
     const card = node('article',undefined,'kpi'); card.dataset.kpi = metric.id;
@@ -60,18 +65,32 @@ export function mountExecutiveSummary(store) {
   store.subscribe(state => {
     const result=state.result ?? state.last_valid;
     const stale=state.status !== 'valid';
+    const presentation=scenarioPresentation(result);
+    renderCharts(presentation,stale);
     $('executive-view').dataset.revision=String(result.revision);
     $('executive-view').classList.toggle('stale',stale);
     $('summary-status').textContent=stale ? `Stale — last valid revision ${result.revision}. Fix the draft in Scenario Model; commentary and review are unavailable.` : `Current · Revision ${result.revision} · ${result.month} · Synthetic clinic planning`;
     $('summary-driver-label').textContent=result.changed_drivers.length > 1 ? 'Changed assumptions' : 'Scenario driver';
     $('summary-driver').textContent=result.changed_drivers.length ? result.changed_drivers.map(d => `${d.name}: ${formatValue(d.baseline,d.unit)} → ${formatValue(d.scenario,d.unit)}`).join(' · ') : 'Baseline scenario · no assumptions changed';
     for (const metric of metrics) {
-      const elements=kpis.get(metric.id), delta=result.changes[metric.id];
+      const elements=kpis.get(metric.id);
+      if(metric.id==='operating_margin') {
+        const margin=presentation.margin;
+        elements.baseline.textContent=(margin.baseline===null?'N/A':formatValue(margin.baseline,'ratio'))+' →';
+        elements.scenario.textContent=margin.scenario===null?'N/A':formatValue(margin.scenario,'ratio');
+        elements.delta.textContent=margin.change_pp===null?'N/A · revenue is zero':formatValue(margin.change_pp,'number',true)+' pp';
+        elements.delta.className='kpi-change '+(margin.change_pp===null?'neutral':tone(margin.change_pp));
+        continue;
+      }
+      const delta=result.changes[metric.id];
+      elements.delta.className='kpi-change '+(metric.id==='visits'?'neutral':tone(delta.amount));
       elements.baseline.textContent=formatValue(result.baseline[metric.id],metric.unit)+' →';
       elements.scenario.textContent=formatValue(result.scenario[metric.id],metric.unit);
       elements.delta.textContent=formatValue(delta.amount,metric.unit,true)+' · '+(delta.percent === null ? `N/A (${delta.percent_reason})` : formatPercent(delta.percent));
     }
     $('summary-impact-value').textContent=formatValue(result.impact,'USD',true);
+    $('summary-impact-value').className=tone(result.impact);
+    $('visits-comparison').textContent=`Expected visits: ${formatValue(result.baseline.visits,'visits')} → ${formatValue(result.scenario.visits,'visits')} · ${result.changes.visits.percent===null?'N/A':formatPercent(result.changes.visits.percent)}. Separate volume measure; financial bars are USD only.`;
     $('summary-impact-context').textContent=`Operating income: ${formatValue(result.baseline.operating_income,'USD')} baseline → ${formatValue(result.scenario.operating_income,'USD')} scenario. No approved forecast is changed.`;
     const comparisons=GRAPH.filter(m => ['revenue','contribution','operating_income'].includes(m.id)).map(m => [m.name,`${formatValue(result.baseline[m.id],'USD')} → ${formatValue(result.scenario[m.id],'USD')}`]);
     renderPairs('summary-comparison-values',comparisons);

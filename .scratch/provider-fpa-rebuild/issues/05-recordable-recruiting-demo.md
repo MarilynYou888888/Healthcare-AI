@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 Approval: Ticket content and dependency order approved by user; finalized with the two requested clarifications.
-Execution gate: Implementation remains on hold until explicitly authorized. This status indicates specification readiness, not permission to start coding.
+Execution gate: Ticket 5 explicitly authorized after Ticket 4 approval. Stop for user review after completion.
 
 ## Parent
 
@@ -18,20 +18,20 @@ Blocked by: 03 — Scenario Interpretation + Analyst Judgment; 04 — Variance I
 
 ## Acceptance criteria
 
-- [ ] Run the complete sequence: HCA/Tenet context → synthetic baseline → FTE 4.0→3.5 → automatic outputs → disclosed fallback commentary → C04 unresolved → human judgment. No hidden operator edits.
-- [ ] Keep inputs and outputs legible together on the recording viewport; polish loading, validation, empty/stale states, labels, source access and reset without adding new product scope.
-- [ ] Rerun the complete recovered and new tests and all ten investigation benchmarks after integration. All reported results must come from actual runs, not old reports or mocked live-generation claims.
-- [ ] Complete a timed 60–90 second rehearsal targeting 85 seconds. The first 60 seconds explain the user, manual pain, public/synthetic separation, dependency model, narrative limits and human authority.
-- [ ] Provide startup/reset/demo instructions and accurate model/source limitations. The application must be screen-recordable; a CLI, mockup or script alone does not satisfy delivery.
-- [ ] Demo works without an API key, live public-filing fetch or production services. Public data stays immutable and synthetic data is never presented as proprietary company data.
-- [ ] No claims of live AI, HCA/Tenet affiliation, real clinic forecast accuracy, measured ROI or production readiness. Record actual rehearsal feedback; do not claim hiring-manager validation unless conducted.
+- [x] Run the complete sequence: HCA/Tenet context → synthetic baseline → FTE 4.0→3.5 → automatic outputs → disclosed fallback commentary → C04 unresolved → human judgment. No hidden operator edits.
+- [x] Keep inputs and outputs legible together on the recording viewport; polish loading, validation, empty/stale states, labels, source access and reset without adding new product scope.
+- [x] Rerun the complete recovered and new tests and all ten investigation benchmarks after integration. All reported results must come from actual runs, not old reports or mocked live-generation claims.
+- [x] Complete a timed 60–90 second rehearsal targeting 85 seconds. The first 60 seconds explain the user, manual pain, public/synthetic separation, dependency model, narrative limits and human authority.
+- [x] Provide startup/reset/demo instructions and accurate model/source limitations. The application must be screen-recordable; a CLI, mockup or script alone does not satisfy delivery.
+- [x] Demo works without an API key, live public-filing fetch or production services. Public data stays immutable and synthetic data is never presented as proprietary company data.
+- [x] No claims of live AI, HCA/Tenet affiliation, real clinic forecast accuracy, measured ROI or production readiness. Record actual rehearsal feedback; do not claim hiring-manager validation unless conducted.
 
 ## Tests
 
-- [ ] Execute full regression and focused browser end-to-end checks, including one-input cascade, all data labels, narrative/review state and C04.
-- [ ] Verify offline startup, reset/repeatability, company-switch independence and no stale cross-module approvals.
-- [ ] Measure recalculation latency and timed rehearsal; inspect the recording viewport for readable values/disclosures.
-- [ ] Check all approved acceptance criteria and report any remaining failure rather than mark the project done.
+- [x] Execute full regression and focused browser end-to-end checks, including one-input cascade, all data labels, narrative/review state and C04.
+- [x] Verify offline startup, reset/repeatability, company-switch independence and no stale cross-module approvals.
+- [x] Measure recalculation latency and timed rehearsal; inspect the recording viewport for readable values/disclosures.
+- [x] Check all approved acceptance criteria and report any remaining failure rather than mark the project done.
 
 ## Demo relevance
 
@@ -49,4 +49,7 @@ No authentication, databases, enterprise permissions, PHI, EHR integrations, RAG
 
 ## Comments
 
-User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Implementation has not started.
+User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Ticket 5 implementation explicitly authorized in the subsequent user request.
+
+
+Ticket 5 visual clarifications implemented within the approved outcome: charcoal/gold system, shared-result charts, dependency trace, normalized public comparison, responsive layout and demo flow. [Validation and review](../ticket-05-review.md). Independent review pending.

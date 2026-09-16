@@ -1,0 +1,64 @@
+{
+  "kind": "automated timed UI rehearsal with narration cues; no recorded or spoken audio",
+  "elapsed_seconds": 85.0,
+  "target_seconds": 85,
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "checkpoints": [
+    {
+      "seconds": 0.12,
+      "cue": "User and manual FP&A workflow pain; synthetic baseline and offline disclosure"
+    },
+    {
+      "seconds": 8.0,
+      "cue": "Public HCA / Tenet source-grounded context, separate from clinic inputs"
+    },
+    {
+      "seconds": 16.0,
+      "cue": "Open editable synthetic clinic model; all downstream outputs are read-only"
+    },
+    {
+      "seconds": 22.0,
+      "cue": "Change one input: Provider FTE 4.0 to 3.5"
+    },
+    {
+      "seconds": 30.0,
+      "cue": "Executive Summary: revenue downside partially offset by variable cost savings"
+    },
+    {
+      "seconds": 42.0,
+      "cue": "Financial comparison and dynamic expense composition"
+    },
+    {
+      "seconds": 48.0,
+      "cue": "Expand deterministic model trace and highlight affected dependencies"
+    },
+    {
+      "seconds": 54.0,
+      "cue": "Offline fallback commentary interprets results; no live AI or financial writes"
+    },
+    {
+      "seconds": 66.0,
+      "cue": "Secondary investigation: C04 insufficient evidence remains unresolved"
+    },
+    {
+      "seconds": 75.0,
+      "cue": "Human judgment: request further investigation rather than inventing a cause"
+    },
+    {
+      "seconds": 85.0,
+      "cue": "End: deterministic calculations \u2192 disclosed interpretation \u2192 analyst judgment"
+    }
+  ],
+  "external_requests": [],
+  "page_errors": [],
+  "outcome": "passed",
+  "feedback": [
+    "All single-input outputs and income impact fit the recording viewport.",
+    "Summary, composition and trace require deliberate short scrolls as scripted.",
+    "C04 requires scrolling to its review card; keep the case selector change visible first.",
+    "Narration pacing remains a guide until the portfolio owner records the voiceover."
+  ]
+}
