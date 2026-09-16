@@ -176,3 +176,26 @@ class ScenarioTests(BrowserModelCase):
         self.page.evaluate('async () => {const {scenarioStore} = await import("/scenario-view.js"); scenarioStore.reset();}')
         expect(self.page.locator('#input-provider_fte')).to_have_value('4.0', timeout=1000)
         expect(self.page.locator('#scenario-impact')).to_have_text('$0.00')
+
+    def test_extreme_inputs_fail_safely_and_recover_without_stale_review(self):
+        result = self.evaluate("""
+            const store = model.createScenarioStore(baseline);
+            store.edit('provider_fte', '3.5');
+            const valid = store.snapshot().result;
+            const rejected = ['1e1000000000000000', '1e-1000000000000000', '9'.repeat(2000)]
+                .map(raw => store.edit('fixed_expense', raw));
+            store.reset();
+            store.edit('provider_fte', '1e900');
+            const derived = store.edit('net_revenue_per_visit', '1e900');
+            const recovered = store.reset();
+            return {valid, rejected, derived, recovered};
+        """)
+        for state in result['rejected']:
+            self.assertEqual(state['status'], 'invalid')
+            self.assertIsNone(state['result'])
+            self.assertFalse(state['review_eligible'])
+            self.assertEqual(state['last_valid'], result['valid'])
+        self.assertEqual(result['derived']['status'], 'invalid')
+        self.assertIsNone(result['derived']['result'])
+        self.assertEqual(result['recovered']['status'], 'valid')
+        self.assertEqual(result['recovered']['result']['impact'], '0')

@@ -2,6 +2,10 @@ import Decimal from './vendor/decimal.mjs';
 
 // The sole scenario calculation engine. Neither views nor Python repeat this model.
 const D = Decimal.clone({precision: 28, rounding: Decimal.ROUND_HALF_EVEN});
+// Technical resource limits, not clinical or financial assumption policies.
+const MAX_INPUT_LENGTH = 128;
+const MAX_EXPONENT = 1000;
+const supported = value => value.isFinite() && Math.abs(value.e) <= MAX_EXPONENT;
 export const MODEL_VERSION = 'clinic-month-v1';
 export const ASSUMPTIONS = deepFreeze({
   provider_fte: {name: 'Provider FTE', unit: 'FTE'},
@@ -46,8 +50,10 @@ export function validate(assumptions, month) {
   for (const [id, meta] of Object.entries(ASSUMPTIONS)) {
     const raw = assumptions?.[id];
     if (typeof raw !== 'string' || !raw.trim()) { errors[id] = `${meta.name} is required; blank is not zero.`; continue; }
+    if (raw.length > MAX_INPUT_LENGTH) { errors[id] = `${meta.name} exceeds the demo's 128-character input limit.`; continue; }
     try {
       const value = new D(raw.trim());
+      if (!supported(value)) { errors[id] = `${meta.name} exceeds the demo's supported numeric range (exponent −1000 to 1000).`; continue; }
       if (!value.isFinite() || value.lt(0)) throw new Error();
       values[id] = value;
     } catch { errors[id] = `${meta.name} must be a finite, nonnegative number.`; }
@@ -65,7 +71,7 @@ export function calculate(assumptions, month) {
     const args = item.inputs.map(id => values[id]);
     const value = item.op === 'multiply' ? args.reduce((a,b) => a.mul(b))
       : item.op === 'add' ? args[0].add(args[1]) : args[0].sub(args[1]);
-    if (!value.isFinite()) throw new Error('Inputs exceed the supported numeric range.');
+    if (!supported(value)) throw new Error('Derived output exceeds the demo supported numeric range (exponent −1000 to 1000).');
     values[item.id] = value;
     outputs[item.id] = value.toString();
   }
@@ -116,7 +122,7 @@ export function formatPercent(raw) {
 }
 export function inputValue(raw, unit) { return unit === 'ratio' ? new D(raw).mul(100).toString() : raw; }
 export function modelInput(raw, unit) {
-  if (!raw.trim()) return raw;
+  if (!raw.trim() || raw.length > MAX_INPUT_LENGTH) return raw;
   try { return unit === 'ratio' ? new D(raw).div(100).toString() : raw; }
   catch { return raw; }
 }

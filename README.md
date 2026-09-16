@@ -2,9 +2,14 @@
 
 A local recruiting portfolio demo for healthcare provider FP&A / financial analysts. Driver-Based Scenario Modeling is primary; Evidence-Aware Variance Investigation is secondary.
 
+Public context comes from **HCA Healthcare and Tenet Healthcare FY2025 public filings**, clearly separated from **synthetic clinic-level planning assumptions**. Public actuals are read-only and never become scenario inputs.
+
+**Deterministic financial calculations → explicitly disclosed interpretation → human analyst judgment.** The demo uses offline fallback commentary, not live AI generation. This is a portfolio demonstration, with no affiliation, sponsorship, or internal-data access implied for HCA Healthcare or Tenet Healthcare.
+
 ## Run the local demo
 
 ```sh
+cd "/Users/muhanyou/Desktop/Healthcare AI"
 python3 -m provider_fpa.web
 ```
 
@@ -76,7 +81,7 @@ Ticket 5 fills the original stable sections without moving model state or recrea
 | `summary-model-logic` | Expandable formula trace | Affected dependency path from the existing GRAPH |
 | `summary-commentary` / `summary-review` | Offline narrative and session decisions | Preserve revision binding |
 
-`web/presentation.js` derives bridge signs, expense shares and margin presentation measures from the existing result. `web/charts.js` maps those values to SVG geometry and reads the existing GRAPH for trace relationships. Neither calls the financial calculator or writes to the store. The scenario calculation engine remains unchanged. Public comparison uses existing source-linked ratios through `web/benchmark-view.js`, never clinic assumptions.
+`web/presentation.js` derives bridge signs, expense shares and margin presentation measures from the existing result. `web/charts.js` maps those values to SVG geometry; the presentation adapter reads the existing GRAPH for trace relationships. Neither calls the financial calculator or writes to the store. The approved financial formulas remain unchanged. Public comparison uses existing source-linked ratios through `web/benchmark-view.js`, never clinic assumptions.
 
 
 ## Variance Investigation (Ticket 4)
@@ -104,3 +109,19 @@ The historical domain/ADR descriptions of variance as the initial MVP are retain
 ## Record the recruiting demo
 
 See [the 85-second walkthrough and recording guide](docs/recruiting-demo.md). The charcoal/off-white/gold presentation includes responsive charts, keyboard tooltips, reduced-motion support and a complete demo-session reset. The reference recording viewport is 1440×900. Financial comparisons are one month, baseline versus scenario; no time-series data has been invented. Run `scripts/rehearse_recruiting_demo.py` for the timed browser rehearsal.
+
+
+## Final closeout
+
+See [final acceptance, review, and validation results](docs/final-closeout.md). All five tickets are complete. The application remains a local, one-clinic / one-month demonstration with session-only review state.
+
+Numeric validation includes technical resource limits: at most 128 input characters and base-10 exponent magnitude of 1000 for assumptions and derived operating outputs. These are browser-safety limits, not financial planning rules. Unsafe drafts retain explicitly stale last-valid outputs, suppress commentary, and disable review until corrected.
+
+Run the remaining presentation checks against the running app:
+
+```sh
+.venv/bin/python scripts/check_presentation.py
+.venv/bin/python scripts/rehearse_recruiting_demo.py
+```
+
+The timed rehearsal exercises the UI without recording audio or video. It does not replace your narrated recording.
