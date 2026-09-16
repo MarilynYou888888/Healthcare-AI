@@ -10,13 +10,13 @@ python3 -m provider_fpa.web
 
 Open http://localhost:8501/. Python 3.11+; no runtime packages, API keys or network connection required. Source links open the original SEC filings when internet is available. Stop with Ctrl-C.
 
-Ticket 3 opens on Executive Summary. Switch to Scenario Model and edit Provider FTE 4.0 → 3.5; the calculation table, summary and offline commentary share one result revision. Record one of three session-only analyst decisions. Investigation remains Ticket 4; chart polish remains Ticket 5. No historical investigation business logic has been changed.
+The app opens on Executive Summary. Switch to Scenario Model and edit Provider FTE 4.0 → 3.5; the calculation table, summary and offline commentary share one result revision. Record one of three session-only analyst decisions. Variance Investigation is available as the secondary workspace; chart polish remains Ticket 5. Recovered investigation rules and approved scenario formulas are preserved.
 
 ## Data and calculation boundaries
 
 - `data/public_benchmarks/`: curated local filing extracts and source metadata, normalized by `provider_fpa/benchmark`. Each metric carries source page, extraction reference, raw scale, definition, reporting basis and source hash. Derived ratios retain both parent metric IDs and formula. Missing observations stay null.
 - `data/synthetic/scenario/`: designer-selected monthly assumptions; no HCA/Tenet internal values. `provider_fpa/scenario` loads immutable source assumptions only. `web/scenario.js` is the sole financial calculation engine and shared session store; the same graph calculates baseline and scenario. Public figures never become operands in this model.
-- `provider_fpa/web.py` serves explicit read-only routes and static `web/` assets. Scenario arithmetic runs locally in the browser; edits make no network requests. `web/scenario-view.js` subscribes to immutable result revisions and formats them for display. Future summary/commentary consumers subscribe to that same result, without calculating it again.
+- `provider_fpa/web.py` serves explicit data routes, a stateless session-review endpoint, and static `web/` assets. Scenario arithmetic runs locally in the browser; edits make no network requests. `web/scenario-view.js` subscribes to immutable result revisions and formats them for display. Future summary/commentary consumers subscribe to that same result, without calculating it again.
 
 The selected public extract has 48 HCA and 32 Tenet reported/missing records, plus ratios derived at load time. It is not a comprehensive data warehouse. Tenet same-hospital volumes must not be divided into full-segment financials; HCA admission payer mix differs from Tenet patient-service revenue mix. Hospital benchmarks supply context, not statistical validation of clinic assumptions or affiliation with either company.
 
@@ -77,3 +77,25 @@ The page already has stable sections; add presentation renderers inside these wi
 | `summary-commentary` / `summary-review` | Offline narrative and session decisions | Preserve revision binding |
 
 Empty chart mounts are hidden, with no fake visuals or artificial data. Later charts should consume the same immutable ScenarioResult through the store subscription. Any required bridge signs, expense shares or margin presentation measures belong in one shared presentation adapter, never inside individual chart components. Ticket 3 does not modify `web/scenario.js` or add these derived measures.
+
+
+## Variance Investigation (Ticket 4)
+
+Open **Variance Investigation** and select a synthetic Clinic-Month. C01 (Provider PTO), C04 (unresolved volume miss), and C03 (weather/closure) are the recruiting cases. All ten benchmark cases remain available. The Review Queue is calculated from actual review rules, including critical metrics; its selector also exposes targets below the rules for explicit **Analyst Override**.
+
+Expand observed facts to inspect input filenames, row identities, sources and timestamps. Driver cards distinguish the immutable system assessment from the current analyst decision. Supported is not confirmed. Use **Confirm supported cause**, **Reject cause**, **Keep unresolved**, or **Request further investigation**. Confirmation requires an originally supported driver; observed upstream context cannot be promoted to a cause. A request records a follow-up without inventing evidence. New choices replace the prior session choice for that driver. Review decisions are in page memory only, scoped to an evidence snapshot and target; tab navigation preserves them, page reload clears them. No approval is persisted or authenticated.
+
+**Explore Provider FTE** in C01 or **Explore Clinic operating days** in C03 opens the existing Scenario Model and highlights the related input. The banner preserves case, Clinic-Month, driver, state and source context. It does not change an input, model revision, scenario review decision, or approved forecast. C04 offers no fabricated causal handoff.
+
+Historical Phase 3/4 code and 73 tests were recovered from `ceb51b3`. The only integration change to historical engine code forwards its already-configurable timing threshold; default remains 0.5. Configure it in `data/synthetic/investigation_policy.json`. It is a demo policy, not a healthcare FP&A standard. Recurrence remains independent of persistence.
+
+`provider_fpa/investigation.py` adapts immutable results for the web. It loads the five input CSVs and case identity fields only; neither analysis nor narration reads gold answers. The recovered narrative guard is unchanged. Some additional operational targets fail that guard; their prose is explicitly withheld while facts, review selection and Analyst Override remain accessible. All ten main case narratives pass. Human decisions are shown separately and never fed back into system narration.
+
+Run the ten-case evaluator separately:
+
+```sh
+python3 -m provider_fpa benchmark --directory data/synthetic_benchmark
+.venv/bin/python scripts/check_investigation.py
+```
+
+The historical domain/ADR descriptions of variance as the initial MVP are retained as recovery context; the approved specification supersedes that product framing. Driver-Based Scenario Modeling remains the primary recruiting demo. No historical Streamlit UI or old production scaffolding was restored.

@@ -8,7 +8,7 @@ function node(tag, text, cls) {
   return element;
 }
 export function setupNavigation() {
-  const tabs = [$('tab-summary'),$('tab-model')];
+  const tabs = [$('tab-summary'),$('tab-model'),$('tab-investigation')];
   function activate(tab) {
     for (const item of tabs) {
       const active = item === tab;
@@ -17,8 +17,11 @@ export function setupNavigation() {
       $(item.getAttribute('aria-controls')).hidden = !active;
     }
     const summary = tab === tabs[0];
-    $('page-title').textContent = summary ? 'Executive Summary' : 'Scenario Model';
-    $('page-description').textContent = summary ? 'Synthetic clinic planning · deterministic results · analyst judgment' : 'Edit an assumption cell to recalculate the complete monthly model.';
+    const investigation = tab === tabs[2];
+    document.querySelector('.period').hidden = investigation;
+    document.querySelector('.eyebrow').textContent = investigation ? 'EVIDENCE-AWARE REVIEW' : 'DRIVER-BASED PLANNING';
+    $('page-title').textContent = investigation ? 'Variance Investigation' : summary ? 'Executive Summary' : 'Scenario Model';
+    $('page-description').textContent = investigation ? 'What happened, and why? Evidence first. Analyst judgment last.' : summary ? 'Synthetic clinic planning · deterministic results · analyst judgment' : 'Edit an assumption cell to recalculate the complete monthly model.';
   }
   tabs.forEach((tab,index) => {
     tab.addEventListener('click',() => activate(tab));
@@ -28,6 +31,7 @@ export function setupNavigation() {
     });
   });
   $('edit-model').addEventListener('click',() => { activate(tabs[1]); $('input-provider_fte')?.focus(); });
+  return view => activate($('tab-' + view));
 }
 
 // Stable section IDs host Ticket 5 visualizations. Every section receives the same
@@ -87,7 +91,7 @@ export function mountExecutiveSummary(store) {
     fillList('commentary-facts',commentary ? [...commentary.drivers.map(d=>d.text),...commentary.metrics.map(m=>m.text)] : []);
     $('commentary-source').textContent=commentary?.source_label ?? '';
     $('review-status').textContent=state.decision ? `${state.decision.label} · Revision ${state.decision.revision}. No forecast updated.` : state.review_eligible ? 'Not reviewed for this revision.' : 'Review unavailable for invalid inputs.';
-    document.querySelectorAll('[data-action]').forEach(button => {
+    $('review-actions').querySelectorAll('[data-action]').forEach(button => {
       button.disabled=!state.review_eligible;
       button.setAttribute('aria-pressed',String(state.decision?.action===button.dataset.action));
     });

@@ -1,0 +1,4 @@
+{
+  "structural_horizon_fraction": 0.5,
+  "disclosure": "The configured share of the remaining forecast horizon is a demo heuristic, not a universal healthcare FP&A standard. Production policy should be configurable. Recurrence alone does not imply structural persistence."
+}
