@@ -82,3 +82,20 @@ class InvestigationBrowserTests(BrowserModelCase):
             'context':base['context'], 'snapshot_id':'stale','decisions':{},
         })
         self.assertEqual(response.status,400)
+
+    def test_handoff_keeps_input_validation_accessible_after_context_is_cleared(self):
+        self.page.reload()
+        self.page.get_by_role('tab', name='Variance Investigation', exact=True).click()
+        expect(self.page.locator('#investigation-status')).to_contain_text('C01 · CL001')
+        self.page.get_by_role('button',name='Explore Provider FTE',exact=True).click()
+        field = self.page.locator('#input-provider_fte')
+        self.assertEqual(set(field.get_attribute('aria-describedby').split()),
+                         {'error-provider_fte', 'investigation-handoff'})
+        self.page.get_by_role('tab',name='Variance Investigation',exact=True).click()
+        self.page.locator('#investigation-case').select_option('C04')
+        expect(self.page.locator('#investigation-status')).to_contain_text('C04 · CL004')
+        self.page.get_by_role('tab',name='Scenario Model',exact=True).click()
+        expect(field).to_have_attribute('aria-describedby', 'error-provider_fte')
+        field.fill('')
+        expect(field).to_have_attribute('aria-invalid','true')
+        expect(self.page.locator('#error-provider_fte')).not_to_have_text('')

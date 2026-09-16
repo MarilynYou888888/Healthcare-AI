@@ -1,6 +1,6 @@
 # Ticket 4 validation and review
 
-Scope: Variance Investigation + Scenario Handoff only. Fixed point: `c1ec18a` (user-created pre-recovery snapshot). Tickets 1–3 preserved; Ticket 5 remains deferred.
+Scope: Variance Investigation + Scenario Handoff only. Fixed point: `c1ec18a` (user-created pre-recovery snapshot). Initial working commit: `e2ff8d0`; review command `git diff c1ec18a...e2ff8d0`, followed by the targeted accessibility correction review. Tickets 1–3 preserved; Ticket 5 remains deferred.
 
 ## Recovery and compatibility
 
@@ -24,7 +24,7 @@ Clinic-Month actual vs Latest Approved Forecast → rule-selected Review Queue (
 
 ## Validation
 
-- Complete suite: 107 tests passed, including all recovered 73 tests and all Ticket 1–3 tests.
+- Complete suite: 108 tests passed, including all recovered 73 tests and all Ticket 1–3 tests.
 - Evaluator: 10/10 cases; 70/70 dimensions, including prohibited conclusions.
 - Browser: source display, six-state controls, all four human decisions, reload clearing, C01/C03 non-mutating handoffs, C04 refusal, override, API confirmation/stale-snapshot rejection, no gold routes and isolated scenario review.
 - Prior browser checks: public benchmarks, synthetic labels, one-input cascade, summary/commentary revision sharing, keyboard navigation, offline operation and review invalidation all pass.
@@ -35,8 +35,14 @@ Clinic-Month actual vs Latest Approved Forecast → rule-selected Review Queue (
 
 ## Standards
 
-Pending required independent review.
+No documented standards violations. One accessibility finding was fixed: handoff previously replaced an input's validation-message reference. It now appends its own description and removes only that description when context clears. A browser regression reproduced the failure, then passed after correction, including a subsequent invalid input.
+
+Reviewer recheck: “No remaining findings from the Ticket 4 standards review.”
 
 ## Spec
 
-Pending required independent review.
+No blocking findings. Review confirmed compatible recovery, snapshot-scoped human decisions, immutable system outputs, non-mutating contextual handoff, C04 refusal and gold isolation. Withheld operational-target narratives are explicitly disclosed; no unrequested Ticket 5 work or undisclosed financial-logic changes.
+
+Final findings: Standards 0 remaining (1 accessibility issue resolved); Spec 0. No remaining worst issue on either axis.
+
+All 89 selectable Clinic-Month target views were exercised: 49 guarded narratives available and 40 explicitly withheld by the preserved historical guard. All 10 primary case narratives are available. This is a disclosed compatibility limitation, not a change to the analytical rules.

@@ -46,7 +46,10 @@ export function mountInvestigation(openWorkspace) {
   function clearHandoff() {
     $('investigation-handoff').hidden=true;
     document.querySelectorAll('.handoff-target').forEach(field=>{
-      field.classList.remove('handoff-target'); field.removeAttribute('aria-describedby');
+      field.classList.remove('handoff-target');
+      const descriptions=(field.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(id=>id && id !== 'investigation-handoff');
+      if(descriptions.length) field.setAttribute('aria-describedby',descriptions.join(' '));
+      else field.removeAttribute('aria-describedby');
     });
   }
   function pending() {
@@ -101,7 +104,9 @@ export function mountInvestigation(openWorkspace) {
       node('p',`${system.variance.id} · ${option.driver_family} · ${STATES[option.state]}. Hypothetical scenario using a separate clinic planning baseline. No inputs or approved forecast changed. No numeric value is inferred from this evidence.`),
       details('Investigation source context',[sources(system.drivers[option.driver_index].evidence)]));
     banner.hidden=false;
-    input.classList.add('handoff-target'); input.setAttribute('aria-describedby','investigation-handoff');
+    input.classList.add('handoff-target');
+    const descriptions=new Set((input.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean));
+    descriptions.add('investigation-handoff'); input.setAttribute('aria-describedby',[...descriptions].join(' '));
     openWorkspace('model'); input.focus(); banner.scrollIntoView({block:'nearest'});
   }
   function renderDrivers(view) {

@@ -1,6 +1,6 @@
 # 04: Variance Investigation + Scenario Handoff
 
-Status: ready-for-agent
+Status: ready-for-human
 Approval: Ticket content and dependency order approved by user; finalized with the two requested clarifications.
 Execution gate: Ticket 4 explicitly authorized after Ticket 3 approval. Stop for user review after this ticket; Ticket 5 is not authorized.
 
@@ -53,4 +53,4 @@ No authentication, databases, enterprise permissions, PHI, EHR integrations, RAG
 User approved the five outcome-level tickets and dependency order. Ticket 2's reference impact is a regression expectation calculated from the approved inputs, never a hardcoded product output. Ticket 3 explicitly distinguishes deterministic finance, offline/demo fallback narrative and human judgment. No additional low-level tickets are created. Implementation authorized by the subsequent Ticket 4 request.
 
 
-Implementation and acceptance checks completed. See [Ticket 4 validation and review](../ticket-04-review.md). Independent review is in progress; Ticket 5 has not started.
+Implementation and acceptance checks completed. See [Ticket 4 validation and review](../ticket-04-review.md). Standards and specification reviews complete; one accessibility finding fixed and verified. All 108 tests and 10/10 benchmark cases pass. Ready for user acceptance review; Ticket 5 has not started.
