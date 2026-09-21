@@ -74,7 +74,7 @@ All decisions below are proposals for approval. No V1 source, contracts, ADRs, o
 
 ### 1. Inspected V1 architecture and exact reuse boundary
 
-V1 uses native browser JavaScript modules served by a lightweight Python HTTP server. The sole scenario calculator is browser-side Decimal arithmetic; Python loads its synthetic baseline but does not recalculate scenarios. Python owns the investigation arithmetic, review rules, causal assessment, timing, and evidence transitions. Browser charts consume a shared scenario presentation. The investigation web wrapper currently selects synthetic cases. Commentary already runs deterministically, although an injectable OpenAI narrative adapter exists outside the required UI flow.
+V1 uses native browser JavaScript modules served by a lightweight Python HTTP server. The sole scenario calculator is browser-side Decimal arithmetic; Python loads its synthetic baseline but does not recalculate scenarios. Python owns the investigation arithmetic, review rules, causal assessment, timing, and evidence transitions. Browser charts consume a shared scenario presentation. The investigation web wrapper currently selects synthetic cases. Commentary already runs deterministically, although an injectable external-provider narrative adapter exists outside the required UI flow; it is not part of the V2 product architecture.
 
 | Existing component | Reuse unchanged | Required V2 adaptation |
 |---|---|---|
@@ -176,7 +176,7 @@ Custom benchmark schema is deliberately lighter than the verified public-filing 
 
 ### 8. Deterministic professional commentary
 
-Visible name: **Automated FP&A Commentary**. Disclosure: **“Rule-based commentary from calculated results and recorded evidence. No LLM or external API is used.”** No model selection, key field, provider fallback, or invocation of the existing OpenAI adapter in V2 user-data paths.
+Visible name: **Automated FP&A Commentary**. Disclosure: **“Rule-based commentary from calculated results and recorded evidence. No LLM or external API is used.”** Deterministic Automated FP&A Commentary is the default and complete commentary solution, not a fallback or an interim dependency on future generation. No model selection, key field, external-provider fallback, or invocation of the existing external-provider adapter is part of V2.
 
 Use two composers appropriate to the existing runtimes: browser scenario composer and local Python investigation composer. They share a documented statement/evidence contract, not a cross-language financial calculation engine. Each returns 3–5 sentences plus internal statement IDs, numeric source paths, result/snapshot revision, and provenance. Formatting may round/display a provided value, but cannot derive a new financial number, rank numeric contributions through hidden calculations, or classify evidence independently.
 
@@ -238,7 +238,7 @@ V2 is done only when a new analyst can perform the above without code assistance
 
 Authentication, accounts, multi-user permissions, cloud/production databases, persistent uploads, audit-log infrastructure, PHI/employee PII/patient/claim ingestion, EHR/Epic/Cerner/ERP integration, live feeds, external analytics, RAG, vector databases, fine-tuning, paid or free LLM inference, API keys, autonomous approvals, and automatic forecast changes.
 
-Also excluded to keep V2 narrow: inpatient/case-mix or hospital-wide financial engines, consolidation, currency conversion, fiscal-calendar conversion, automatic annualization, arbitrary Excel formula recalculation, complex workbook reshaping, mapping-template persistence, multiple approved-forecast versions, scenario libraries, and an enterprise reporting engine. Optional model-generated prose belongs to a separately approved future version and is not needed for any V2 acceptance criterion.
+Also excluded to keep V2 narrow: inpatient/case-mix or hospital-wide financial engines, consolidation, currency conversion, fiscal-calendar conversion, automatic annualization, arbitrary Excel formula recalculation, complex workbook reshaping, mapping-template persistence, multiple approved-forecast versions, scenario libraries, and an enterprise reporting engine.
 
 ## Further Notes
 
@@ -253,6 +253,20 @@ Recommend **four** outcome-oriented tickets after specification approval; no tic
 
 The main cost lies in trustworthy import and evidence adaptation, not new finance formulas. No implementation estimate is implied by the four-ticket grouping.
 
-**Zero-token confirmation:** V2 uses deterministic local parsing, mapping, validation, calculations, evidence rules, and narrative templates. It requires zero external LLM tokens, zero paid API calls, no API key, no account, and no cloud database.
+### Fully free product constraint
+
+The core product must remain fully free to use. V2 requires zero paid API calls, zero LLM token cost, zero API keys, zero account setup for external AI providers, and no paid cloud inference dependency. It uses deterministic local parsing, mapping, validation, calculations, evidence rules, and narrative templates, with no cloud database. Automated FP&A Commentary is the default and complete commentary solution; every core workflow remains usable without a generative layer.
+
+### Optional future experiment — outside V2
+
+**Optional future enhancement: local or user-hosted open-source generative narrative layer.**
+
+If separately explored and approved, the only proposed architecture is:
+
+Deterministic ScenarioResult / InvestigationResult → local open-source model → optional narrative → human review.
+
+The deterministic financial engine remains the source of truth. Any optional narrative may only explain already-computed results and recorded evidence; it must not calculate financial outputs, invent numbers or causes, or approve a forecast. This layer must remain optional and must never be required for the core product. It must introduce no required API keys, external AI-provider accounts, inference charges, or paid cloud dependency.
+
+This is an optional future experiment, not a committed roadmap dependency. A fully local generative layer may materially increase installation complexity or hardware requirements; evaluating those tradeoffs belongs only to that separate experiment. No generative layer, model installation, or additional model hardware requirement is included in V2.
 
 **Approval gate:** Approve or revise this specification—including the proposed contract resolutions and browser-level test boundary—before to-tickets or implementation. Until then V1 remains closed and unchanged.
