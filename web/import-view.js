@@ -112,5 +112,11 @@ $('import-confirm').onclick=()=>{
   }catch(e){status(e.message);}
 };
 window.addEventListener('beforeunload',event=>{if(session.snapshot().revision||hasDraft){event.preventDefault();event.returnValue='';}});
-window.addEventListener('pagehide',stopWorker);
+window.addEventListener('pagehide',()=>{
+  stopWorker();session.dispose();tables=[];result=null;hasDraft=false;$('import-file').value='';
+  for(const id of ['import-sheet-list','import-mapping-list','import-issues','import-preview-tables','import-transformations','import-confirmed-list']) $(id).replaceChildren();
+});
+window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 step(0);
+
+$('import-limits').textContent = `Up to ${LIMITS.fileBytes/1024/1024} MiB per file · ${LIMITS.rows.toLocaleString('en-US')} selected rows · ${LIMITS.columns} columns per sheet · ${LIMITS.cells.toLocaleString('en-US')} populated cells · ${LIMITS.expandedBytes/1024/1024} MiB expanded workbook · ${LIMITS.parseMs/1000}-second read limit. One table per sheet. CSV uses UTF-8.`;

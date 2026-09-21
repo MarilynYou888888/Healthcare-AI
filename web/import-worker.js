@@ -1,6 +1,6 @@
 /* File bytes stay in this dedicated worker. Never upload, evaluate formulas or follow workbook links. */
 importScripts('/vendor/xlsx.full.min.js', '/vendor/papaparse.min.js');
-const MAX_BYTES = 10*1024*1024, MAX_EXPANDED = 100*1024*1024, MAX_CELLS = 500000;
+let limits; // Loaded from the same policy module as validation and the UI.
 function fail(message) { throw new Error(message); }
 async function inspectZip(bytes) {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -17,7 +17,7 @@ async function inspectZip(bytes) {
     const n=v.getUint16(pos+28,true), extra=v.getUint16(pos+30,true), comment=v.getUint16(pos+32,true);
     if(flags&1 || size===0xffffffff || compressed===0xffffffff) fail('Encrypted or ZIP64 workbooks are not supported. Export an unencrypted XLSX.');
     expanded+=size;
-    if(expanded>MAX_EXPANDED) fail('Workbook exceeds the 100 MiB expanded-content limit. Export fewer sheets.');
+    if(expanded>limits.expandedBytes) fail('Workbook exceeds the 100 MiB expanded-content limit. Export fewer sheets.');
     if(pos+46+n+extra+comment>end) fail('Workbook archive is damaged.');
     const name=new TextDecoder().decode(bytes.subarray(pos+46,pos+46+n));
     names.push(name);
@@ -39,7 +39,7 @@ async function inspectZip(bytes) {
     while(true) {
       const {value,done}=await reader.read();if(done)break;
       actual+=value.length;actualTotal+=value.length;
-      if(actualTotal>MAX_EXPANDED || actual>part.size) {await reader.cancel();fail('Workbook expanded content exceeds its declared size or the 100 MiB limit. Export fewer sheets.');}
+      if(actualTotal>limits.expandedBytes || actual>part.size) {await reader.cancel();fail('Workbook expanded content exceeds its declared size or the 100 MiB limit. Export fewer sheets.');}
       if(part.name==='[Content_Types].xml')content+=new TextDecoder().decode(value);
     }
     if(actual!==part.size) fail('Workbook archive contains inconsistent sizes. Save a new XLSX copy.');
@@ -55,7 +55,8 @@ function parseCsv(bytes) {
   if(errors.length) fail(`CSV row ${(errors[0].row??0)+1}: ${errors[0].message} Save a well-formed CSV with matching quotes.`);
   let cells=0;
   const rows=parsed.data.map(row=>row.map(value=>{ if(value!=='') cells++; return {v:value,t:'s'}; }));
-  if(cells>MAX_CELLS || rows.length>50001 || rows.some(r=>r.length>100)) fail('CSV exceeds 50,000 data rows, 100 columns, or 500,000 populated cells. Split the file.');
+  while(rows.length && rows.at(-1).every(cell=>cell.v==='')) rows.pop();
+  if(cells>limits.cells || rows.length>limits.rows+1 || rows.some(r=>r.length>limits.columns)) fail('CSV exceeds 50,000 data rows, 100 columns, or 500,000 populated cells. Split the file.');
   return [{name:'CSV table',hidden:false,rows,merges:[]}];
 }
 async function parseXlsx(bytes) {
@@ -66,7 +67,7 @@ async function parseXlsx(bytes) {
     const sheet=book.Sheets[name], ref=sheet['!ref'];
     if(!ref) return {name,hidden:!!book.Workbook?.Sheets?.[i]?.Hidden,rows:[],merges:[]};
     const range=XLSX.utils.decode_range(ref);
-    if(range.e.r>50000 || range.e.c>=100) fail(`Sheet “${name}” exceeds 50,000 data rows or 100 columns. Export only the needed table.`);
+    if(range.e.r>limits.rows || range.e.c>=limits.columns) fail(`Sheet “${name}” exceeds 50,000 data rows or 100 columns. Export only the needed table.`);
     const rows=[];
     for(let r=0;r<=range.e.r;r++) {
       const row=[];
@@ -74,7 +75,7 @@ async function parseXlsx(bytes) {
         const cell=sheet['!data']?.[r]?.[c] ?? sheet[r]?.[c] ?? sheet[XLSX.utils.encode_cell({r,c})];
         if(!cell) { row.push({v:'',t:'s'}); continue; }
         if(cell.v!==undefined || cell.f) populated++;
-        if(populated>MAX_CELLS) fail('Workbook exceeds 500,000 populated cells. Export fewer sheets.');
+        if(populated>limits.cells) fail('Workbook exceeds 500,000 populated cells. Export fewer sheets.');
         let date=null;
         if(cell.t==='n' && XLSX.SSF.is_date(cell.z??'')) {
           const d=XLSX.SSF.parse_date_code(cell.v,{date1904:!!book.Workbook?.WBProps?.date1904});
@@ -89,7 +90,8 @@ async function parseXlsx(bytes) {
 }
 self.onmessage=async ({data})=>{
   try {
-    if(data.file.size>MAX_BYTES) fail('File exceeds 10 MiB. Export a smaller CSV or XLSX.');
+    limits ??= (await import('/import-schema.js')).LIMITS;
+    if(data.file.size>limits.fileBytes) fail('File exceeds 10 MiB. Export a smaller CSV or XLSX.');
     const extension=data.file.name.split('.').pop().toLowerCase();
     if(!['csv','xlsx'].includes(extension)) fail('Choose a .csv or .xlsx file. Macro-enabled files are not supported.');
     const bytes=new Uint8Array(await data.file.arrayBuffer());

@@ -1,0 +1,29 @@
+{
+  "result": "pass",
+  "page_errors": [],
+  "external_requests": 0,
+  "upload_requests": 0,
+  "sample_roles": {
+    "planning": 3,
+    "performance": 3,
+    "events": 1
+  },
+  "replacement_failure_preserved_data": true,
+  "reload_discarded_session": true,
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    "01-upload-desktop.png",
+    "02-sheet-roles.png",
+    "03-column-mapping.png",
+    "04-validation.png",
+    "05-original-normalized-preview.png",
+    "06-normalization-register.png",
+    "07-confirmed-session.png",
+    "08-errors-preserve-session.png",
+    "09-mobile-validation.png",
+    "10-mobile-upload.png"
+  ]
+}

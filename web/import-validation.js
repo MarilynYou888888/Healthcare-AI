@@ -77,8 +77,11 @@ export function validateImport(tables,confirmed={}) {
     // even when a column-level encoding was selected.
     for(let c=0;c<headers.length;c++) {
       const id=table.mapping[c];
-      if(id!=='utilization_rate') continue;
-      const values=table.sheet.rows.slice(table.headerRow).map(row=>row[c]).filter(cell=>cell && !cell.percent && !String(cell.v).includes('%')).map(cell=>Number(cell.v)).filter(Number.isFinite);
+      if(!['utilization_rate','actual_value','forecast_value','value','observed_value'].includes(id)) continue;
+      const unitColumn=table.mapping.indexOf('unit');
+      const values=table.sheet.rows.slice(table.headerRow).filter(row=>id==='utilization_rate' || ['ratio','percent'].includes(unitColumn>=0?String(row[unitColumn]?.v??'').trim():table.constants?.unit))
+        .map(row=>row[c]).filter(cell=>cell && !cell.percent && !String(cell.v).includes('%'))
+        .map(cell=>{try{return numeric(String(cell.v),cell,settings,false).toNumber();}catch{return NaN;}}).filter(Number.isFinite);
       if(values.some(v=>v>0&&v<1)&&values.some(v=>v>1)) error(table.headerRow,headers[c],'Mixed percentage scales are ambiguous.','Use one encoding consistently in this column; do not mix 0.90 and 90.');
     }
     let dataRows=0;
@@ -91,7 +94,7 @@ export function validateImport(tables,confirmed={}) {
       for(const id of role.fields) {
         const index=table.mapping.indexOf(id), cell=index>=0?cells[index]:null;
         const constant=table.constants?.[id];
-        const raw=String(cell?.v??constant??'');
+        const raw=String(index>=0 ? (cell?.v??'') : (constant??''));
         sourceCells[id]={cell,raw,column:index>=0?headers[index]:FIELDS[id].label,constant:index<0&&constant!==undefined&&constant!==''};
         record[id]=raw.trim();
       }
@@ -128,7 +131,7 @@ export function validateImport(tables,confirmed={}) {
             else value=dateValue(value,cell,settings.dateFormat,true);
           } else if(field.type==='date') value=dateValue(value,cell,settings.dateFormat);
           else if(field.type==='timestamp') {
-            if(cell?.date) value=cell.date+'T00:00:00Z';
+            if(cell?.date || cell?.t==='n') throw new Error('Excel timestamps do not identify a timezone. Supply an ISO timestamp with a timezone, such as 2026-09-01T15:00:00-05:00, or leave unknown.');
             else if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) || !validDate(value.slice(0,10)) || !Number.isFinite(Date.parse(value))) throw new Error('Use an ISO timestamp including timezone, or leave unknown.');
           } else if(field.type==='currency') {value=value.toUpperCase(); if(!currencies.has(value)) throw new Error('Use a supported ISO currency code, such as USD.');}
           else if(field.type==='url'&&!/^https?:\/\//i.test(value)) throw new Error('Use an http(s) URL, or leave blank.');
@@ -206,6 +209,7 @@ export function createImportSession() {
   let datasets=freeze({}),revision=0;
   return Object.freeze({
     snapshot:()=>({datasets,revision}),
+    dispose(){datasets=freeze({});revision=0;},
     confirm(result,{reviewed=false,replace=false}={}) {
       if(!result.valid || !reviewed) throw new Error('Review valid normalized data before confirming.');
       if(Object.keys(result.datasets).some(role=>datasets[role])&&!replace) throw new Error('Explicit replacement confirmation is required.');

@@ -257,3 +257,101 @@ class ImportTests(unittest.TestCase):
         self.page.get_by_label('Map FTE Count').select_option('')
         expect(self.page.locator('#import-validation')).to_be_hidden()
         expect(self.page.get_by_role('button',name='Confirm import',exact=True)).to_be_hidden()
+
+    def test_missing_mapped_cell_never_falls_back_to_constant(self):
+        result=self.page.evaluate('''async()=>{
+          const {validateImport}=await import('/import-validation.js');
+          const headers=['entity_id','entity_name','period','metric_id','metric_name','actual_value','unit','currency','forecast_value'];
+          const row=['A','Clinic','2026-08','REV_NET_PATIENT','Revenue','100','USD','USD'];
+          return validateImport([{fileName:'short.csv',role:'performance',headerRow:1,mapping:headers,constants:{forecast_value:'90'},settings:{},sheet:{name:'CSV',merges:[],rows:[headers,row].map(r=>r.map(v=>({v,t:'s'})))}}]);
+        }''')
+        self.assertFalse(result['valid'])
+        self.assertEqual(result['datasets']['performance'][0]['forecast_value'],'')
+
+    def test_mixed_scales_block_benchmark_performance_and_event_ratios(self):
+        cases=[
+          ('benchmark',[['company','period','business_segment','metric_id','metric_name','value','unit','source'],['A','FY2026','All','RATE','Rate','0.42','percent','Public'],['B','FY2026','All','RATE','Rate','42','percent','Public']]),
+          ('performance',[['entity_id','entity_name','period','metric_id','metric_name','actual_value','forecast_value','unit'],['A','Clinic','2026-08','COMMERCIAL_PAYER_MIX','Mix','0.42','50','percent'],['A','Clinic','2026-09','COMMERCIAL_PAYER_MIX','Mix','42','50','percent']]),
+          ('events',[['entity_id','period','event_type','start_date','description','observed_value','unit'],['A','2026-08','payer_mix_shift','2026-08-01','Reported mix','0.42','percent'],['A','2026-09','payer_mix_shift','2026-09-01','Reported mix','42','percent']])]
+        for role,rows in cases:
+            with self.subTest(role=role):
+                result=self.validate_contract(rows,role)
+                self.assertFalse(result['valid'])
+                self.assertTrue(any('Mixed percentage' in i['problem'] for i in result['issues']))
+
+    def test_excel_reporting_timestamp_requires_explicit_timezone(self):
+        rows=[['entity_id','period','event_type','start_date','description','reported_at'],['A','2026-08','clinic_closure','2026-08-01','Reported closure',{'t':'n','v':'46266.625','date':'2026-09-01','w':'9/1/2026 15:00'}]]
+        result=self.validate_contract(rows,'events')
+        self.assertFalse(result['valid'])
+        self.assertTrue(any('timezone' in i['correction'] for i in result['issues']))
+
+    def test_unmapped_constants_and_entity_ids_are_disclosed(self):
+        result=self.page.evaluate('''async()=>{
+          const {validateImport}=await import('/import-validation.js');
+          const headers=['entity_name','period','metric_id','actual_value','forecast_value','unit'];
+          return validateImport([{fileName:'operating.csv',role:'performance',headerRow:1,mapping:headers,constants:{forecast_value:'999'},settings:{generateIds:true},sheet:{name:'Counts',merges:[],rows:[headers,['Nashville','2026-08','VISITS','10','12','visits']].map(r=>r.map(v=>({v,t:'s'})))}}]);
+        }''')
+        self.assertTrue(result['valid'],result['issues'])
+        self.assertEqual(result['datasets']['performance'][0]['forecast_value'],'12')
+        self.assertTrue(any(t['field']=='entity_id' for t in result['transformations']))
+        self.assertTrue(any(t['field']=='metric_name' for t in result['transformations']))
+        self.assertTrue(any(t['field']=='source' for t in result['transformations']))
+
+    def test_populated_cell_limit_and_csv_utf8_bom(self):
+        import io
+        data=(',' .join('C'+str(i) for i in range(100))+'\n'+((',' .join(['1']*100)+'\n')*5001)).encode()
+        self.assertIn('500,000',self.worker_parse(data,'many-cells.csv').get('error',''))
+        result=self.worker_parse(b'\xef\xbb\xbfName,Value\n"Clinic, East",3.5\n','bom.csv')
+        self.assertEqual(result['sheets'][0]['rows'][0][0]['v'],'Name')
+        self.assertEqual(result['sheets'][0]['rows'][1][0]['v'],'Clinic, East')
+        self.assertIn('UTF-8',self.worker_parse(b'Name\n\xff','encoding.csv').get('error',''))
+
+    def test_cached_formula_missing_value_and_merged_table_block_import(self):
+        for edit in ['missing_formula','merge']:
+            data=self.make_xlsx(self.planning_rows(),edits=edit)
+            parsed=self.worker_parse(data)
+            result=self.page.evaluate('''async sheet=>{
+              const {suggestMappings}=await import('/import-schema.js');const {validateImport}=await import('/import-validation.js');
+              return validateImport([{sheet,fileName:'file.xlsx',role:'planning',headerRow:1,mapping:suggestMappings(sheet.rows[0].map(c=>c.v),'planning'),settings:{percent:'percent'},constants:{}}]);
+            }''',parsed['sheets'][0])
+            self.assertFalse(result['valid'])
+
+    def test_replacement_checkbox_is_required_in_visible_workflow(self):
+        self.test_csv_mapping_validation_and_explicit_confirmation()
+        self.upload(PLANNING.replace(',4,22,',',5,22,'))
+        self.page.get_by_role('button',name='Validate data',exact=True).click()
+        self.page.get_by_label('I reviewed all warnings').check()
+        self.page.get_by_role('button',name='Preview normalized data',exact=True).click()
+        self.page.get_by_label('I confirm the normalized data').check()
+        expect(self.page.get_by_role('button',name='Confirm import',exact=True)).to_be_disabled()
+        self.page.get_by_label('Replace the previously confirmed datasets for these roles').check()
+        self.page.get_by_role('button',name='Confirm import',exact=True).click()
+        self.page.locator('#import-confirmed details summary').click()
+        expect(self.page.locator('#import-confirmed')).to_contain_text('Session revision 2')
+
+    def test_cancel_reading_and_timeout_preserve_confirmed_data(self):
+        self.test_csv_mapping_validation_and_explicit_confirmation()
+        # Hold a local static worker dependency at the network boundary to make
+        # cancellation deterministic without mocking parser/validation internals.
+        self.page.route('**/import-schema.js',lambda route:None)
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files({'name':'next.csv','mimeType':'text/csv','buffer':PLANNING.encode()})
+        self.page.get_by_role('button',name='Cancel reading',exact=True).click()
+        expect(self.page.locator('#import-status')).to_contain_text('cancelled')
+        expect(self.page.locator('#import-confirmed')).to_contain_text('Planning Assumptions: 1 row')
+        self.page.clock.install()
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files({'name':'third.csv','mimeType':'text/csv','buffer':PLANNING.encode()})
+        self.page.clock.fast_forward(16000)
+        expect(self.page.locator('#import-status')).to_contain_text('exceeded 15 seconds')
+        expect(self.page.locator('#import-confirmed')).to_contain_text('Planning Assumptions: 1 row')
+        self.page.unroute_all(behavior='ignoreErrors')
+
+    def test_page_exit_discards_confirmed_state_even_with_history_restore(self):
+        self.test_csv_mapping_validation_and_explicit_confirmation()
+        self.page.on('dialog',lambda d:d.accept())
+        self.page.get_by_role('link',name='Return to V1 demo').click()
+        self.page.go_back()
+        expect(self.page.locator('#import-confirmed')).to_contain_text('No confirmed datasets')
+
+    def test_exact_csv_row_limit_including_trailing_newline(self):
+        result=self.worker_parse(('Value\n'+'1\n'*50000).encode(),'limit.csv')
+        self.assertNotIn('error',result)
