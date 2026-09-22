@@ -4,6 +4,7 @@ import {mountInvestigation} from './investigation.js';
 import {mountBenchmarkComparison} from './benchmark-view.js';
 'use strict';
 const $ = id => document.getElementById(id);
+const entryChoice=document.createElement('nav');entryChoice.className='entry-choice';entryChoice.setAttribute('aria-label','Choose workspace');entryChoice.append(Object.assign(document.createElement('a'),{href:'/',textContent:'Explore Demo',className:'entry-choice-current'}),Object.assign(document.createElement('a'),{href:'/import',textContent:'Use My Data ↗'}));document.querySelector('.page-heading > div').append(entryChoice);
 const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(Number(value));
 const number = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value));
 function node(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}

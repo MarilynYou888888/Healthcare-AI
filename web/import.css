@@ -10,4 +10,5 @@
 #user-investigation-controls label {display:block;margin-block:10px;}
 #user-analysis .import-actions {margin-block:18px;}
 #user-analysis-host {min-width:0;}
+.entry-choice{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.entry-choice a{border:1px solid var(--line);border-radius:4px;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:12px}.entry-choice a:hover,.entry-choice .entry-choice-current{border-color:var(--gold);color:var(--ink)}
 .benchmark-context-row{border-top:1px solid var(--line);padding:12px 0}.benchmark-context-row p,.benchmark-context-row small{display:block;margin:5px 0;color:var(--muted)}.benchmark-context-row a{font-size:11px;color:var(--gold)}

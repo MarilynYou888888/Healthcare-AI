@@ -9,6 +9,8 @@ function check(label,value,onchange) {const box=el('label',undefined,'import-che
 const session=createImportSession();
 const workspace=createUserWorkspace(session);
 $('import-open-workflows').onclick=()=>workspace.open().catch(()=>status('Unable to open analytical panels. Your confirmed data remains in this session.'));
+const entryChoice=document.createElement('nav');entryChoice.className='entry-choice';entryChoice.setAttribute('aria-label','Choose workspace');entryChoice.append(Object.assign(document.createElement('a'),{href:'/',textContent:'Explore Demo ↗'}),Object.assign(document.createElement('a'),{href:'/import',textContent:'Use My Data',className:'entry-choice-current'}));document.querySelector('#import-workspace .page-heading > div').append(entryChoice);
+const clearButton=document.createElement('button');clearButton.type='button';clearButton.id='import-clear-data';clearButton.textContent='Clear Uploaded Data';$('import-open-workflows').after(clearButton);clearButton.onclick=()=>workspace.clear();
 let tables=[],result=null,worker=null,timer=null,generation=0,hasDraft=false;
 const STEPS=['Upload','Role & sheets','Map columns','Validate','Preview','Confirm'];
 function step(index) {$('import-steps').replaceChildren(...STEPS.map((name,i)=>{const li=el('li');li.append(el('b',String(i+1)),document.createTextNode(name));if(i===index)li.setAttribute('aria-current','step');return li;}));}

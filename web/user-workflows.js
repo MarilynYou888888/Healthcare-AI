@@ -13,7 +13,7 @@ import {createScenarioStore} from './scenario.js';
 import {mountScenarioModel} from './scenario-view.js';
 import {mountExecutiveSummary} from './executive.js';
 import {mountUploadedInvestigation} from './user-investigation.js';
-import {COMMENTARY_DISCLOSURE} from './commentary.js';
+import {COMMENTARY_DISCLOSURE,composeScenarioCommentary} from './commentary.js';
 const $=id=>document.getElementById(id);
 let ready;
 async function templates() {
@@ -46,11 +46,14 @@ async function templates() {
 
 export function createUserWorkspace(session) {
   let snapshot=null, selected=null, baseline=null, store=null, disposeModel=()=>{},disposeSummary=()=>{},investigation=null;
-  let view='model', notes=new Map(), previous=null,openVersion=0, benchmark='none';
+  let view='model', notes=new Map(), previous=null,openVersion=0, benchmark='none',disposeExport=()=>{};
   const dirty=()=>store && (store.snapshot().status!=='valid' || store.snapshot().result.changed_drivers.length>0);
   function noteKey(){return JSON.stringify([snapshot?.revision,selected,view,view==='investigation'?$('user-metric')?.value:'']);}
   function saveNote(){if(previous)notes.set(previous,$('user-analyst-note').value);}
   function loadNote(){saveNote();previous=noteKey();$('user-analyst-note').value=notes.get(previous)??'';}
+  function csvCell(value,numeric=false) { if(value===null || value===undefined)return ''; if(numeric || typeof value==='number')return String(value); let text=String(value);if(/^[=+\-@]/.test(text))text="'"+text;return /[",\n\r]/.test(text)?'"'+text.replaceAll('"','""')+'"':text; }
+  function exportSummary() { saveNote();const state=store?.snapshot();if(!state||state.status!=='valid'||!state.result){$('user-export-status').textContent='Export unavailable until the selected scenario inputs are valid.';return;}const result=state.result,commentary=composeScenarioCommentary(result),rows=[],add=(field,value,numeric=false)=>rows.push([field,value,numeric]);add('data_source',result.data_kind==='synthetic'?'SYNTHETIC SAMPLE':'USER UPLOADED');add('entity',result.entity_name);add('period',result.month);add('scenario',result.scenario_name);add('currency',result.currency);add('revision',result.revision,true);add('source',result.source);add('source_file',result.source_lineage?.file);add('source_sheet',result.source_lineage?.sheet);add('source_row',result.source_lineage?.row,true);for(const [id,value] of Object.entries(result.baseline_assumptions)){add(`baseline_assumption.${id}`,value,true);add(`scenario_assumption.${id}`,result.assumptions[id],true);}for(const [id,value] of Object.entries(result.baseline)){add(`baseline_output.${id}`,value,true);add(`scenario_output.${id}`,result.scenario[id],true);add(`change.${id}`,result.changes[id]?.amount,true);add(`change_percent.${id}`,result.changes[id]?.percent??`N/A: ${result.changes[id]?.percent_reason??'Unavailable'}`,!result.changes[id]?.percent_reason);}add('automated_commentary',commentary?.summary);add('analyst_note',notes.get(noteKey())||'');add('disclosure','Deterministic calculation outputs and recorded source lineage; no forecast approval or external transmission.');const csv=['field,value',...rows.map(([field,value,numeric])=>`${csvCell(field)},${csvCell(value,numeric)}`)].join('\r\n')+'\r\n';const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=`${result.entity_name||'scenario'}-${result.month||'summary'}-scenario-summary.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),0);$('user-export-status').textContent=`Exported current valid ScenarioResult revision ${result.revision}.`; }
+  function clearUploadedData(){openVersion++;disposeExport();disposeModel();disposeSummary();investigation?.dispose();session.dispose();snapshot=selected=baseline=store=null;notes.clear();previous=null;location.href='/';}
   function options(id,values,current) {
     $(id).replaceChildren(...values.map(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;return o;}));
     if(values.some(([value])=>value===current))$(id).value=current;
@@ -94,13 +97,13 @@ export function createUserWorkspace(session) {
       options('user-entity',[...new Map([...rows('planning'),...rows('performance')].map(r=>[r.entity_id,r.entity_name+' · '+r.entity_id])).entries()],selected.entity);
       selectors(1);$('user-scenario').value=selected.scenario;return;
     }
-    saveNote();disposeModel();disposeSummary();store=null;
+    saveNote();disposeExport();disposeModel();disposeSummary();store=null;
     selected={entity:$('user-entity').value,period:$('user-period').value,scenario:$('user-scenario').value};
     const row=periodRows('planning')[Number(selected.scenario)];
     $('user-open-model').disabled=$('user-open-summary').disabled=!row;
     $('user-open-investigation').disabled=!periodRows('performance').length;
     if(row){
-      baseline=planningBaseline(row,snapshot.revision);store=createScenarioStore(baseline);
+      baseline=planningBaseline(row,snapshot.revision);store=createScenarioStore(baseline);disposeExport=store.subscribe(state=>{$('user-export-summary').disabled=state.status!=='valid';});
       disposeModel=mountScenarioModel(baseline,store);disposeSummary=mountExecutiveSummary(store);
       $('edit-model').onclick=()=>activate('model');$('view-summary').onclick=()=>activate('summary');
       document.querySelector('#model-view .model-heading h2').textContent=row.entity_name;
@@ -130,6 +133,7 @@ export function createUserWorkspace(session) {
         for(const name of ['model','summary','investigation'])$('user-open-'+name).onclick=()=>activate(name);
         $('user-entity').onchange=()=>{selectors(1);choose();};$('user-period').onchange=()=>{selectors(2);choose();};$('user-scenario').onchange=choose;
         $('user-benchmark').onchange=()=>selectBenchmark($('user-benchmark').value);
+        const actions=document.createElement('div');actions.className='import-actions';actions.id='user-ticket4-actions';const exportButton=document.createElement('button');exportButton.type='button';exportButton.id='user-export-summary';exportButton.textContent='Export Scenario Summary CSV';exportButton.disabled=true;exportButton.onclick=exportSummary;const clearButton=document.createElement('button');clearButton.type='button';clearButton.id='user-clear-data';clearButton.textContent='Clear Uploaded Data';clearButton.onclick=clearUploadedData;actions.append(exportButton,clearButton);const exportStatus=document.createElement('p');exportStatus.id='user-export-status';exportStatus.className='session-note';exportStatus.setAttribute('role','status');$('user-analysis-status').after(actions,exportStatus);
       }
       const fresh=session.snapshot();
       if(snapshot?.revision!==fresh.revision){
@@ -140,6 +144,7 @@ export function createUserWorkspace(session) {
       $('user-analysis').hidden=false;window.scrollTo({top:0});
     },
     canReplace(){return !dirty() || window.confirm('Replacing confirmed data will discard the edited scenario and its review decision. Continue?');},
-    dispose(){openVersion++;disposeModel();disposeSummary();investigation?.dispose();snapshot=selected=baseline=store=null;notes.clear();previous=null;$('user-analysis-host')?.remove();ready=null;},
+    dispose(){openVersion++;disposeExport();disposeModel();disposeSummary();investigation?.dispose();snapshot=selected=baseline=store=null;notes.clear();previous=null;$('user-analysis-host')?.remove();ready=null;},
+    clear:clearUploadedData,
   };
 }
