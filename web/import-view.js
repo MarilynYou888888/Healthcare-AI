@@ -45,7 +45,7 @@ $('import-file').addEventListener('change',()=>{
   worker.onmessage=({data})=>{
     if(token!==generation)return;stopWorker();
     if(data.error){status('ERROR · '+data.error);return;}
-    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,mapping:[],constants:{},settings:{percent:'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
+    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
     renderSheets();step(1);status(`${data.name} · ${tables.length} table(s) read locally. Select the roles to include.`);
   };
   worker.postMessage({file});
@@ -81,7 +81,12 @@ function renderMapping(){
   }
   $('import-mapping').hidden=false;$('import-sheets').hidden=true;step(2);$('import-mapping').scrollIntoView({block:'start'});
 }
-$('import-map').onclick=()=>{if(!tables.some(t=>t.role)){status('Choose at least one dataset role before mapping.');return;}invalidate();for(const t of tables.filter(t=>t.role))t.mapping=suggestMappings(headersFor(t),t.role);renderMapping();status('Review the suggested mappings and explicit format choices.');};
+$('import-map').onclick=()=>{if(!tables.some(t=>t.role)){status('Choose at least one dataset role before mapping.');return;}invalidate();for(const t of tables.filter(t=>t.role)){
+  // Keep separate drafts when the user changes a sheet's role or header row.
+  const key=JSON.stringify([t.role,t.headerRow]);
+  if(!t.mappingDrafts.has(key))t.mappingDrafts.set(key,suggestMappings(headersFor(t),t.role));
+  t.mapping=t.mappingDrafts.get(key);
+}renderMapping();status('Review your column mappings and explicit format choices. Previous choices are preserved; new mappings use suggestions.');};
 $('import-back-sheets').onclick=()=>{invalidate();$('import-sheets').hidden=false;$('import-mapping').hidden=true;step(1);};
 $('import-validate').onclick=()=>{
   invalidate();result=validateImport(tables.filter(t=>t.role),session.snapshot().datasets);

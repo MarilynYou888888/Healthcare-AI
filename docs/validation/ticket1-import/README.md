@@ -2,6 +2,14 @@
 
 Date: 2026-09-21. Scope: Self-Service Data Import & Validation only. Awaiting user review. Tickets 2–4 have not started.
 
+## Mapping navigation follow-up
+
+Manual column choices now survive Back to sheets → Map columns, including an explicit choice not to import a column. Suggestions initialize a mapping only on its first visit. Each sheet keeps independent, in-memory mapping drafts per dataset role and header row; switching back restores the previous draft. Ignoring and re-enabling a sheet also retains its choices. A new file starts fresh drafts. Sheet roles remain entirely manual.
+
+The new browser regression failed before the fix because a manually selected Provider FTE mapping became blank after navigation, then passed after removing unconditional suggestion regeneration. A second browser regression covers role/header changes, ignored/re-enabled sheets, and adding another sheet without replacing earlier choices.
+
+Follow-up validation: **143 tests passed** (116 existing + 27 Ticket 1), including the original import validation, replacement protection, session lifecycle, and no-external-transmission checks. Desktop/mobile acceptance rehearsal passed with zero browser errors, external requests, or upload requests. JavaScript syntax and `git diff --check` passed. No V1 engine, benchmark, or Ticket 2–4 changes. Follow-up files: `web/import-view.js`, `tests/test_import.py`, and this report. Pre-fix snapshot: `c7121d4`.
+
 ## Review the complete workflow
 
 Start the existing local server with `python3 -m provider_fpa.web` and choose **Import My Data** from the sidebar, or visit `/import`. The review session started by the agent is at http://localhost:8502/import while that process remains running.
