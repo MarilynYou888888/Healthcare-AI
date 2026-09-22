@@ -8,7 +8,7 @@ Manual column choices now survive Back to sheets → Map columns, including an e
 
 The new browser regression failed before the fix because a manually selected Provider FTE mapping became blank after navigation, then passed after removing unconditional suggestion regeneration. A second browser regression covers role/header changes, ignored/re-enabled sheets, and adding another sheet without replacing earlier choices.
 
-Follow-up validation: **143 tests passed** (116 existing + 27 Ticket 1), including the original import validation, replacement protection, session lifecycle, and no-external-transmission checks. Desktop/mobile acceptance rehearsal passed with zero browser errors, external requests, or upload requests. JavaScript syntax and `git diff --check` passed. No V1 engine, benchmark, or Ticket 2–4 changes. Follow-up files: `web/import-view.js`, `tests/test_import.py`, and this report. Pre-fix snapshot: `c7121d4`.
+Follow-up validation: **143 tests passed** (116 existing + 27 Ticket 1), including the original import validation, replacement protection, session lifecycle, and no-external-transmission checks. Desktop/mobile acceptance rehearsal passed with zero browser errors, external requests, or upload requests. Browser module loading and `git diff --check` passed; a standalone Node syntax check was unavailable because Node is not on PATH. No V1 engine, benchmark, or Ticket 2–4 changes. Follow-up files: `web/import-view.js`, `tests/test_import.py`, and this report. Pre-fix snapshot: `c7121d4`.
 
 ## Review the complete workflow
 
