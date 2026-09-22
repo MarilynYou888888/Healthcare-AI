@@ -48,7 +48,10 @@ $('import-file').addEventListener('change',()=>{
   worker.onmessage=({data})=>{
     if(token!==generation)return;stopWorker();
     if(data.error){status('ERROR · '+data.error);return;}
-    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
+    // The bundled onboarding workbook explicitly documents utilization as whole
+    // percentage points (90 = 90%). Keep this convenience scoped to that
+    // fingerprint; user files still require an explicit percentage encoding.
+    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:data.synthetic?'percent':'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
     renderSheets();step(1);status(`${data.name} · ${tables.length} table(s) read locally. Select the roles to include.`);
   };
   worker.postMessage({file});

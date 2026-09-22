@@ -124,6 +124,20 @@ class ImportTests(unittest.TestCase):
         for role in ['Planning Assumptions','Actual vs Forecast','Operating Events']:
             expect(self.page.locator('#import-confirmed')).to_contain_text(role+':')
 
+    def test_official_sample_workbook_validates_without_manual_percentage_setup(self):
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files('web/sample-import.xlsx')
+        for sheet, role in [('Planning Assumptions','planning'),('Actual vs Forecast','performance'),('Operating Events','events')]:
+            self.page.get_by_label('Dataset role — '+sheet, exact=True).select_option(role)
+        self.page.get_by_role('button', name='Map columns', exact=True).click()
+        expect(self.page.get_by_label('Numeric percentage encoding').first).to_have_value('percent')
+        self.page.get_by_role('button', name='Validate data', exact=True).click()
+        expect(self.page.locator('#import-validation')).to_contain_text('0 errors')
+        self.page.get_by_label('I reviewed all warnings').check()
+        self.page.get_by_role('button', name='Preview normalized data', exact=True).click()
+        self.page.get_by_label('I confirm the normalized data').check()
+        self.page.get_by_role('button', name='Confirm import', exact=True).click()
+        expect(self.page.locator('#import-confirmed')).to_contain_text('Planning Assumptions: 3 rows')
+
     def validate_contract(self, rows, role='planning', settings=None, mapping=None):
         return self.page.evaluate('''async ({rows,role,settings,mapping}) => {
           const {suggestMappings}=await import('/import-schema.js');
