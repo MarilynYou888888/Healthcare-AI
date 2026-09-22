@@ -1,7 +1,7 @@
 # 02: Run Existing FP&A Workflows on User Data
 
-Status: needs-triage
-Approval: Ticket scope and publication approved by the user. Implementation is NOT authorized; stop for review after publication.
+Status: ready-for-human
+Approval: Ticket 2 implementation completed and awaiting user review. Ticket 3 and Ticket 4 have not started.
 Blocked by: 01 — Self-Service Data Import & Validation.
 Specification: Approved narrow V2 specification, including the fully free product clarification.
 
@@ -41,6 +41,14 @@ Select Nashville Specialty Clinic, August 2026, change FTE from 4.0 to 3.5, and 
 ## Boundaries and handoff
 
 Reuse the V1 visit-based model; do not add hospital-specific engines, consolidation, FX conversion, forecast versioning, or automatic forecasts. Apply the approved identity/currency/contract adaptations without weakening V1. No authentication, databases, PHI/EHR support, RAG, keys, paid APIs, LLM tokens, or external AI dependencies. Ticket 3 consumes the current calculated results and evidence states; no new low-level tickets are authorized.
+
+## Completion evidence
+
+Implemented in commit `a3f6844` plus the provenance follow-up. Confirmed Planning Assumptions now initialize the existing Decimal scenario engine for selected entity, period, and uploaded scenario; baseline data is immutable and scenario edits remain draft-only. Executive Summary, charts, and calculation trace consume the same immutable `ScenarioResult` revision.
+
+Imported Actual vs Forecast records use a bounded, same-origin loopback request to the local Python process. Review thresholds, closed-month and Latest Approved Forecast confirmations, Analyst Override, structured timing evidence, and human driver decisions remain session-only. Operating Events alone never create a variance target. Unsupported mechanisms, missing reconciliation, FTE/available-days ambiguity, unsupported currency mechanisms, and insufficient evidence remain Unresolved. Mixed user/synthetic evidence retains provenance in each Source Reference and the UI label.
+
+Validation: `python -m unittest discover -s tests -q` — **158 passed**. Ticket 2 browser acceptance rehearsal passed at 1440×1000 and 390×844 with no browser errors, external requests, or raw upload requests. Focused uploaded-investigation tests: **10 passed**. Python compile and `git diff --check` passed. V1 scenario, benchmark, and investigation regressions remain green.
 
 ## Comments
 

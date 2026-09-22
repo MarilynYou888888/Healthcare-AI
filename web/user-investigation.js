@@ -31,7 +31,7 @@ export function mountUploadedInvestigation(onMetricChange) {
   function show(data){
     view=data;
     const variance=data.system.variance;
-    const kinds=new Set(payload.performance.map(r=>r._lineage.kind));
+    const kinds=new Set([...payload.performance,...payload.events].map(r=>r._lineage.kind));
     const sourceLabel=kinds.size>1?'USER UPLOADED + SYNTHETIC SAMPLE':kinds.has('synthetic')?'SYNTHETIC SAMPLE':'USER UPLOADED';
     render({...data,context:{case_id:'USER DATA',target_id:variance.id,target_type:variance.variance_type},
       targets:[{id:variance.id,type:variance.variance_type,required:data.system.review_required}],

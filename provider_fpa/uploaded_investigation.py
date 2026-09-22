@@ -70,7 +70,7 @@ def reference(row, dataset, identity):
         text(loc[field], 256, True)
     if type(loc['row']) is not int or not 1 <= loc['row'] <= 50001 or loc['kind'] not in ('user_uploaded','synthetic'):
         raise ValueError('Invalid source row')
-    return SourceReference(dataset, (('file',loc['file']),('sheet',loc['sheet']),('row',str(loc['row'])),*identity),
+    return SourceReference(dataset, (('file',loc['file']),('sheet',loc['sheet']),('row',str(loc['row'])),('kind',loc['kind']),*identity),
                            text(row.get('source',''), 2000, True), row.get('reported_at') or None)
 
 

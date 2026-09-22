@@ -131,3 +131,11 @@ class UploadedInvestigationTests(unittest.TestCase):
             second=uploaded_investigation(request(True))
         self.assertEqual(first,second)
         self.assertEqual(first['decisions'],{})
+
+    def test_mixed_provenance_is_preserved_per_source(self):
+        payload=request(True)
+        payload['events'][0]['_lineage']['kind']='synthetic'
+        result=uploaded_investigation(payload)['system']
+        event=next(f for f in result['observed_facts'] if f['fact_type']=='reported_event')
+        self.assertEqual(event['evidence'][0]['row_selector']['kind'],'synthetic')
+        self.assertEqual(result['variance']['evidence'][0]['row_selector']['kind'],'user_uploaded')
