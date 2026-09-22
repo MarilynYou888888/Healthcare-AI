@@ -19,6 +19,13 @@ async function selectCompany(ticker){
   const version=++requestVersion;
   document.querySelectorAll('[data-company]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.company===ticker)));
   $('benchmark-state').classList.remove('error');$('benchmark-state').textContent='Loading verified public references…';$('benchmark-cards').replaceChildren();$('source-rows').replaceChildren();$('company-notes').textContent='';$('benchmark-note').textContent='Reference context only';
+  if(ticker==='none'){
+    $('benchmark-state').textContent='No Benchmark selected. Public context is optional and does not affect the synthetic model.';
+    $('benchmark-note').textContent='No Benchmark · Context omitted';
+    $('benchmark-comparison-panel').hidden=true;
+    return;
+  }
+  $('benchmark-comparison-panel').hidden=false;
   try{
     const company=await getJSON('/api/benchmarks/'+ticker);if(version!==requestVersion)return;
     const find=(id,seg='Consolidated')=>company.metrics.find(m=>m.metric_id===id && m.period==='FY2025' && m.business_segment===seg);
@@ -43,6 +50,7 @@ async function selectCompany(ticker){
     $('benchmark-state').textContent='';
   }catch(error){if(version!==requestVersion)return;$('benchmark-cards').replaceChildren();$('benchmark-state').textContent='Public reference unavailable. The synthetic baseline is independent and remains usable.';$('benchmark-state').classList.add('error');}
 }
+const noBenchmark=document.createElement('button');noBenchmark.type='button';noBenchmark.dataset.company='none';noBenchmark.setAttribute('aria-pressed','false');noBenchmark.textContent='No Benchmark';document.querySelector('.switcher').prepend(noBenchmark);
 document.querySelectorAll('[data-company]').forEach(button=>button.addEventListener('click',()=>selectCompany(button.dataset.company)));
 $('sources-button').addEventListener('click',()=>{const show=$('source-panel').hidden;$('source-panel').hidden=!show;$('sources-button').setAttribute('aria-expanded',String(show));$('sources-button').textContent=show?'Close source register ↑':'Inspect sources & definitions ↗';});
 const openWorkspace = setupNavigation();

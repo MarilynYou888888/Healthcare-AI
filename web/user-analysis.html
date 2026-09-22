@@ -1,6 +1,7 @@
 <section id="user-analysis" hidden>
 <div class="page-heading"><div><div class="eyebrow">YOUR CONFIRMED DATA</div><h1>Run your FP&A workflow</h1><p>Protected baseline → selected scenario draft → analyst judgment</p></div><button id="user-back-import" type="button">Back to import</button></div>
 <p id="user-source" class="import-notice"></p>
+<section class="panel" id="user-benchmark-panel"><div class="panel-title"><h3>Benchmark context</h3><span class="small-label">OPTIONAL · DOES NOT DRIVE THE MODEL</span></div><label for="user-benchmark">Benchmark</label><select id="user-benchmark"><option value="none">No Benchmark</option><option value="HCA">HCA Healthcare · Built-in Public</option><option value="THC">Tenet Healthcare · Built-in Public</option><option value="custom">Custom Benchmark · User Uploaded</option></select><p id="user-benchmark-status">No Benchmark selected. Analysis remains available.</p><div id="user-benchmark-context"></div></section>
 <div class="panel import-controls" id="user-selectors"><label>Entity<select id="user-entity"></select></label><label>Period<select id="user-period"></select></label><label>Uploaded scenario<select id="user-scenario"></select></label><span id="month" hidden></span></div>
 <nav class="import-actions" aria-label="Uploaded FP&A workflows"><button id="user-open-model" type="button">Scenario Model</button><button id="user-open-summary" type="button">Executive Summary</button><button id="user-open-investigation" type="button">Variance Investigation</button></nav>
 <p id="user-analysis-status" role="status"></p>

@@ -17,7 +17,7 @@ ASSETS.update({
     '/import': ('import.html', 'text/html'),
     '/user-analysis.html': ('user-analysis.html', 'text/html'),
     **{'/' + name: (name, 'text/javascript') for name in (
-        'user-investigation.js', 'user-workflows.js', 'import-view.js', 'import-schema.js', 'import-validation.js', 'import-worker.js',
+        'commentary.js', 'user-investigation.js', 'user-workflows.js', 'import-view.js', 'import-schema.js', 'import-validation.js', 'import-worker.js',
         'vendor/xlsx.full.min.js', 'vendor/papaparse.min.js')},
     '/import.css': ('import.css', 'text/css'),
     '/sample-import.xlsx': ('sample-import.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),

@@ -13,6 +13,7 @@ import {createScenarioStore} from './scenario.js';
 import {mountScenarioModel} from './scenario-view.js';
 import {mountExecutiveSummary} from './executive.js';
 import {mountUploadedInvestigation} from './user-investigation.js';
+import {COMMENTARY_DISCLOSURE} from './commentary.js';
 const $=id=>document.getElementById(id);
 let ready;
 async function templates() {
@@ -27,7 +28,9 @@ async function templates() {
     }
     // Reuse V1 panels and renderers; replace demo-only context, not model logic.
     document.querySelector('#executive-view .context-strip').replaceChildren();
-    $('summary-commentary').hidden=true; // Ticket 3 provides the complete user commentary composer.
+    $('commentary-disclosure').textContent=COMMENTARY_DISCLOSURE;
+    document.querySelector('#summary-commentary .summary-eyebrow').textContent='02 · AUTOMATED FP&A COMMENTARY';
+    document.querySelector('#summary-commentary h3').textContent='Automated FP&A Commentary';
     document.querySelector('#investigation-view .investigation-controls').remove();
     document.querySelector('#investigation-view .investigation-intro').textContent='Uploaded Actual vs Latest Approved Forecast. Confirm the comparator before investigation.';
     document.querySelector('#investigation-view .model-heading .badge').textContent='UPLOADED · EVIDENCE REVIEW';
@@ -35,7 +38,7 @@ async function templates() {
     document.querySelector('label[for="investigation-target"]').hidden=true;
     $('investigation-override').hidden=true;
     $('investigation-handoffs').closest('section').hidden=true;
-    $('investigation-narrative').closest('section').hidden=true;
+    document.querySelector('#investigation-narrative').replaceChildren();
     $('investigation-view').insertBefore($('user-investigation-controls-template').content.cloneNode(true),$('investigation-status'));
   }).catch(error=>{ready=null;throw error;});
   return ready;
@@ -43,7 +46,7 @@ async function templates() {
 
 export function createUserWorkspace(session) {
   let snapshot=null, selected=null, baseline=null, store=null, disposeModel=()=>{},disposeSummary=()=>{},investigation=null;
-  let view='model', notes=new Map(), previous=null,openVersion=0;
+  let view='model', notes=new Map(), previous=null,openVersion=0, benchmark='none';
   const dirty=()=>store && (store.snapshot().status!=='valid' || store.snapshot().result.changed_drivers.length>0);
   function noteKey(){return JSON.stringify([snapshot?.revision,selected,view,view==='investigation'?$('user-metric')?.value:'']);}
   function saveNote(){if(previous)notes.set(previous,$('user-analyst-note').value);}
@@ -54,6 +57,33 @@ export function createUserWorkspace(session) {
   }
   function rows(role){return snapshot?.datasets[role]??[];}
   function periodRows(role){return rows(role).filter(r=>r.entity_id===$('user-entity').value && r.period===$('user-period').value);}
+  function renderCustomBenchmark(){
+    const records=rows('benchmark');
+    $('user-benchmark-context').replaceChildren(...records.map(row=>{
+      const article=document.createElement('article'); article.className='benchmark-context-row';
+      const title=document.createElement('strong');title.textContent=`${row.company} · ${row.period} · ${row.business_segment}`;
+      const value=document.createElement('p');value.textContent=`${row.metric_name}: ${row.value} ${row.unit} · Source: ${row.source}`;
+      article.append(title,value);
+      if(row.notes){const note=document.createElement('small');note.textContent=row.notes;article.append(note);}
+      if(row.source_url){const link=document.createElement('a');link.href=row.source_url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open submitted source URL ↗';article.append(link);}
+      return article;
+    }));
+  }
+  async function selectBenchmark(value){
+    benchmark=value;$('user-benchmark-context').replaceChildren();
+    if(value==='none'){$('user-benchmark-status').textContent='No Benchmark selected. Analysis remains available.';return;}
+    if(value==='custom'){
+      const records=rows('benchmark');
+      $('user-benchmark-status').textContent=records.length?`USER UPLOADED · ${records.length} benchmark row${records.length===1?'':'s'} · Unverified external context`:'No Custom Benchmark has been confirmed in this session.';
+      renderCustomBenchmark();return;
+    }
+    $('user-benchmark-status').textContent='Loading BUILT-IN PUBLIC benchmark context…';
+    try {const response=await fetch(`/api/benchmarks/${value}`);if(!response.ok)throw new Error();const data=await response.json();
+      if(benchmark!==value)return;
+      $('user-benchmark-status').textContent=`BUILT-IN PUBLIC · ${data.company} · Context only · Read-only`;
+      $('user-benchmark-context').replaceChildren(...data.metrics.slice(0,5).map(metric=>{const p=document.createElement('p');p.textContent=`${metric.metric_name}: ${metric.value ?? 'Not disclosed'} ${metric.unit} · ${metric.period} · ${metric.business_segment} · ${metric.reporting_basis} · Source: ${metric.source_document} · ${metric.source_locator}`;return p;}));
+    } catch {$('user-benchmark-status').textContent='Public benchmark context unavailable. No Benchmark remains valid.';}
+  }
   function selectors(level=0){
     if(level===0){const all=[...rows('planning'),...rows('performance')];options('user-entity',[...new Map(all.map(r=>[r.entity_id,r.entity_name+' · '+r.entity_id])).entries()],selected?.entity);}
     if(level<=1) options('user-period',[...new Set([...rows('planning'),...rows('performance')].filter(r=>r.entity_id===$('user-entity').value).map(r=>r.period))].sort().map(p=>[p,p]),selected?.period);
@@ -83,13 +113,13 @@ export function createUserWorkspace(session) {
     }
     investigation.select(snapshot,selected.entity,selected.period);
     const labelRow=row??periodRows('performance')[0];
-    $('user-source').textContent=labelRow ? `${labelRow._lineage.kind==='synthetic'?'SYNTHETIC SAMPLE':'USER UPLOADED'} · ${labelRow.entity_name} · ${labelRow.period} · ${row?.scenario_name||'Uploaded baseline'} · ${row?.currency||'Metric-specific units'} · Source: ${labelRow.source} · ${labelRow._lineage.file} / ${labelRow._lineage.sheet} / row ${labelRow._lineage.row}. Public benchmarks are separate context and never initialize these inputs.` : 'Operating evidence is available, but Actual vs Forecast data is required to start a variance investigation.';
+    $('user-source').textContent=labelRow ? `${labelRow._lineage.kind==='synthetic'?'SYNTHETIC SAMPLE':'USER UPLOADED'} · ${labelRow.entity_name} · ${labelRow.period} · ${row?.scenario_name||'Uploaded baseline'} · ${row?.currency||'Metric-specific units'} · Source: ${labelRow.source} · ${labelRow._lineage.file} / ${labelRow._lineage.sheet} / row ${labelRow._lineage.row}. Public benchmarks are separate context and never initialize these inputs.` : rows('events').length ? 'Operating evidence is available, but Actual vs Forecast data is required to start a variance investigation.' : rows('benchmark').length ? 'Custom Benchmark context is available, but Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.' : 'Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.';
     if(!row && view!=='investigation')view='investigation';
     if(view==='investigation' && !periodRows('performance').length && row)view='model';
     activate(view);
   }
   function activate(next){saveNote();view=next;for(const [key,id] of [['model','model-view'],['summary','executive-view'],['investigation','investigation-view']]) $(id).hidden=key!==view || (key==='investigation'?!periodRows('performance').length:!store);
-    $('user-analysis-status').textContent=!store&&!periodRows('performance').length?'Operating evidence is available, but Actual vs Forecast data is required to start a variance investigation.':!store?'Scenario Model requires Planning Assumptions. Variance Investigation is available.':!periodRows('performance').length?'Variance Investigation requires Actual vs Forecast data. Scenario Model and Executive Summary are available.':'';
+    $('user-analysis-status').textContent=!store&&!periodRows('performance').length?(rows('events').length?'Operating evidence is available, but Actual vs Forecast data is required to start a variance investigation.':rows('benchmark').length?'Custom Benchmark context is available, but Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.':'Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.'):!store?'Scenario Model requires Planning Assumptions. Variance Investigation is available.':!periodRows('performance').length?'Variance Investigation requires Actual vs Forecast data. Scenario Model and Executive Summary are available.':'';
     loadNote();
   }
   return {
@@ -99,10 +129,12 @@ export function createUserWorkspace(session) {
         $('user-back-import').onclick=()=>{saveNote();$('user-analysis').hidden=true;for(const child of document.querySelector('main').children)if(child.id!=='user-analysis-host')child.hidden=false;};
         for(const name of ['model','summary','investigation'])$('user-open-'+name).onclick=()=>activate(name);
         $('user-entity').onchange=()=>{selectors(1);choose();};$('user-period').onchange=()=>{selectors(2);choose();};$('user-scenario').onchange=choose;
+        $('user-benchmark').onchange=()=>selectBenchmark($('user-benchmark').value);
       }
       const fresh=session.snapshot();
       if(snapshot?.revision!==fresh.revision){
         snapshot=fresh;selected=null;notes.clear();previous=null;disposeModel();disposeSummary();store=null;selectors();choose();
+        $('user-benchmark').value='none';selectBenchmark('none');
       }
       for(const child of document.querySelector('main').children)if(child.id!=='user-analysis-host')child.hidden=true;
       $('user-analysis').hidden=false;window.scrollTo({top:0});

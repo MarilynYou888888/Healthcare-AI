@@ -1,4 +1,5 @@
 import {createInvestigationRenderer} from './investigation.js';
+import {composeInvestigationCommentary, COMMENTARY_DISCLOSURE} from './commentary.js';
 const $=id=>document.getElementById(id);
 const fields=['closed','forecast','clinical','absolute','percentage','always','override','normalization','persistence','horizon','timing-source','recurring'];
 const checks=new Set(['closed','forecast','clinical','always','override','recurring']);
@@ -36,6 +37,10 @@ export function mountUploadedInvestigation(onMetricChange) {
     render({...data,context:{case_id:'USER DATA',target_id:variance.id,target_type:variance.variance_type},
       targets:[{id:variance.id,type:variance.variance_type,required:data.system.review_required}],
       handoffs:[],narrative:{sections:[]},narrative_status:'available',narrative_disclosure:''});
+    const commentary=composeInvestigationCommentary({...data.system,snapshot_id:data.snapshot_id},data.reviewed);
+    $('investigation-disclosure').textContent=COMMENTARY_DISCLOSURE;
+    $('investigation-narrative').replaceChildren(Object.assign(document.createElement('p'),{textContent:commentary.summary}));
+    document.querySelector('#investigation-narrative').closest('section').hidden=false;
     $('investigation-override').hidden=true;
     document.querySelector('#investigation-view .model-heading .badge').textContent=sourceLabel+' · EVIDENCE REVIEW';
   }

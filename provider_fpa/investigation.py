@@ -67,7 +67,8 @@ def investigation_view(case_id, target_id=None, target_type=None, analyst_overri
                 targets=[dict(id=r.variance.item_id, type=r.variance.variance_type,
                               required=r.review.required, reasons=list(r.review.reasons)) for r in targets],
                 narrative=narrative, narrative_status=narrative_status,
-                narrative_disclosure='Offline demo — guarded deterministic fallback narrative; no live LLM used. '
+                narrative_disclosure='Automated FP&A Commentary — deterministic narrative from calculated results '
+                                     'and recorded evidence. No LLM or external API is used. '
                                      'Describes the system assessment before human review.')
 
 

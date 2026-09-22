@@ -62,7 +62,7 @@ The pinned MIT-licensed decimal.js 10.6.0 module and license are vendored under 
 
 ## Executive Summary and interpretation
 
-`web/executive.js` renders the same result as the detailed model. `web/interpretation.js` formats validated current results only and owns a separate revision-bound review session. It accepts no live provider text, performs no financial arithmetic, and exposes no forecast write. The UI explicitly states: “Offline demo — deterministic fallback commentary; no live LLM used.”
+`web/executive.js` renders the same result as the detailed model. `web/interpretation.js` formats validated current results only and owns a separate revision-bound review session. It accepts no live provider text, performs no financial arithmetic, and exposes no forecast write. The UI explicitly states: “Rule-based commentary from calculated results and recorded evidence. No LLM or external API is used.”
 
 Review choices: Reviewed — retain baseline; Request further investigation; Mark for forecast-assumption review. Any model edit (including an invalid draft) or reset clears the decision. Navigation preserves it; reload creates a new session. Invalid inputs remove commentary and disable review while the numerical views label the last valid revision as stale. Neither localStorage nor sessionStorage is used.
 
