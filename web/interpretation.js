@@ -24,7 +24,7 @@ function freeze(value) {
 function currentResult(state) {
   const result = state?.result;
   return state?.status === 'valid' && state.review_eligible && result?.validation?.status === 'valid'
-    && result.data_kind === 'synthetic' && result.revision === state.revision ? result : null;
+    && ['synthetic','user_uploaded'].includes(result.data_kind) && result.revision === state.revision ? result : null;
 }
 
 // Narrow adaptation of Phase 4's result-bound formatter pattern. No provider text,
@@ -38,12 +38,12 @@ export function interpret(state) {
   const metrics = GRAPH.filter(m => result.changes[m.id].amount !== '0').map(m => {
     const delta = result.changes[m.id];
     const percentage = delta.percent === null ? `N/A (${delta.percent_reason})` : formatPercent(delta.percent);
-    return {id:m.id, text:`${m.name}: ${formatValue(result.baseline[m.id],m.unit)} → ${formatValue(result.scenario[m.id],m.unit)}; change ${formatValue(delta.amount,m.unit,true)} (${percentage}).`,
+    return {id:m.id, text:`${m.name}: ${formatValue(result.baseline[m.id],m.unit === 'USD' ? result.currency : m.unit)} → ${formatValue(result.scenario[m.id],m.unit === 'USD' ? result.currency : m.unit)}; change ${formatValue(delta.amount,m.unit === 'USD' ? result.currency : m.unit,true)} (${percentage}).`,
       sources:[`baseline.${m.id}`,`scenario.${m.id}`,`changes.${m.id}`]};
   });
   const summary = drivers.length
-    ? `Under these synthetic assumptions, modeled monthly operating income is ${formatValue(result.scenario.operating_income,'USD')} versus baseline ${formatValue(result.baseline.operating_income,'USD')}, a ${formatValue(result.impact,'USD',true)} change. This is a hypothetical scenario, not a prediction or approved forecast update.`
-    : 'The scenario matches the synthetic baseline. No assumptions have changed and there is no modeled financial impact. Edit an assumption to explore a hypothetical outcome.';
+    ? `Under these ${result.data_kind === 'synthetic' ? 'synthetic' : 'uploaded planning'} assumptions, modeled monthly operating income is ${formatValue(result.scenario.operating_income,result.currency)} versus baseline ${formatValue(result.baseline.operating_income,result.currency)}, a ${formatValue(result.impact,result.currency,true)} change. This is a hypothetical scenario, not a prediction or approved forecast update.`
+    : `The scenario matches the ${result.data_kind === 'synthetic' ? 'synthetic' : 'uploaded'} baseline. No assumptions have changed and there is no modeled financial impact. Edit an assumption to explore a hypothetical outcome.`;
   const implications = [];
   if (result.changes.visits.amount !== '0') implications.push('In this model, visit volume drives revenue and variable labor and supply expense. Actual cost flexibility would require analyst validation.');
   if (result.assumption_changes.fixed_expense.amount === '0' && result.changes.visits.amount !== '0') implications.push('Fixed expense remains unchanged under this scenario, so it does not offset the volume change.');
@@ -61,7 +61,7 @@ export function interpret(state) {
     baseline_id:result.baseline_id, month:result.month, model_version:result.model_version,
     summary, drivers, metrics, implications,
     questions:drivers.length ? drivers.map(d => QUESTIONS[d.id]) : ['Which operating assumption should be tested, and what evidence would support it?'],
-    source_label:`Synthetic planning baseline ${result.baseline_id} · ${result.month} · ${result.model_version} · Revision ${result.revision}`,
+    source_label:`${result.data_kind === 'synthetic' ? 'Synthetic' : 'User uploaded'} planning baseline ${result.baseline_id} · ${result.month} · ${result.model_version} · Revision ${result.revision}`,
     boundary:'Analyst review records a scenario decision only. It does not confirm an actual cause or update an approved forecast.'});
 }
 

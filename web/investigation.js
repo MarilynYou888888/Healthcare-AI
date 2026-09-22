@@ -26,7 +26,7 @@ function details(title,children) {
 }
 function display(value,unit) {
   if(value === null) return 'Unavailable';
-  return formatValue(value,unit === 'USD' ? 'USD' : 'number');
+  return formatValue(value,unit || 'number');
 }
 async function request(path,options) {
   const response=await fetch(path,options);
@@ -41,6 +41,7 @@ function canReview(state,action) {
 }
 
 export function mountInvestigation(openWorkspace) {
+  const render=createInvestigationRenderer({decide,handoff});
   const sessions=new Map();
   let current=null, version=0;
   function clearHandoff() {
@@ -109,6 +110,22 @@ export function mountInvestigation(openWorkspace) {
     descriptions.add('investigation-handoff'); input.setAttribute('aria-describedby',[...descriptions].join(' '));
     openWorkspace('model'); input.focus(); banner.scrollIntoView({block:'nearest'});
   }
+  $('investigation-case').addEventListener('change',()=>load({case_id:$('investigation-case').value}));
+  $('investigation-target').addEventListener('change',()=>{
+    const [target_id,target_type]=JSON.parse($('investigation-target').value);
+    load({case_id:$('investigation-case').value,target_id,target_type});
+  });
+  $('investigation-override').addEventListener('click',()=>{ if(current) load({...current.context,analyst_override:true}); });
+  $('investigation-reload').addEventListener('click',()=>load(current?.context ?? {case_id:$('investigation-case').value || 'C01'}));
+  request('/api/investigation/catalog').then(cases=>{
+    $('investigation-case').replaceChildren(...cases.map(item=>{
+      const option=node('option',`${item.case_id} · ${item.clinic_id} · ${item.month}`); option.value=item.case_id; return option;
+    }));
+    $('investigation-case').disabled=false; load({case_id:'C01'});
+  }).catch(error=>{ $('investigation-status').textContent=error.message; });
+}
+
+export function createInvestigationRenderer({decide,handoff}) {
   function renderDrivers(view) {
     const system=view.system, effective=view.reviewed ?? system;
     $('investigation-drivers').replaceChildren(...system.drivers.map((driver,index)=>{
@@ -140,13 +157,13 @@ export function mountInvestigation(openWorkspace) {
   function render(view) {
     const system=view.system, variance=system.variance;
     $('investigation-content').inert=false; $('investigation-content').hidden=false;
-    $('investigation-status').textContent=`${view.context.case_id} · ${system.clinic_id} · ${system.month} · Synthetic investigation inputs · Current evidence`;
+    $('investigation-status').textContent=`${view.context.case_id} · ${system.clinic_id} · ${system.month} · ${view.data_kind === 'user_uploaded' ? 'Uploaded investigation inputs' : 'Synthetic investigation inputs'} · Current evidence`;
     $('investigation-target').replaceChildren(...view.targets.map(target=>{
       const option=node('option',`${target.required ? 'Review Queue' : 'Below selection rules'} · ${target.id} · ${label(target.type)}`);
       option.value=JSON.stringify([target.id,target.type]);
       option.selected=target.id===view.context.target_id && target.type===view.context.target_type; return option;
     }));
-    $('investigation-queue').textContent=(system.review_required ? 'Selected for review: ' : 'Not selected for Review Queue. ')+(system.review.reasons.map(label).join(' · ') || 'No configured threshold or critical rule triggered.');
+    $('investigation-queue').textContent=(view.rule_disclosure ? view.rule_disclosure+' ' : '')+(system.review_required ? 'Selected for review: ' : 'Not selected for Review Queue. ')+(system.review.reasons.map(label).join(' · ') || 'No configured threshold or critical rule triggered.');
     $('investigation-override').hidden=system.review_required;
     $('investigation-rule-sources').replaceChildren(sources(system.review.evidence));
     const comparator=variance.variance_type === 'financial_variance' ? 'Latest Approved Forecast' : 'Expected operating comparator';
@@ -175,17 +192,5 @@ export function mountInvestigation(openWorkspace) {
     }));
     if(!view.handoffs.length) $('investigation-handoffs').append(node('p','No supported provider/capacity handoff is available. Use further investigation to resolve evidence gaps; do not infer a scenario input.'));
   }
-  $('investigation-case').addEventListener('change',()=>load({case_id:$('investigation-case').value}));
-  $('investigation-target').addEventListener('change',()=>{
-    const [target_id,target_type]=JSON.parse($('investigation-target').value);
-    load({case_id:$('investigation-case').value,target_id,target_type});
-  });
-  $('investigation-override').addEventListener('click',()=>{ if(current) load({...current.context,analyst_override:true}); });
-  $('investigation-reload').addEventListener('click',()=>load(current?.context ?? {case_id:$('investigation-case').value || 'C01'}));
-  request('/api/investigation/catalog').then(cases=>{
-    $('investigation-case').replaceChildren(...cases.map(item=>{
-      const option=node('option',`${item.case_id} · ${item.clinic_id} · ${item.month}`); option.value=item.case_id; return option;
-    }));
-    $('investigation-case').disabled=false; load({case_id:'C01'});
-  }).catch(error=>{ $('investigation-status').textContent=error.message; });
+  return render;
 }

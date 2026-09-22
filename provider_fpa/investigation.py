@@ -92,6 +92,19 @@ def review_investigation(context, snapshot_id, decisions):
     if snapshot_id != view['snapshot_id']:
         raise ValueError('Investigation changed. Reload before reviewing.')
     _, result, _, _ = _load(**context)
+    reviewed_result, receipts = apply_review_decisions(result, decisions)
+    view.update(reviewed=investigation_payload(reviewed_result), decisions=receipts, handoffs=_handoffs(reviewed_result))
+    return view
+
+
+def apply_review_decisions(result, decisions):
+    """Shared evidence transitions for immutable demo and uploaded results."""
+    from dataclasses import replace
+    from datetime import datetime, timezone
+    from uuid import uuid4
+    from provider_fpa.evidence import confirm_driver, transition_driver
+    from provider_fpa.models import HumanDecision, SourceReference
+
     if not isinstance(decisions, dict) or len(decisions) > len(result.drivers):
         raise ValueError('Invalid session decisions')
     drivers = list(result.drivers)
@@ -122,5 +135,4 @@ def review_investigation(context, snapshot_id, decisions):
         drivers[int(key)] = reviewed
         receipts[key] = dict(action=action, rationale=rationale)
     reviewed_result = replace(result, drivers=tuple(drivers), analyst_status='reviewed' if decisions else 'pending')
-    view.update(reviewed=investigation_payload(reviewed_result), decisions=receipts, handoffs=_handoffs(reviewed_result))
-    return view
+    return reviewed_result, receipts

@@ -1,3 +1,4 @@
+import {createUserWorkspace} from './user-workflows.js';
 import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,ambiguousAlias} from './import-schema.js';
 import {headersFor,validateImport,createImportSession} from './import-validation.js';
 const $=id=>document.getElementById(id);
@@ -6,6 +7,8 @@ function option(value,text){const n=el('option',text);n.value=value;return n;}
 function select(label,choices,value,onchange) {const box=el('label',label),input=el('select');input.setAttribute('aria-label',label);for(const [v,t]of choices)input.append(option(v,t));input.value=value;input.addEventListener('change',()=>onchange(input.value));box.append(input);return box;}
 function check(label,value,onchange) {const box=el('label',undefined,'import-check'),input=el('input');input.type='checkbox';input.checked=value;input.addEventListener('change',()=>onchange(input.checked));box.append(input,document.createTextNode(label));return box;}
 const session=createImportSession();
+const workspace=createUserWorkspace(session);
+$('import-open-workflows').onclick=()=>workspace.open().catch(()=>status('Unable to open analytical panels. Your confirmed data remains in this session.'));
 let tables=[],result=null,worker=null,timer=null,generation=0,hasDraft=false;
 const STEPS=['Upload','Role & sheets','Map columns','Validate','Preview','Confirm'];
 function step(index) {$('import-steps').replaceChildren(...STEPS.map((name,i)=>{const li=el('li');li.append(el('b',String(i+1)),document.createTextNode(name));if(i===index)li.setAttribute('aria-current','step');return li;}));}
@@ -110,15 +113,17 @@ $('import-confirm-check').onchange=confirmationReady;$('import-replace-check').o
 $('import-back-validation').onclick=()=>{$('import-preview').hidden=true;$('import-confirm-check').checked=false;confirmationReady();step(3);$('import-validation').scrollIntoView({block:'start'});};
 $('import-confirm').onclick=()=>{
   try {
+    if(!workspace.canReplace())return;
     const snapshot=session.confirm(result,{reviewed:$('import-confirm-check').checked,replace:$('import-replace-check').checked});
     $('import-confirmed-list').replaceChildren();
     for(const [role,rows]of Object.entries(snapshot.datasets)){const details=el('details');details.append(el('summary',`${ROLES[role].label}: ${rows.length} row${rows.length===1?'':'s'} · confirmed`));const kinds=[...new Set(rows.map(r=>r._lineage.kind))];details.append(el('p',`${kinds.includes('synthetic')?'SYNTHETIC SAMPLE':'USER UPLOADED'} · Session revision ${snapshot.revision}`));grid(ROLES[role].fields,rows.map(r=>ROLES[role].fields.map(f=>r[f])),details);$('import-confirmed-list').append(details);}
+    $('import-open-workflows').disabled=false;
     status('Import confirmed. Data is held in this page session only; V1 demo data is unchanged.');$('import-confirmed').scrollIntoView({block:'start'});invalidate();hasDraft=false;$('import-file').value='';
   }catch(e){status(e.message);}
 };
 window.addEventListener('beforeunload',event=>{if(session.snapshot().revision||hasDraft){event.preventDefault();event.returnValue='';}});
 window.addEventListener('pagehide',()=>{
-  stopWorker();session.dispose();tables=[];result=null;hasDraft=false;$('import-file').value='';
+  stopWorker();workspace.dispose();session.dispose();tables=[];result=null;hasDraft=false;$('import-file').value='';
   for(const id of ['import-sheet-list','import-mapping-list','import-issues','import-preview-tables','import-transformations','import-confirmed-list']) $(id).replaceChildren();
 });
 window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});

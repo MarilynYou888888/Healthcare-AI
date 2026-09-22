@@ -7,7 +7,7 @@ export function node(tag,text,cls) {const e=document.createElement(tag);if(text!
 function svgNode(tag,attrs={},text) {const e=document.createElementNS(NS,tag);set(e,attrs);if(text!==undefined)e.textContent=text;return e;}
 function set(e,attrs) {for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));}
 function chartShell(id,label,width,height) {
-  const root=document.getElementById(id);root.hidden=false;root.classList.add('chart');
+  const root=document.getElementById(id);root.replaceChildren();root.hidden=false;root.classList.add('chart');
   const scroll=node('div',undefined,'chart-scroll');
   const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,role:'group','aria-label':label});
   const tip=node('div',undefined,'chart-tooltip');tip.id=id+'-tooltip';tip.role='tooltip';tip.hidden=true;
@@ -39,21 +39,22 @@ function makeBridge() {
   });
   const exact=node('details'),summary=node('summary','Inspect exact bridge values');const list=node('dl',undefined,'chart-data');exact.append(summary,list);c.root.append(exact);
   return (view,stale)=>{
-    list.replaceChildren(...view.bridge.map(b=>{const row=node('div');row.append(node('dt',b.label),node('dd',formatValue(b.impact,'USD',!['baseline','scenario'].includes(b.id))));return row;}));
+    list.replaceChildren(...view.bridge.map(b=>{const row=node('div');row.append(node('dt',b.label),node('dd',formatValue(b.impact,view.source.currency,!['baseline','scenario'].includes(b.id))));return row;}));
+    c.svg.setAttribute('aria-label','Operating income bridge, '+view.source.currency);
     const values=view.bridge.flatMap(b=>[Number(b.start),Number(b.end)]);
     const d=domain(values);
     if(!c.update(view.revision,stale,[...values,d.span]))return;
     const y=value=>225-(value-d.min)/d.span*185;
     grid.replaceChildren(...[d.min,0,d.max].filter((v,i,a)=>a.indexOf(v)===i).flatMap(value=>[
       svgNode('line',{x1:65,x2:985,y1:y(value),y2:y(value),class:value===0?'zero-line':'grid-line'}),
-      svgNode('text',{x:54,y:y(value)+4,'text-anchor':'end',class:'axis-label'},compact(value)),
+      svgNode('text',{x:54,y:y(value)+4,'text-anchor':'end',class:'axis-label'},compact(value,view.source.currency)),
     ]));
     view.bridge.forEach((b,i)=>{
       const p=pieces[i],start=Number(b.start),end=Number(b.end),top=Math.min(y(start),y(end));
-      const context=b.baseline===undefined?b.meaning:`Baseline: ${formatValue(b.baseline,'USD')} → Scenario: ${formatValue(b.scenario,'USD')}\n${b.meaning}`;
-      const tooltip=`${b.label}\n${i===0||i===5?'Operating income':'Income impact'}: ${formatValue(b.impact,'USD',i>0&&i<5)}\n${context}${stale?'\nStale — last valid scenario.':''}`;
+      const context=b.baseline===undefined?b.meaning:`Baseline: ${formatValue(b.baseline,view.source.currency)} → Scenario: ${formatValue(b.scenario,view.source.currency)}\n${b.meaning}`;
+      const tooltip=`${b.label}\n${i===0||i===5?'Operating income':'Income impact'}: ${formatValue(b.impact,view.source.currency,i>0&&i<5)}\n${context}${stale?'\nStale — last valid scenario.':''}`;
       set(p.rect,{x:p.x,y:top,width:88,height:Math.max(2,Math.abs(y(start)-y(end))),class:'chart-mark '+b.tone,'data-component':b.id,'data-value':b.impact,'aria-label':tooltip});
-      set(p.value,{x:p.x+44,y:Math.max(17,top-10)});p.value.textContent=(Number(b.impact)>0&&i>0&&i<5?'+':'')+compact(b.impact);
+      set(p.value,{x:p.x+44,y:Math.max(17,top-10)});p.value.textContent=(Number(b.impact)>0&&i>0&&i<5?'+':'')+compact(b.impact,view.source.currency);
       set(p.label,{x:p.x+44});p.label.textContent=b.label;
       set(p.connector,{x1:p.x-68,x2:p.x,y1:y(start),y2:y(start),visibility:i>0&&i<5?'visible':'hidden'});
     });
@@ -71,16 +72,16 @@ function makeDonut() {
   const legend=node('dl',undefined,'expense-legend');c.root.append(legend);
   return (view,stale)=>{
     const data=view.expenses;
-    total.textContent=compact(data.total);total.setAttribute('aria-label',formatValue(data.total,'USD'));
+    total.textContent=compact(data.total,view.source.currency);total.setAttribute('aria-label',formatValue(data.total,view.source.currency));
     const zero=data.total==='0';empty.hidden=!zero;
     let offset=0;
     data.items.forEach((item,i)=>{
       const share=item.share===null?0:Number(item.share)*100;
-      const text=`${item.label}\n${formatValue(item.amount,'USD')} · ${item.share===null?'Share N/A':formatValue(item.share,'ratio')+' of total expense'}${stale?'\nStale — last valid scenario.':''}`;
+      const text=`${item.label}\n${formatValue(item.amount,view.source.currency)} · ${item.share===null?'Share N/A':formatValue(item.share,'ratio')+' of total expense'}${stale?'\nStale — last valid scenario.':''}`;
       set(arcs[i],{'stroke-dasharray':`${share} ${100-share}`,'stroke-dashoffset':-offset,'data-value':item.amount,'aria-label':text,visibility:share>0?'visible':'hidden'});offset+=share;
     });
     legend.replaceChildren(...data.items.map((item,i)=>{
-      const row=node('div');row.append(node('dt',item.label,'expense-key expense-'+i),node('dd',`${formatValue(item.amount,'USD')} · ${item.share===null?'N/A':formatValue(item.share,'ratio')}`));return row;
+      const row=node('div');row.append(node('dt',item.label,'expense-key expense-'+i),node('dd',`${formatValue(item.amount,view.source.currency)} · ${item.share===null?'N/A':formatValue(item.share,'ratio')}`));return row;
     }));
     c.update(view.revision,stale,[data.total,...data.items.map(i=>i.share ?? '0')]);
   };
@@ -96,6 +97,7 @@ function makeComparison() {
     const values=svgNode('text',{x:660,y:i*82+17,'text-anchor':'end',class:'chart-value'});group.append(label,values);c.svg.append(group);return {label,bars,values};
   });
   return (view,stale)=>{
+    c.svg.setAttribute('aria-label','Baseline versus scenario financial values, '+view.source.currency);
     const values=view.comparison.flatMap(r=>[Number(r.baseline),Number(r.scenario)]);
     const d=domain(values);
     if(!c.update(view.revision,stale,[...values,d.span]))return;
@@ -103,10 +105,10 @@ function makeComparison() {
     set(zero,{x1:x(0),x2:x(0),y1:25,y2:232});
     view.comparison.forEach((row,i)=>{
       groups[i].label.textContent={revenue:'Revenue',contribution:'Contribution margin',operating_income:'Operating income'}[row.id];
-      groups[i].values.textContent=`${compact(row.baseline)} → ${compact(row.scenario)}`;
+      groups[i].values.textContent=`${compact(row.baseline,view.source.currency)} → ${compact(row.scenario,view.source.currency)}`;
       groups[i].bars.forEach((bar,j)=>{
         const v=Number(j?row.scenario:row.baseline);
-        set(bar,{x:Math.min(x(0),x(v)),y:i*82+28+j*20,width:Math.abs(x(v)-x(0)),'data-metric':row.id,'data-series':j?'scenario':'baseline','data-value':j?row.scenario:row.baseline,'aria-label':comparisonTooltip(row)+(stale?'\nStale — last valid scenario.':'')});
+        set(bar,{x:Math.min(x(0),x(v)),y:i*82+28+j*20,width:Math.abs(x(v)-x(0)),'data-metric':row.id,'data-series':j?'scenario':'baseline','data-value':j?row.scenario:row.baseline,'aria-label':comparisonTooltip(row,view.source.currency)+(stale?'\nStale — last valid scenario.':'')});
       });
     });
   };

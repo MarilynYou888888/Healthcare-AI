@@ -1,0 +1,15 @@
+{
+  "result": "pass",
+  "scenario_impact": "-21740.4",
+  "revenue": "243243",
+  "operating_income": "67182.8",
+  "insufficient_evidence": "Unresolved",
+  "external_requests": 0,
+  "raw_upload_requests": 0,
+  "local_normalized_investigation_requests": 1,
+  "browser_errors": [],
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ]
+}
