@@ -365,6 +365,53 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(result['datasets']['payer_mix'][0]['payer_category'],'Commercial')
         self.assertEqual(result['datasets']['payer_mix'][0]['net_revenue_per_visit'],'240')
 
+    def test_v21_context_only_acceptance_workbook_flow(self):
+        from pathlib import Path
+        workbook=Path('data/synthetic/v2_1/payer_mix_acceptance.xlsx')
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files(str(workbook))
+        self.page.get_by_label('Dataset role — Planning Assumptions',exact=True).select_option('planning')
+        self.page.get_by_label('Dataset role — Payer Mix Only',exact=True).select_option('payer_mix')
+        self.page.get_by_label('Dataset role — Payer Mix + Rates',exact=True).select_option('')
+        self.page.get_by_role('button',name='Map columns',exact=True).click()
+        self.page.locator('select[aria-label="Numeric percentage encoding"]').nth(0).select_option('fraction')
+        self.page.locator('select[aria-label="Numeric percentage encoding"]').nth(1).select_option('fraction')
+        self.page.get_by_role('button',name='Validate data',exact=True).click()
+        expect(self.page.locator('#import-validation')).to_contain_text('0 errors')
+        self.page.get_by_role('button',name='Preview normalized data',exact=True).click()
+        self.page.get_by_label('I confirm the normalized data').check()
+        self.page.get_by_role('button',name='Confirm import',exact=True).click()
+        expect(self.page.locator('#import-open-workflows')).to_be_enabled()
+        self.page.locator('#import-open-workflows').click()
+        expect(self.page.locator('#user-payer-mix-panel')).to_be_visible()
+        expect(self.page.locator('#user-payer-mix-chart svg')).to_be_visible()
+        expect(self.page.locator('#user-payer-mix-status')).to_contain_text('required to calculate a financial impact')
+        expect(self.page.get_by_role('button',name='Use payer-mix-derived Net Revenue / Visit',exact=True)).to_be_disabled()
+        expect(self.page.locator('#user-open-model')).to_be_enabled()
+
+    def test_v21_reimbursement_acceptance_workbook_requires_explicit_opt_in(self):
+        from pathlib import Path
+        workbook=Path('data/synthetic/v2_1/payer_mix_acceptance.xlsx')
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files(str(workbook))
+        self.page.get_by_label('Dataset role — Planning Assumptions',exact=True).select_option('planning')
+        self.page.get_by_label('Dataset role — Payer Mix Only',exact=True).select_option('')
+        self.page.get_by_label('Dataset role — Payer Mix + Rates',exact=True).select_option('payer_mix')
+        self.page.get_by_role('button',name='Map columns',exact=True).click()
+        self.page.locator('select[aria-label="Numeric percentage encoding"]').nth(0).select_option('fraction')
+        self.page.locator('select[aria-label="Numeric percentage encoding"]').nth(1).select_option('fraction')
+        self.page.get_by_role('button',name='Validate data',exact=True).click()
+        expect(self.page.locator('#import-validation')).to_contain_text('0 errors')
+        self.page.get_by_role('button',name='Preview normalized data',exact=True).click()
+        self.page.get_by_label('I confirm the normalized data').check()
+        self.page.get_by_role('button',name='Confirm import',exact=True).click()
+        self.page.locator('#import-open-workflows').click()
+        expect(self.page.locator('#user-payer-mix-status')).to_contain_text('Blended Net Revenue / Visit: $200.60')
+        revenue=self.page.locator('[data-output="revenue"] .scenario-value').inner_text()
+        operating_income=self.page.locator('[data-output="operating_income"] .scenario-value').inner_text()
+        self.page.get_by_role('button',name='Use payer-mix-derived Net Revenue / Visit',exact=True).click()
+        expect(self.page.locator('[data-output="revenue"] .scenario-value')).not_to_have_text(revenue)
+        expect(self.page.locator('[data-output="operating_income"] .scenario-value')).not_to_have_text(operating_income)
+        expect(self.page.locator('#user-payer-mix-trace')).to_contain_text('existing Scenario Model revenue logic')
+
     def test_session_store_requires_explicit_valid_replacement(self):
         result=self.page.evaluate('''async()=>{
           'use strict';
