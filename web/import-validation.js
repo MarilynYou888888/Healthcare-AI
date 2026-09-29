@@ -67,8 +67,9 @@ export function validateImport(tables,confirmed={}) {
     for(let c=0;c<headers.length;c++) {
       if(prohibitedHeader(headers[c])) error(table.headerRow,headers[c],'Personal identifiers are outside the aggregated-data contract.','Remove patient/employee/claim identifiers from the file before retrying.');
       const id=table.mapping[c];
-      if(id && !role.fields.includes(id)) error(table.headerRow,headers[c],'This field does not belong to the chosen dataset role.');
-      if(id && table.mapping.filter(x=>x===id).length>1) error(table.headerRow,headers[c],'More than one column maps to the same field.','Choose one source column for each FP&A field.');
+      const payerToken=table.role==='payer_mix'&&/^payer_(share|rate):/.test(String(id));
+      if(id && !role.fields.includes(id) && !payerToken) error(table.headerRow,headers[c],'This field does not belong to the chosen dataset role.');
+      if(id && table.mapping.filter(x=>x===id).length>1 && !payerToken) error(table.headerRow,headers[c],'More than one column maps to the same field.','Choose one source column for each FP&A field.');
       if(id && ambiguousAlias(headers[c]) && !settings.confirmSemantics) error(table.headerRow,headers[c],'This suggested mapping has ambiguous business meaning.','Confirm that provider count means FTE and visits per day means visits per provider-day, or correct the mapping.');
       if(!id) add('INFO',table,table.headerRow,headers[c],'Unmapped column will be excluded.','Map it if needed, or review its exclusion.');
     }
@@ -83,6 +84,40 @@ export function validateImport(tables,confirmed={}) {
         .map(row=>row[c]).filter(cell=>cell && !cell.percent && !String(cell.v).includes('%'))
         .map(cell=>{try{return numeric(String(cell.v),cell,settings,false).toNumber();}catch{return NaN;}}).filter(Number.isFinite);
       if(values.some(v=>v>0&&v<1)&&values.some(v=>v>1)) error(table.headerRow,headers[c],'Mixed percentage scales are ambiguous.','Use one encoding consistently in this column; do not mix 0.90 and 90.');
+    }
+    if(table.role==='payer_mix') {
+      const indexOf=id=>table.mapping.indexOf(id), payerShares=table.mapping.map((value,index)=>/^payer_share:/.test(String(value))?{index,category:String(value).slice(12)}:null).filter(Boolean), payerRates=table.mapping.map((value,index)=>/^payer_rate:/.test(String(value))?{index,category:String(value).slice(11)}:null).filter(Boolean);
+      const longForm=indexOf('payer_category')>=0 && indexOf('payer_mix_share')>=0;
+      if(indexOf('period')<0) error(table.headerRow,'Period','Period is required for payer mix context.','Map Month or Period.');
+      if(indexOf('entity_id')<0 && indexOf('entity_name')<0) error(table.headerRow,'Entity','Map Entity ID or Entity name.','Payer mix records need an entity identifier or name.');
+      if(!longForm && !payerShares.length) error(table.headerRow,'Payer mix share','Map Payer + Mix % columns, or map one or more payer-category percentage columns.','Provide payer shares explicitly; no shares are inferred.');
+      const totals=new Map(); let dataRows=0;
+      for(let r=table.headerRow;r<table.sheet.rows.length;r++) {
+        const cells=table.sheet.rows[r]; if(cells.every(c=>c.v===''&&!c.formula)) continue;
+        rowsCount++;dataRows++;cellsCount+=cells.filter(c=>c.v!==''||c.formula).length;
+        const raw=id=>{const index=indexOf(id),cell=index>=0?cells[index]:null;return {index,cell,raw:String(index>=0?(cell?.v??''):(table.constants?.[id]??'')).trim()};};
+        const entityId=raw('entity_id'),entityName=raw('entity_name'),period=raw('period'),source=raw('source'),currency=raw('currency');
+        if(!entityId.raw&&!entityName.raw) error(r+1,'Entity','Entity ID or Entity name is required.','Map one of the entity identity columns.');
+        let normalizedPeriod=period.raw;
+        try {if(!normalizedPeriod) throw new Error('Period is required.');normalizedPeriod=dateValue(normalizedPeriod,period.cell,settings.dateFormat,true);} catch(e) {error(r+1,'Period','Period could not be imported.',e.message);}
+        const base={entity_id:entityId.raw,entity_name:entityName.raw,period:normalizedPeriod,source:source.raw||`${table.fileName} / ${table.sheet.name} / row ${r+1}`,currency:currency.raw.toUpperCase()};
+        if(currency.raw&&!currencies.has(base.currency)) error(r+1,'Currency','Currency could not be imported.','Use a supported ISO currency code such as USD.');
+        const entries=longForm?[{category:raw('payer_category').raw,share:raw('payer_mix_share'),rate:raw('net_revenue_per_visit')}]:payerShares.map(({index,category})=>({category,share:{index,cell:cells[index],raw:String(cells[index]?.v??'').trim()},rate:payerRates.find(item=>item.category===category)?{index:payerRates.find(item=>item.category===category).index,cell:cells[payerRates.find(item=>item.category===category).index],raw:String(cells[payerRates.find(item=>item.category===category).index]?.v??'').trim()}:null}));
+        for(const entry of entries) {
+          if(!entry.category) {error(r+1,'Payer','Payer category is required.','Map Payer or use a named payer percentage column.');continue;}
+          let share='';try {share=numeric(entry.share.raw,entry.share.cell,settings,true).toString();if(new D(share).lt(0)||new D(share).gt(1)) throw new Error('Use a payer share between 0% and 100%.');if(!entry.share.cell?.percent&&!entry.share.raw.includes('%')&&settings.percent==='percent') add('WARNING',table,r+1,headers[entry.share.index],`${entry.share.raw} normalized to ${share} using percentage-point encoding.`,'Review the conversion before confirming.');} catch(e) {error(r+1,headers[entry.share.index]||'Payer mix share','Payer share could not be imported.',e.message);continue;}
+          let rate=''; if(entry.rate?.raw) {try {rate=numeric(entry.rate.raw,entry.rate.cell,settings,false).toString();if(new D(rate).lt(0)) throw new Error('Use a nonnegative reimbursement value.');} catch(e) {error(r+1,headers[entry.rate.index]||'Reimbursement','Reimbursement value could not be imported.',e.message);}}
+          const record={...base,payer_category:entry.category,payer_mix_share:share,net_revenue_per_visit:rate,reimbursement_rate:'',reimbursement_index:''};
+          if(rate&&!base.currency) error(r+1,'Currency','Currency is required for dollar-denominated reimbursement values.','Map Currency or choose an explicit ISO currency.');
+          record._lineage={file:table.fileName,sheet:table.sheet.name,row:r+1,kind:table.synthetic?'synthetic':'user_uploaded'};
+          (datasets.payer_mix??=[]).push(record);
+          const key=JSON.stringify([base.entity_id||base.entity_name,normalizedPeriod]),total=totals.get(key)||new D(0);totals.set(key,total.add(share));
+          if(entry.share.raw!==share) transformations.push({file:table.fileName,sheet:table.sheet.name,row:r+1,column:headers[entry.share.index]||'Payer mix share',field:'payer_mix_share',original:entry.share.raw,normalized:share,reason:'Explicit percentage normalization'});
+        }
+      }
+      for(const [key,total] of totals) {const difference=total.sub(1).abs();if(difference.gt(0)&&difference.lte('0.01')) add('WARNING',table,'—','Payer mix share',`Payer shares total ${total.mul(100).toFixed(2)}%, within rounding tolerance of 100%.`,'Review payer percentages; small rounding differences are allowed.');else if(difference.gt('0.01')) add('ERROR',table,'—','Payer mix share',`Payer shares total ${total.mul(100).toFixed(2)}%, materially different from 100%.`,'Correct payer shares so each entity and period totals approximately 100%.');}
+      if(!dataRows) error(table.headerRow,'Table','No data rows follow the selected header.');
+      continue;
     }
     let dataRows=0;
     for(let r=table.headerRow;r<table.sheet.rows.length;r++) {

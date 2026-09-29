@@ -1,5 +1,5 @@
 import {createUserWorkspace} from './user-workflows.js';
-import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,suggestSheetRole,ambiguousAlias} from './import-schema.js';
+import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,suggestSheetRole,suggestPayerMappings,PAYER_CATEGORIES,ambiguousAlias} from './import-schema.js';
 import {headersFor,validateImport,createImportSession} from './import-validation.js';
 const $=id=>document.getElementById(id);
 function el(tag,text,cls) {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -67,9 +67,11 @@ function renderMapping(){
     const headers=headersFor(table),list=el('table',undefined,'import-mapping-table'),body=el('tbody'),head=el('thead'),hr=el('tr');
     ['Uploaded column','Expected FP&A field','Example from your file'].forEach(x=>hr.append(el('th',x)));head.append(hr);list.append(head,body);
     const fieldStatus=el('div',undefined,'import-field-status');
-    function refreshStatus(){fieldStatus.replaceChildren();for(const id of ROLES[table.role].fields){const mapped=table.mapping.includes(id)||!!table.constants[id];fieldStatus.append(el('span',`${FIELDS[id].required?'* ':''}${FIELDS[id].label}: ${mapped?'mapped / supplied':'unmapped'}`,!mapped&&FIELDS[id].required?'import-unmapped':''));}}
+    function refreshStatus(){fieldStatus.replaceChildren();for(const id of ROLES[table.role].fields){const mapped=id==='payer_mix_share'&&table.role==='payer_mix'?table.mapping.some(value=>value==='payer_mix_share'||String(value).startsWith('payer_share:')):table.mapping.includes(id)||!!table.constants[id];const required=table.role==='payer_mix'&&['payer_mix_share','period'].includes(id)?true:FIELDS[id].required;fieldStatus.append(el('span',`${required?'* ':''}${FIELDS[id].label}: ${mapped?'mapped / supplied':'unmapped'}`,!mapped&&required?'import-unmapped':''));}}
     headers.forEach((header,c)=>{const row=el('tr'),name=el('td',header),mapping=el('td'),sel=el('select');sel.setAttribute('aria-label',`Map ${header}`);sel.append(option('','Do not import this column'));
-      ROLES[table.role].fields.forEach(id=>sel.append(option(id,`${FIELDS[id].label}${FIELDS[id].required?' *':''}`)));sel.value=table.mapping[c]??'';
+      ROLES[table.role].fields.forEach(id=>sel.append(option(id,`${FIELDS[id].label}${FIELDS[id].required?' *':''}`)));
+      if(table.role==='payer_mix') PAYER_CATEGORIES.forEach(category=>{sel.append(option(`payer_share:${category}`,`Payer mix share · ${category}`));sel.append(option(`payer_rate:${category}`,`Reimbursement value · ${category}`));});
+      sel.value=table.mapping[c]??'';
       sel.onchange=()=>{table.mapping[c]=sel.value;invalidate();refreshStatus();};mapping.append(sel);row.append(name,mapping,el('td',table.sheet.rows[table.headerRow]?.[c]?.w||table.sheet.rows[table.headerRow]?.[c]?.v||'—'));body.append(row);
     });
     const scroll=el('div',undefined,'import-scroll');scroll.append(list);section.append(scroll,fieldStatus);refreshStatus();
@@ -93,7 +95,7 @@ function renderMapping(){
 $('import-map').onclick=()=>{if(!tables.some(t=>t.role)){status('Choose at least one dataset role before mapping.');return;}invalidate();for(const t of tables.filter(t=>t.role)){
   // Keep separate drafts when the user changes a sheet's role or header row.
   const key=JSON.stringify([t.role,t.headerRow]);
-  if(!t.mappingDrafts.has(key))t.mappingDrafts.set(key,suggestMappings(headersFor(t),t.role));
+  if(!t.mappingDrafts.has(key))t.mappingDrafts.set(key,t.role==='payer_mix'?suggestPayerMappings(headersFor(t)):suggestMappings(headersFor(t),t.role));
   t.mapping=t.mappingDrafts.get(key);
 }renderMapping();status('Review your column mappings and explicit format choices. Previous choices are preserved; new mappings use suggestions.');};
 $('import-back-sheets').onclick=()=>{invalidate();$('import-sheets').hidden=false;$('import-mapping').hidden=true;step(1);};

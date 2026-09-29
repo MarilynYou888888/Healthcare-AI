@@ -1,15 +1,16 @@
 import {toScenarioAssumptions} from './import-schema.js';
+import {payerMixSummary,payerMixContextText} from './payer-mix.js';
 
 // Identity/provenance adapter only. All financial arithmetic stays in scenario.js.
-export function planningBaseline(row, uploadRevision) {
+export function planningBaseline(row, uploadRevision, payerMix=null) {
   if (!row?._lineage || !['synthetic','user_uploaded'].includes(row._lineage.kind)) throw new Error('A confirmed planning row with source lineage is required.');
   return {data_kind:'user_uploaded',baseline_id:`upload-${uploadRevision}-${crypto.randomUUID()}`,
     entity_id:row.entity_id,entity_name:row.entity_name,clinic:row.entity_name,month:row.period,
     scenario_name:row.scenario_name || 'Uploaded baseline',currency:row.currency,
-    source:row.source,source_lineage:{...row._lineage},assumptions:toScenarioAssumptions(row)};
+    source:row.source,source_lineage:{...row._lineage},payer_mix_context:payerMix,assumptions:toScenarioAssumptions(row)};
 }
 
-import {createScenarioStore} from './scenario.js';
+import {createScenarioStore,formatValue} from './scenario.js';
 import {mountScenarioModel} from './scenario-view.js';
 import {mountExecutiveSummary} from './executive.js';
 import {mountUploadedInvestigation} from './user-investigation.js';
@@ -46,7 +47,7 @@ async function templates() {
 
 export function createUserWorkspace(session) {
   let snapshot=null, selected=null, baseline=null, store=null, disposeModel=()=>{},disposeSummary=()=>{},investigation=null;
-  let view='model', notes=new Map(), previous=null,openVersion=0, benchmark='none',disposeExport=()=>{};
+  let view='model', notes=new Map(), previous=null,openVersion=0, benchmark='none',disposeExport=()=>{},payerSummary=null,payerMixApplied=false;
   const dirty=()=>store && (store.snapshot().status!=='valid' || store.snapshot().result.changed_drivers.length>0);
   function noteKey(){return JSON.stringify([snapshot?.revision,selected,view,view==='investigation'?$('user-metric')?.value:'']);}
   function saveNote(){if(previous)notes.set(previous,$('user-analyst-note').value);}
@@ -60,6 +61,17 @@ export function createUserWorkspace(session) {
   }
   function rows(role){return snapshot?.datasets[role]??[];}
   function periodRows(role){return rows(role).filter(r=>r.entity_id===$('user-entity').value && r.period===$('user-period').value);}
+  function renderPayerMix(){
+    const panel=$('user-payer-mix-panel');if(!panel)return;
+    const records=rows('payer_mix');if(!records.length){panel.hidden=true;return;}
+    const planningRow=periodRows('planning')[Number($('user-scenario')?.value||0)];
+    payerSummary=payerMixSummary(records,selected?.entity,planningRow?.entity_name,$('user-period')?.value);
+    panel.hidden=false;$('user-payer-mix-rows').replaceChildren(...payerSummary.categories.map(item=>{const row=document.createElement('div');row.className='payer-mix-row';row.append(Object.assign(document.createElement('span'),{textContent:item.category}),Object.assign(document.createElement('strong'),{textContent:formatValue(item.share,'ratio')}));return row;}));
+    const currency=planningRow?.currency||records.find(row=>row.currency)?.currency||'USD';
+    $('user-payer-mix-status').textContent=payerSummary.reimbursement_complete?`Blended Net Revenue / Visit: ${formatValue(payerSummary.blended_net_revenue_per_visit,currency)}${payerMixApplied?' · Applied to selected scenario draft.':' · Available for explicit analyst selection.'}`:payerMixContextText(payerSummary);
+    $('user-payer-mix-trace').textContent=payerSummary.reimbursement_complete?'Calculation trace: Payer Mix + payer-specific Net Revenue / Visit → Blended Net Revenue / Visit → existing Scenario Model revenue logic.':'Calculation trace: Payer Mix context only; no reimbursement value is inferred.';
+    const button=$('user-use-payer-mix');button.disabled=!payerSummary.reimbursement_complete||!store||payerMixApplied;button.textContent=payerMixApplied?'Payer-mix-derived value applied':'Use payer-mix-derived Net Revenue / Visit';
+  }
   function renderCustomBenchmark(){
     const records=rows('benchmark');
     $('user-benchmark-context').replaceChildren(...records.map(row=>{
@@ -97,13 +109,13 @@ export function createUserWorkspace(session) {
       options('user-entity',[...new Map([...rows('planning'),...rows('performance')].map(r=>[r.entity_id,r.entity_name+' · '+r.entity_id])).entries()],selected.entity);
       selectors(1);$('user-scenario').value=selected.scenario;return;
     }
-    saveNote();disposeExport();disposeModel();disposeSummary();store=null;
+    saveNote();disposeExport();disposeModel();disposeSummary();store=null;payerMixApplied=false;
     selected={entity:$('user-entity').value,period:$('user-period').value,scenario:$('user-scenario').value};
     const row=periodRows('planning')[Number(selected.scenario)];
     $('user-open-model').disabled=$('user-open-summary').disabled=!row;
     $('user-open-investigation').disabled=!periodRows('performance').length;
     if(row){
-      baseline=planningBaseline(row,snapshot.revision);store=createScenarioStore(baseline);disposeExport=store.subscribe(state=>{$('user-export-summary').disabled=state.status!=='valid';});
+      payerSummary=payerMixSummary(rows('payer_mix'),selected.entity,row.entity_name,selected.period);baseline=planningBaseline(row,snapshot.revision,payerSummary.rows.length?payerSummary:null);store=createScenarioStore(baseline);disposeExport=store.subscribe(state=>{$('user-export-summary').disabled=state.status!=='valid';if(payerMixApplied&&payerSummary?.blended_net_revenue_per_visit&&state.draft.net_revenue_per_visit!==payerSummary.blended_net_revenue_per_visit)payerMixApplied=false;renderPayerMix();});
       disposeModel=mountScenarioModel(baseline,store);disposeSummary=mountExecutiveSummary(store);
       $('edit-model').onclick=()=>activate('model');$('view-summary').onclick=()=>activate('summary');
       document.querySelector('#model-view .model-heading h2').textContent=row.entity_name;
@@ -114,6 +126,7 @@ export function createUserWorkspace(session) {
       document.querySelector('#summary-comparison > p').textContent=`One entity · one month · common ${row.currency} scale`;
       document.querySelector('#summary-expenses > p').textContent=`Variable costs and fixed expense · ${row.currency}`;
     }
+    renderPayerMix();
     investigation.select(snapshot,selected.entity,selected.period);
     const labelRow=row??periodRows('performance')[0];
     $('user-source').textContent=labelRow ? `${labelRow._lineage.kind==='synthetic'?'SYNTHETIC SAMPLE':'USER UPLOADED'} · ${labelRow.entity_name} · ${labelRow.period} · ${row?.scenario_name||'Uploaded baseline'} · ${row?.currency||'Metric-specific units'} · Source: ${labelRow.source} · ${labelRow._lineage.file} / ${labelRow._lineage.sheet} / row ${labelRow._lineage.row}. Public benchmarks are separate context and never initialize these inputs.` : rows('events').length ? 'Operating evidence is available, but Actual vs Forecast data is required to start a variance investigation.' : rows('benchmark').length ? 'Custom Benchmark context is available, but Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.' : 'Planning Assumptions or Actual vs Forecast data is required to run an analytical workflow.';
@@ -133,11 +146,12 @@ export function createUserWorkspace(session) {
         for(const name of ['model','summary','investigation'])$('user-open-'+name).onclick=()=>activate(name);
         $('user-entity').onchange=()=>{selectors(1);choose();};$('user-period').onchange=()=>{selectors(2);choose();};$('user-scenario').onchange=choose;
         $('user-benchmark').onchange=()=>selectBenchmark($('user-benchmark').value);
+        $('user-use-payer-mix').onclick=()=>{if(!payerSummary?.reimbursement_complete||!store)return;payerMixApplied=true;store.edit('net_revenue_per_visit',payerSummary.blended_net_revenue_per_visit);renderPayerMix();};
         const actions=document.createElement('div');actions.className='import-actions';actions.id='user-ticket4-actions';const exportButton=document.createElement('button');exportButton.type='button';exportButton.id='user-export-summary';exportButton.textContent='Export Scenario Summary CSV';exportButton.disabled=true;exportButton.onclick=exportSummary;const clearButton=document.createElement('button');clearButton.type='button';clearButton.id='user-clear-data';clearButton.textContent='Clear Uploaded Data';clearButton.onclick=clearUploadedData;actions.append(exportButton,clearButton);const exportStatus=document.createElement('p');exportStatus.id='user-export-status';exportStatus.className='session-note';exportStatus.setAttribute('role','status');$('user-analysis-status').after(actions,exportStatus);
       }
       const fresh=session.snapshot();
       if(snapshot?.revision!==fresh.revision){
-        snapshot=fresh;selected=null;notes.clear();previous=null;disposeModel();disposeSummary();store=null;selectors();choose();
+        snapshot=fresh;selected=null;notes.clear();previous=null;disposeModel();disposeSummary();store=null;payerMixApplied=false;selectors();choose();
         $('user-benchmark').value='none';selectBenchmark('none');
       }
       for(const child of document.querySelector('main').children)if(child.id!=='user-analysis-host')child.hidden=true;

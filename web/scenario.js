@@ -94,7 +94,7 @@ export function scenarioResult(baseline, assumptions, revision) {
   const assumptionChanges = Object.fromEntries(Object.keys(ASSUMPTIONS).map(id => [id,change(baseline.assumptions[id],assumptions[id])]));
   const changedDrivers = Object.entries(ASSUMPTIONS).filter(([id]) => !new D(assumptions[id]).eq(baseline.assumptions[id]))
     .map(([id, meta]) => ({id, ...meta, unit:meta.unit === 'USD' ? (baseline.currency ?? 'USD') : meta.unit, baseline:baseline.assumptions[id], scenario:assumptions[id]}));
-  const result = {data_kind:baseline.data_kind, currency:baseline.currency ?? 'USD', entity_id:baseline.entity_id, entity_name:baseline.entity_name, scenario_name:baseline.scenario_name, source_lineage:baseline.source_lineage, source:baseline.source, validation:{status:'valid',errors:{}}, model_version:MODEL_VERSION, baseline_id:baseline.baseline_id,
+  const result = {data_kind:baseline.data_kind, currency:baseline.currency ?? 'USD', entity_id:baseline.entity_id, entity_name:baseline.entity_name, scenario_name:baseline.scenario_name, source_lineage:baseline.source_lineage, source:baseline.source, payer_mix_context:baseline.payer_mix_context, validation:{status:'valid',errors:{}}, model_version:MODEL_VERSION, baseline_id:baseline.baseline_id,
     clinic:baseline.clinic, month:baseline.month, revision, baseline_assumptions:{...baseline.assumptions},
     assumptions:{...assumptions}, baseline:base, scenario, changes, assumption_changes:assumptionChanges,
     changed_drivers:changedDrivers, output_units:Object.fromEntries(GRAPH.map(m => [m.id,m.unit === 'USD' ? (baseline.currency ?? 'USD') : m.unit])),

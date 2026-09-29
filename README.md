@@ -33,6 +33,8 @@ Choose **Use My Data** to upload aggregated, de-identified CSV/XLSX data, assign
 
 The uploaded workspace can export the current valid `ScenarioResult` as a lightweight CSV. It includes source disclosure, assumptions, outputs, changes, deterministic Automated FP&A Commentary, and a separately labeled Analyst Note. Export is generated in the browser; no report file is written to the server. The core commentary is complete rule-based functionality with zero LLM tokens, API keys, paid APIs, external AI-provider accounts, or paid cloud inference.
 
+Payer Mix / Reimbursement Drivers is an optional uploaded context role. Wide payer columns are normalized into payer-category records and checked against a 100% entity-period total. Payer mix without payer-specific reimbursement remains context only. A blended Net Revenue / Visit is calculated only when complete payer-specific values are present and the analyst explicitly selects **Use payer-mix-derived Net Revenue / Visit**; the existing Scenario Model remains the downstream source of revenue and operating-income calculations.
+
 ## Verify
 
 ```sh

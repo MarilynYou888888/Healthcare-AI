@@ -291,13 +291,15 @@ class ImportTests(unittest.TestCase):
             suggestSheetRole({name:'Income_Statement',rows:[cellRows(['Month','Entity','Revenue','Actual','Budget','Operating Income'])]}),
             suggestSheetRole({name:'Operating_Metrics',rows:[cellRows(['FTE','Operating Days','Visits','Utilization','Revenue per Visit'])]}),
             suggestSheetRole({name:'Ops Notes',rows:[cellRows(['Event Type','Start Date','Description'])]}),
+            suggestSheetRole({name:'Payer_Mix',rows:[cellRows(['Clinic','Month','Commercial %','Medicare %','Medicaid %','Self Pay %'])]}),
             suggestSheetRole({name:'Summary',rows:[cellRows(['Notes','Owner'])]})
           ];
         }''')
         self.assertEqual(suggestions[0]['role'],'performance')
         self.assertEqual(suggestions[1]['role'],'planning')
         self.assertEqual(suggestions[2]['role'],'events')
-        self.assertEqual(suggestions[3]['role'],'')
+        self.assertEqual(suggestions[3]['role'],'payer_mix')
+        self.assertEqual(suggestions[4]['role'],'')
         self.assertTrue(all(item['reason'] for item in suggestions))
 
     def test_sheet_role_suggestion_is_visible_but_requires_explicit_assignment(self):
@@ -311,6 +313,57 @@ class ImportTests(unittest.TestCase):
         expect(card.get_by_label('Dataset role — Income_Statement')).to_have_value('')
         self.page.get_by_role('button',name='Map columns',exact=True).click()
         expect(self.page.locator('#import-status')).to_contain_text('Choose at least one dataset role')
+
+    def test_wide_payer_mix_import_normalizes_categories_and_warns_on_rounding(self):
+        rows=[['Clinic','Month','Commercial %','Medicare %','Medicaid %','Self Pay %'],['C01','2026-08','42','31','12','15']]
+        result=self.page.evaluate('''async rows=>{
+          const {suggestPayerMappings}=await import('/import-schema.js');
+          const {validateImport}=await import('/import-validation.js');
+          const cells=rows.map(row=>row.map(v=>({v:String(v),w:String(v),t:'s'})));
+          const table={sheet:{name:'Payer_Mix',rows:cells,merges:[]},fileName:'payer.csv',role:'payer_mix',headerRow:1,mapping:suggestPayerMappings(rows[0]),constants:{},settings:{percent:'percent',numberFormat:'dot',dateFormat:'iso'}};
+          return validateImport([table]);
+        }''',rows)
+        self.assertTrue(result['valid'],result['issues'])
+        self.assertEqual(len(result['datasets']['payer_mix']),4)
+        self.assertEqual({row['payer_category'] for row in result['datasets']['payer_mix']},{'Commercial','Medicare','Medicaid','Self Pay'})
+        self.assertEqual(sum(float(row['payer_mix_share']) for row in result['datasets']['payer_mix']),1.0)
+
+    def test_payer_mix_invalid_total_and_negative_share_block_import(self):
+        rows=[['Clinic','Month','Commercial %','Medicare %'],['C01','2026-08','60','-10']]
+        result=self.page.evaluate('''async rows=>{
+          const {suggestPayerMappings}=await import('/import-schema.js');
+          const {validateImport}=await import('/import-validation.js');
+          const cells=rows.map(row=>row.map(v=>({v:String(v),w:String(v),t:'s'})));
+          const table={sheet:{name:'Payer_Mix',rows:cells,merges:[]},fileName:'payer.csv',role:'payer_mix',headerRow:1,mapping:suggestPayerMappings(rows[0]),constants:{},settings:{percent:'percent',numberFormat:'dot',dateFormat:'iso'}};
+          return validateImport([table]);
+        }''',rows)
+        self.assertFalse(result['valid'])
+        self.assertTrue(any('between 0% and 100%' in (issue['problem']+' '+issue['correction']) for issue in result['issues']))
+
+    def test_payer_mix_role_ui_maps_wide_headers(self):
+        data=self.make_xlsx([['Clinic','Month','Commercial %','Medicare %','Medicaid %','Self Pay %'],['C01','2026-08','42','31','12','15']],sheet='Payer_Mix')
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files({'name':'payer.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+        card=self.page.locator('.import-sheet').first
+        expect(card).to_contain_text('Suggested role: Payer Mix / Reimbursement Drivers')
+        card.get_by_label('Dataset role — Payer_Mix').select_option('payer_mix')
+        self.page.get_by_role('button',name='Map columns',exact=True).click()
+        expect(self.page.get_by_label('Map Commercial %')).to_have_value('payer_share:Commercial')
+        self.page.get_by_label('Numeric percentage encoding').select_option('percent')
+        self.page.get_by_role('button',name='Validate data',exact=True).click()
+        expect(self.page.locator('#import-validation')).to_contain_text('0 errors')
+
+    def test_long_form_payer_mix_import_is_supported(self):
+        rows=[['Clinic','Month','Payer','Mix %','Net Revenue / Visit','Currency'],['C01','2026-08','Commercial','100','240','USD']]
+        result=self.page.evaluate('''async rows=>{
+          const {suggestPayerMappings}=await import('/import-schema.js');
+          const {validateImport}=await import('/import-validation.js');
+          const cells=rows.map(row=>row.map(v=>({v:String(v),w:String(v),t:'s'})));
+          const table={sheet:{name:'Payer_Long',rows:cells,merges:[]},fileName:'payer-long.csv',role:'payer_mix',headerRow:1,mapping:suggestPayerMappings(rows[0]),constants:{},settings:{percent:'percent',numberFormat:'dot',dateFormat:'iso'}};
+          return validateImport([table]);
+        }''',rows)
+        self.assertTrue(result['valid'],result['issues'])
+        self.assertEqual(result['datasets']['payer_mix'][0]['payer_category'],'Commercial')
+        self.assertEqual(result['datasets']['payer_mix'][0]['net_revenue_per_visit'],'240')
 
     def test_session_store_requires_explicit_valid_replacement(self):
         result=self.page.evaluate('''async()=>{

@@ -23,12 +23,17 @@ export const FIELDS = Object.freeze({
   observed_value: field('Observed value', ['observed'], 'number', false), reported_at: field('Reported at', ['reported date'], 'timestamp', false),
   company: field('Company', ['company name']), business_segment: field('Business segment', ['segment']),
   value: field('Value', ['benchmark value'], 'number'), source_url: field('Source URL', ['url'], 'url', false),
+  payer_category: field('Payer category', ['payer','payer name','payer type'], 'text', false),
+  payer_mix_share: field('Payer mix share', ['mix','mix %','mix share','payer mix','payer mix share','share'], 'ratio', false),
+  reimbursement_rate: field('Reimbursement rate', ['reimbursement rate','realization rate','allowed amount'], 'nonnegative', false),
+  reimbursement_index: field('Reimbursement index', ['reimbursement index','reimbursement factor'], 'positive', false),
 });
 export const ROLES = Object.freeze({
   planning: {label:'Planning Assumptions', fields:'entity_id entity_name period provider_fte operating_days visits_per_provider_day utilization_rate net_revenue_per_visit variable_labor_cost_per_visit variable_supply_cost_per_visit fixed_operating_expense reimbursement_factor market specialty business_unit scenario_name currency source notes'.split(' '), key:['entity_id','period','scenario_name']},
   performance: {label:'Actual vs Forecast', fields:'entity_id entity_name period metric_id metric_name actual_value forecast_value unit currency source'.split(' '), key:['entity_id','period','metric_id']},
   events: {label:'Operating Events', fields:'entity_id period event_type start_date end_date description observed_value unit source reported_at'.split(' '), key:['entity_id','period','event_type','start_date','end_date','description','observed_value','unit']},
   benchmark: {label:'Custom Benchmark', fields:'company period business_segment metric_id metric_name value unit source notes source_url'.split(' '), key:['company','period','business_segment','metric_id']},
+  payer_mix: {label:'Payer Mix / Reimbursement Drivers', fields:'entity_id entity_name period payer_category payer_mix_share source net_revenue_per_visit reimbursement_rate reimbursement_index currency'.split(' '), key:['entity_id','entity_name','period','payer_category']},
 });
 export const LIMITS = Object.freeze({fileBytes:10*1024*1024, expandedBytes:100*1024*1024, rows:50000, columns:100, cells:500000, parseMs:15000});
 const metric = (label, units, signed=false) => ({label, units:units.split(' '), signed});
@@ -41,6 +46,7 @@ export const METRICS = Object.freeze({
 });
 export const normalizeName = value => String(value).toLowerCase().replace(/[_/\-]+/g,' ').replace(/\s+/g,' ').trim();
 export function suggestMappings(headers, role) {
+  if(role==='payer_mix') return suggestPayerMappings(headers);
   const candidates = headers.map(header => ROLES[role].fields.filter(id => [id,FIELDS[id].label,...FIELDS[id].aliases].some(alias => normalizeName(alias) === normalizeName(header))));
   return candidates.map(matches => matches.length === 1 && candidates.filter(other => other.includes(matches[0])).length === 1 ? matches[0] : '');
 }
@@ -65,14 +71,20 @@ const SHEET_ROLE_SIGNALS = Object.freeze({
     ['benchmark metric', ['metric','metric id','metric name','value']],
     ['benchmark context', ['period','unit','source','notes']],
   ]),
+  payer_mix: Object.freeze([
+    ['payer-category shares', ['commercial %','medicare %','medicaid %','self pay %','payer mix','mix %','payer share']],
+    ['payer identity', ['payer','payer category','commercial','medicare','medicaid','self pay']],
+    ['reimbursement driver', ['reimbursement','net revenue per visit','allowed amount','realization rate','reimbursement rate']],
+  ]),
 });
 const SHEET_ROLE_NAMES = Object.freeze({
   performance:['income statement','actuals','actual vs forecast','forecast','financial performance'],
   planning:['planning','operating metrics','staffing plan','capacity'],
   events:['events','event log','ops notes','operating events'],
   benchmark:['benchmark','benchmarks','market data'],
+  payer_mix:['payer mix','payer_mixes','payer reimbursement','reimbursement drivers','payer mix drivers'],
 });
-const SHEET_ROLE_LABELS = Object.freeze({performance:'Actual vs Forecast',planning:'Planning Assumptions',events:'Operating Events',benchmark:'Custom Benchmark'});
+const SHEET_ROLE_LABELS = Object.freeze({performance:'Actual vs Forecast',planning:'Planning Assumptions',events:'Operating Events',benchmark:'Custom Benchmark',payer_mix:'Payer Mix / Reimbursement Drivers'});
 function cellText(cell) { return cell && typeof cell === 'object' ? (cell.w ?? cell.v ?? '') : (cell ?? ''); }
 function signalMatches(text, aliases) {
   const normalized=normalizeName(text);
@@ -98,6 +110,28 @@ export function suggestSheetRole(sheet, headerRow=1) {
   if(best.score<3 || best.score-runner<2) return {role:'',label:'Do not import',confidence:'ambiguous',reason:'No dataset role has enough distinct deterministic signals; defaulting to Do not import.'};
   const signalText=best.matched.filter(label=>label!=='sheet name').slice(0,3).join(', ');
   return {role,label:SHEET_ROLE_LABELS[role],confidence:best.score>=5?'high':'medium',reason:`Matched ${signalText||'sheet-name'} signals${best.matched.includes('sheet name')?' and the sheet name':''}.`};
+}
+export const PAYER_CATEGORIES = Object.freeze(['Commercial','Medicare','Medicaid','Self Pay','Tricare','Managed Care','Other']);
+export function payerCategoryFromHeader(header) {
+  const normalized=normalizeName(header);
+  const category=PAYER_CATEGORIES.find(value=>normalized.includes(normalizeName(value)));
+  if(!category || !/(%|percent|share|mix)/.test(normalized)) return '';
+  return category;
+}
+export function payerRateCategoryFromHeader(header) {
+  const normalized=normalizeName(header);
+  const category=PAYER_CATEGORIES.find(value=>normalized.includes(normalizeName(value)));
+  if(!category || !/(revenue|reimbursement|allowed|realization|rate|amount)/.test(normalized)) return '';
+  return category;
+}
+export function suggestPayerMappings(headers) {
+  return headers.map(header=>{
+    const exact=ROLES.payer_mix.fields.find(id=>[id,FIELDS[id].label,...FIELDS[id].aliases].some(alias=>normalizeName(alias)===normalizeName(header)));
+    if(exact) return exact;
+    const share=payerCategoryFromHeader(header); if(share) return `payer_share:${share}`;
+    const rate=payerRateCategoryFromHeader(header); if(rate) return `payer_rate:${rate}`;
+    return '';
+  });
 }
 export const ambiguousAlias = header => ['provider count','visits per day'].includes(normalizeName(header));
 export const prohibitedHeader = header => /^(patient( name| id| identifier)?|mrn|medical record( number)?|dob|date of birth|ssn|social security( number)?|employee( name| id| identifier)?|claim( id| number)?|member( id| name)?)$/.test(normalizeName(header));
