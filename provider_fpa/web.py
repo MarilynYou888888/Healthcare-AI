@@ -11,6 +11,9 @@ from provider_fpa.investigation import investigation_catalog, investigation_view
 
 WEB = Path(__file__).resolve().parents[1] / 'web'
 ASSETS = {'/presentation.js':('presentation.js','text/javascript'),'/charts.js':('charts.js','text/javascript'),'/benchmark-view.js':('benchmark-view.js','text/javascript'),'/investigation.js':('investigation.js','text/javascript'),'/executive.js':('executive.js','text/javascript'),'/interpretation.js':('interpretation.js','text/javascript'),'/scenario-view.js':('scenario-view.js','text/javascript'),'/scenario.js':('scenario.js','text/javascript'),'/vendor/decimal.mjs':('vendor/decimal.mjs','text/javascript'),'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
+ASSETS['/prototype/ux'] = ('ux-prototype.html', 'text/html')
+ASSETS['/prototype/ux.css'] = ('ux-prototype.css', 'text/css')
+ASSETS['/prototype/ux.js'] = ('ux-prototype.js', 'text/javascript')
 
 # Ticket 1: static, locally bundled import workspace. No upload endpoint.
 ASSETS.update({
