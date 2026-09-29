@@ -13,4 +13,5 @@
 .entry-choice{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.entry-choice a{border:1px solid var(--line);border-radius:4px;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:12px}.entry-choice a:hover,.entry-choice .entry-choice-current{border-color:var(--gold);color:var(--ink)}
 .import-role-suggestion{margin:12px 0 4px;font-weight:600}.import-role-reason{margin:0 0 12px;color:var(--muted);font-size:12px}
 .payer-mix-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0;max-width:360px}.payer-mix-row strong{font-variant-numeric:tabular-nums}
+.payer-mix-chart{max-width:560px;margin:16px 0}.payer-mix-chart svg{display:block;width:100%;height:auto}.payer-mix-chart rect{opacity:.9}
 .benchmark-context-row{border-top:1px solid var(--line);padding:12px 0}.benchmark-context-row p,.benchmark-context-row small{display:block;margin:5px 0;color:var(--muted)}.benchmark-context-row a{font-size:11px;color:var(--gold)}

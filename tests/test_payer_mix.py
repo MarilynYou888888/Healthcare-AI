@@ -1,5 +1,6 @@
 """V2.1 payer mix context and explicit reimbursement opt-in seams."""
 import unittest
+from pathlib import Path
 
 try:
     from test_scenario import BrowserModelCase
@@ -8,6 +9,16 @@ except ModuleNotFoundError:
 
 
 class PayerMixTests(BrowserModelCase):
+    def test_v21_acceptance_workbook_contains_two_period_states(self):
+        import zipfile
+        with zipfile.ZipFile(Path('data/synthetic/v2_1/payer_mix_acceptance.xlsx')) as archive:
+            workbook=archive.read('xl/workbook.xml').decode()
+            strings=''.join(archive.read(name).decode(errors='ignore') for name in archive.namelist() if name.endswith('.xml'))
+        for name in ['Planning Assumptions','Payer Mix Only','Payer Mix + Rates']:
+            self.assertIn(name,workbook)
+        for value in ['2026-08','2026-09','Commercial %','Commercial Net Revenue / Visit']:
+            self.assertIn(value,strings)
+
     def test_weighted_blended_reimbursement_is_deterministic(self):
         result=self.page.evaluate('''async()=>{
           const {payerMixSummary}=await import('/payer-mix.js');
@@ -41,6 +52,22 @@ class PayerMixTests(BrowserModelCase):
           return {before:before.scenario.revenue,after:after.scenario.revenue,changed:after.changed_drivers.map(driver=>driver.id)};''')
         self.assertNotEqual(result['before'],result['after'])
         self.assertIn('net_revenue_per_visit',result['changed'])
+
+    def test_payer_mix_composition_renderer_is_descriptive_only(self):
+        result=self.page.evaluate('''async()=>{
+          const {payerMixSummary,renderPayerMixComposition}=await import('/payer-mix.js');
+          const root=document.createElement('div');document.body.append(root);
+          const summary=payerMixSummary([
+            {entity_id:'C01',period:'2026-08',payer_category:'Commercial',payer_mix_share:'0.42'},
+            {entity_id:'C01',period:'2026-08',payer_category:'Medicare',payer_mix_share:'0.31'},
+            {entity_id:'C01',period:'2026-08',payer_category:'Medicaid',payer_mix_share:'0.12'},
+            {entity_id:'C01',period:'2026-08',payer_category:'Self Pay',payer_mix_share:'0.15'}
+          ],'C01','Clinic','2026-08');
+          renderPayerMixComposition(root,summary);
+          return {labels:[...root.querySelectorAll('[data-payer-category]')].map(node=>node.getAttribute('data-payer-category')),blended:summary.blended_net_revenue_per_visit};
+        }''')
+        self.assertEqual(result['labels'],['Commercial','Medicare','Medicaid','Self Pay'])
+        self.assertEqual(result['blended'],'')
 
 
 if __name__ == '__main__':

@@ -35,6 +35,8 @@ The uploaded workspace can export the current valid `ScenarioResult` as a lightw
 
 Payer Mix / Reimbursement Drivers is an optional uploaded context role. Wide payer columns are normalized into payer-category records and checked against a 100% entity-period total. Payer mix without payer-specific reimbursement remains context only. A blended Net Revenue / Visit is calculated only when complete payer-specific values are present and the analyst explicitly selects **Use payer-mix-derived Net Revenue / Visit**; the existing Scenario Model remains the downstream source of revenue and operating-income calculations.
 
+For the V2.1 manual acceptance flow, use `data/synthetic/v2_1/payer_mix_acceptance.xlsx`. Select `Planning Assumptions` plus either `Payer Mix Only` (context-only state) or `Payer Mix + Rates` (complete reimbursement state), assign the payer sheet to **Payer Mix / Reimbursement Drivers**, and then select Nashville Specialty Clinic for August or September 2026.
+
 ## Verify
 
 ```sh

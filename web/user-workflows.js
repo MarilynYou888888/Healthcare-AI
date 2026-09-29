@@ -1,5 +1,5 @@
 import {toScenarioAssumptions} from './import-schema.js';
-import {payerMixSummary,payerMixContextText} from './payer-mix.js';
+import {payerMixSummary,payerMixContextText,renderPayerMixComposition} from './payer-mix.js';
 
 // Identity/provenance adapter only. All financial arithmetic stays in scenario.js.
 export function planningBaseline(row, uploadRevision, payerMix=null) {
@@ -66,7 +66,7 @@ export function createUserWorkspace(session) {
     const records=rows('payer_mix');if(!records.length){panel.hidden=true;return;}
     const planningRow=periodRows('planning')[Number($('user-scenario')?.value||0)];
     payerSummary=payerMixSummary(records,selected?.entity,planningRow?.entity_name,$('user-period')?.value);
-    panel.hidden=false;$('user-payer-mix-rows').replaceChildren(...payerSummary.categories.map(item=>{const row=document.createElement('div');row.className='payer-mix-row';row.append(Object.assign(document.createElement('span'),{textContent:item.category}),Object.assign(document.createElement('strong'),{textContent:formatValue(item.share,'ratio')}));return row;}));
+    panel.hidden=false;$('user-payer-mix-rows').replaceChildren(...payerSummary.categories.map(item=>{const row=document.createElement('div');row.className='payer-mix-row';row.append(Object.assign(document.createElement('span'),{textContent:item.category}),Object.assign(document.createElement('strong'),{textContent:formatValue(item.share,'ratio')}));return row;}));renderPayerMixComposition($('user-payer-mix-chart'),payerSummary);
     const currency=planningRow?.currency||records.find(row=>row.currency)?.currency||'USD';
     $('user-payer-mix-status').textContent=payerSummary.reimbursement_complete?`Blended Net Revenue / Visit: ${formatValue(payerSummary.blended_net_revenue_per_visit,currency)}${payerMixApplied?' · Applied to selected scenario draft.':' · Available for explicit analyst selection.'}`:payerMixContextText(payerSummary);
     $('user-payer-mix-trace').textContent=payerSummary.reimbursement_complete?'Calculation trace: Payer Mix + payer-specific Net Revenue / Visit → Blended Net Revenue / Visit → existing Scenario Model revenue logic.':'Calculation trace: Payer Mix context only; no reimbursement value is inferred.';
