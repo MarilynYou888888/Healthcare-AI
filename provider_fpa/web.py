@@ -14,6 +14,7 @@ ASSETS = {'/presentation.js':('presentation.js','text/javascript'),'/charts.js':
 ASSETS['/prototype/ux'] = ('ux-prototype.html', 'text/html')
 ASSETS['/prototype/ux.css'] = ('ux-prototype.css', 'text/css')
 ASSETS['/prototype/ux.js'] = ('ux-prototype.js', 'text/javascript')
+ASSETS['/prototype/ux-blue-sand-bg.png'] = ('ux-blue-sand-bg.png', 'image/png')
 
 # Ticket 1: static, locally bundled import workspace. No upload endpoint.
 ASSETS.update({
