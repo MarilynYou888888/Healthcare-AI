@@ -44,6 +44,61 @@ export function suggestMappings(headers, role) {
   const candidates = headers.map(header => ROLES[role].fields.filter(id => [id,FIELDS[id].label,...FIELDS[id].aliases].some(alias => normalizeName(alias) === normalizeName(header))));
   return candidates.map(matches => matches.length === 1 && candidates.filter(other => other.includes(matches[0])).length === 1 ? matches[0] : '');
 }
+const SHEET_ROLE_SIGNALS = Object.freeze({
+  performance: Object.freeze([
+    ['actual/forecast', ['actual','actuals','forecast','budget','plan','expected']],
+    ['period/entity', ['month','period','entity','clinic','facility']],
+    ['financial metric', ['revenue','operating income','expense','metric','variance']],
+  ]),
+  planning: Object.freeze([
+    ['provider capacity', ['fte','provider fte','provider count']],
+    ['operating capacity', ['operating days','work days','clinic days','visits','visits per day']],
+    ['planning rate', ['utilization','revenue per visit','rev per visit','labor per visit','supply per visit']],
+  ]),
+  events: Object.freeze([
+    ['event', ['event type','event']],
+    ['event timing', ['start date','end date','reported at']],
+    ['event description', ['description','observed value','notes']],
+  ]),
+  benchmark: Object.freeze([
+    ['benchmark identity', ['company','business segment','segment']],
+    ['benchmark metric', ['metric','metric id','metric name','value']],
+    ['benchmark context', ['period','unit','source','notes']],
+  ]),
+});
+const SHEET_ROLE_NAMES = Object.freeze({
+  performance:['income statement','actuals','actual vs forecast','forecast','financial performance'],
+  planning:['planning','operating metrics','staffing plan','capacity'],
+  events:['events','event log','ops notes','operating events'],
+  benchmark:['benchmark','benchmarks','market data'],
+});
+const SHEET_ROLE_LABELS = Object.freeze({performance:'Actual vs Forecast',planning:'Planning Assumptions',events:'Operating Events',benchmark:'Custom Benchmark'});
+function cellText(cell) { return cell && typeof cell === 'object' ? (cell.w ?? cell.v ?? '') : (cell ?? ''); }
+function signalMatches(text, aliases) {
+  const normalized=normalizeName(text);
+  return aliases.some(alias=>{const target=normalizeName(alias);return normalized===target||normalized.includes(target);});
+}
+export function suggestSheetRole(sheet, headerRow=1) {
+  const rows=sheet?.rows??[], headerIndex=Math.max(0,Math.min(rows.length-1,(Number(headerRow)||1)-1));
+  const headerTexts=(rows[headerIndex]??[]).map(cellText).filter(Boolean);
+  const contentTexts=rows.slice(0,Math.min(rows.length,12)).flatMap(row=>row.map(cellText)).filter(Boolean);
+  const name=normalizeName(sheet?.name??'');
+  const scores={};
+  for(const role of Object.keys(SHEET_ROLE_SIGNALS)) {
+    let score=0;const matched=[];
+    for(const [label,aliases] of SHEET_ROLE_SIGNALS[role]) {
+      if(headerTexts.some(text=>signalMatches(text,aliases))) {score+=2;matched.push(label);}
+      else if(contentTexts.some(text=>signalMatches(text,aliases))) {score+=1;matched.push(label);}
+    }
+    if(SHEET_ROLE_NAMES[role].some(alias=>name.includes(normalizeName(alias)))) {score+=1;matched.push('sheet name');}
+    scores[role]={score,matched};
+  }
+  const ranked=Object.entries(scores).sort((a,b)=>b[1].score-a[1].score);
+  const [role,best]=ranked[0]??['',{score:0,matched:[]}], runner=ranked[1]?.[1]?.score??0;
+  if(best.score<3 || best.score-runner<2) return {role:'',label:'Do not import',confidence:'ambiguous',reason:'No dataset role has enough distinct deterministic signals; defaulting to Do not import.'};
+  const signalText=best.matched.filter(label=>label!=='sheet name').slice(0,3).join(', ');
+  return {role,label:SHEET_ROLE_LABELS[role],confidence:best.score>=5?'high':'medium',reason:`Matched ${signalText||'sheet-name'} signals${best.matched.includes('sheet name')?' and the sheet name':''}.`};
+}
 export const ambiguousAlias = header => ['provider count','visits per day'].includes(normalizeName(header));
 export const prohibitedHeader = header => /^(patient( name| id| identifier)?|mrn|medical record( number)?|dob|date of birth|ssn|social security( number)?|employee( name| id| identifier)?|claim( id| number)?|member( id| name)?)$/.test(normalizeName(header));
 export function toScenarioAssumptions(row) {

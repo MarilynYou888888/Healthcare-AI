@@ -283,6 +283,35 @@ class ImportTests(unittest.TestCase):
                 elif edit=='date1904':self.assertEqual(sheet['rows'][1][2]['date'],'2026-08-01')
                 else:self.assertTrue(sheet['rows'][1][3]['formula'])
 
+    def test_sheet_role_suggestions_are_deterministic_and_never_selected(self):
+        suggestions=self.page.evaluate('''async()=>{
+          const {suggestSheetRole}=await import('/import-schema.js');
+          const cellRows=headers=>headers.map(v=>({v:String(v),w:String(v),t:'s'}));
+          return [
+            suggestSheetRole({name:'Income_Statement',rows:[cellRows(['Month','Entity','Revenue','Actual','Budget','Operating Income'])]}),
+            suggestSheetRole({name:'Operating_Metrics',rows:[cellRows(['FTE','Operating Days','Visits','Utilization','Revenue per Visit'])]}),
+            suggestSheetRole({name:'Ops Notes',rows:[cellRows(['Event Type','Start Date','Description'])]}),
+            suggestSheetRole({name:'Summary',rows:[cellRows(['Notes','Owner'])]})
+          ];
+        }''')
+        self.assertEqual(suggestions[0]['role'],'performance')
+        self.assertEqual(suggestions[1]['role'],'planning')
+        self.assertEqual(suggestions[2]['role'],'events')
+        self.assertEqual(suggestions[3]['role'],'')
+        self.assertTrue(all(item['reason'] for item in suggestions))
+
+    def test_sheet_role_suggestion_is_visible_but_requires_explicit_assignment(self):
+        rows=[['Month','Entity','Revenue','Actual','Budget','Operating Income'],['2026-08','Clinic A','100','90','95','10']]
+        data=self.make_xlsx(rows,sheet='Income_Statement')
+        self.page.get_by_label('Choose CSV or XLSX').set_input_files({'name':'analyst.xlsx','mimeType':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','buffer':data})
+        card=self.page.locator('.import-sheet').first
+        expect(card).to_contain_text('Sheet: Income_Statement')
+        expect(card).to_contain_text('Suggested role: Actual vs Forecast')
+        expect(card).to_contain_text('Matched actual/forecast')
+        expect(card.get_by_label('Dataset role — Income_Statement')).to_have_value('')
+        self.page.get_by_role('button',name='Map columns',exact=True).click()
+        expect(self.page.locator('#import-status')).to_contain_text('Choose at least one dataset role')
+
     def test_session_store_requires_explicit_valid_replacement(self):
         result=self.page.evaluate('''async()=>{
           'use strict';

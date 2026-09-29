@@ -1,5 +1,5 @@
 import {createUserWorkspace} from './user-workflows.js';
-import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,ambiguousAlias} from './import-schema.js';
+import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,suggestSheetRole,ambiguousAlias} from './import-schema.js';
 import {headersFor,validateImport,createImportSession} from './import-validation.js';
 const $=id=>document.getElementById(id);
 function el(tag,text,cls) {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -27,11 +27,12 @@ function grid(headers,rows,target,pageSize=20) {
 function renderSheets(){
   $('import-sheet-list').replaceChildren();
   for(const table of tables){
-    const card=el('div',undefined,'import-sheet');card.append(el('h3',table.sheet.name+(table.sheet.hidden?' · Hidden sheet':'')));
+    const card=el('div',undefined,'import-sheet');card.append(el('h3',`Sheet: ${table.sheet.name}${table.sheet.hidden?' · Hidden sheet':''}`));
+    const suggestion=table.suggestion??suggestSheetRole(table.sheet,table.headerRow);card.append(el('p',`Suggested role: ${suggestion.label}`,'import-role-suggestion'));card.append(el('p',suggestion.reason,'import-role-reason'));
     const controls=el('div',undefined,'import-controls');
     controls.append(select(`Dataset role — ${table.sheet.name}`,[['','Do not import'],...Object.entries(ROLES).map(([id,r])=>[id,r.label])],table.role,v=>{table.role=v;invalidate();}));
     const label=el('label','Header row'),input=el('input');input.type='number';input.min='1';input.max=String(table.sheet.rows.length||1);input.value=table.headerRow;input.setAttribute('aria-label',`Header row — ${table.sheet.name}`);
-    input.onchange=()=>{table.headerRow=Math.max(1,Math.min(table.sheet.rows.length,Number(input.value)||1));invalidate();renderSheets();};label.append(input);controls.append(label);card.append(controls);
+    input.onchange=()=>{table.headerRow=Math.max(1,Math.min(table.sheet.rows.length,Number(input.value)||1));table.suggestion=suggestSheetRole(table.sheet,table.headerRow);invalidate();renderSheets();};label.append(input);controls.append(label);card.append(controls);
     const rows=table.sheet.rows.slice(0,Math.max(6,Math.min(table.headerRow+3,20)));grid(['Row',...Array.from({length:Math.max(0,...rows.map(r=>r.length))},(_,i)=>String(i+1))],rows.map((r,i)=>[i+1,...r.map(c=>c.w||c.v)]),card,6);
     $('import-sheet-list').append(card);
   }
@@ -53,7 +54,7 @@ $('import-file').addEventListener('change',()=>{
     // The bundled onboarding workbook explicitly documents utilization as whole
     // percentage points (90 = 90%). Keep this convenience scoped to that
     // fingerprint; user files still require an explicit percentage encoding.
-    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:data.synthetic?'percent':'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
+    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,suggestion:suggestSheetRole(sheet,1),mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:data.synthetic?'percent':'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
     renderSheets();step(1);status(`${data.name} · ${tables.length} table(s) read locally. Select the roles to include.`);
   };
   worker.postMessage({file});
