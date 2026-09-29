@@ -24,9 +24,11 @@ export function renderPayerMixComposition(root,summary) {
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 520 210');svg.setAttribute('role','img');svg.setAttribute('aria-label','Payer Mix Composition');
   const title=document.createElementNS('http://www.w3.org/2000/svg','text');title.setAttribute('x','0');title.setAttribute('y','18');title.setAttribute('class','chart-label');title.textContent='Payer Mix Composition';svg.append(title);
   const colors=['#c3a45d','#8096a3','#6f8974','#9d6c5d','#8b82a7','#777'];
+  const track=document.createElementNS('http://www.w3.org/2000/svg','rect');track.setAttribute('x','0');track.setAttribute('y','42');track.setAttribute('width','320');track.setAttribute('height','26');track.setAttribute('class','donut-track');svg.append(track);
+  let offset=0;
   summary.categories.forEach((item,index)=>{
-    const y=42+index*24,share=Math.max(0,Math.min(1,Number(item.share)||0)),bar=document.createElementNS('http://www.w3.org/2000/svg','rect');bar.setAttribute('x','0');bar.setAttribute('y',String(y));bar.setAttribute('width',String(320*share));bar.setAttribute('height','16');bar.setAttribute('fill',colors[index%colors.length]);bar.setAttribute('data-payer-category',item.category);bar.setAttribute('data-share',item.share);bar.setAttribute('aria-label',`${item.category}: ${(share*100).toFixed(1)}%`);svg.append(bar);
-    const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.setAttribute('x','332');label.setAttribute('y',String(y+13));label.setAttribute('class','chart-label');label.textContent=`${item.category} ${(share*100).toFixed(1)}%`;svg.append(label);
+    const share=Math.max(0,Math.min(1,Number(item.share)||0)),bar=document.createElementNS('http://www.w3.org/2000/svg','rect');bar.setAttribute('x',String(320*offset));bar.setAttribute('y','42');bar.setAttribute('width',String(320*share));bar.setAttribute('height','26');bar.setAttribute('fill',colors[index%colors.length]);bar.setAttribute('data-payer-category',item.category);bar.setAttribute('data-share',item.share);bar.setAttribute('aria-label',`${item.category}: ${(share*100).toFixed(1)}%`);svg.append(bar);offset+=share;
+    const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.setAttribute('x','0');label.setAttribute('y',String(100+index*22));label.setAttribute('class','chart-label');label.textContent=`${item.category} ${(share*100).toFixed(1)}%`;svg.append(label);
   });
   root.append(svg);
 }
