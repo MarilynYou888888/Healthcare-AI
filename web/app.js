@@ -62,3 +62,18 @@ selectCompany('HCA');
 mountBenchmarkComparison();
 $('benchmark-jump').addEventListener('click',()=>{document.querySelector('.reference').scrollIntoView({block:'start'});$('benchmark-comparison-panel').open=true;});
 $('reset-demo').addEventListener('click',()=>window.location.reload());
+
+// The landing page is a visual entry point; the existing demo panels remain
+// mounted underneath so the approved ScenarioResult and benchmark workflows
+// are unchanged when the analyst chooses Explore Demo.
+document.getElementById('landing-demo')?.addEventListener('click',()=>{
+  document.body.classList.remove('landing-mode');
+  document.getElementById('landing-view')?.setAttribute('hidden','');
+  document.getElementById('legacy-demo')?.removeAttribute('hidden');
+  document.getElementById('tab-summary')?.focus();
+});
+document.querySelectorAll('#tab-summary,#tab-model,#tab-investigation').forEach(tab=>tab.addEventListener('click',()=>{
+  document.body.classList.remove('landing-mode');
+  document.getElementById('landing-view')?.setAttribute('hidden','');
+  document.getElementById('legacy-demo')?.removeAttribute('hidden');
+}));
