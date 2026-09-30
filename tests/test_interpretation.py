@@ -17,11 +17,11 @@ class InterpretationTests(BrowserModelCase):
         self.assertTrue(result['unchanged'])
         c=result['commentary']
         self.assertEqual(c['revision'],1)
-        self.assertEqual(c['mode'],'offline-deterministic-fallback')
-        self.assertIn('no live LLM used',c['disclosure'])
+        self.assertEqual(c['mode'],'deterministic-rule-based')
+        self.assertIn('No LLM or external API is used',c['disclosure'])
         self.assertIn('−$21,740.40',c['summary'])
         self.assertIn('$243,243.00',str(c['metrics']))
-        self.assertIn('Under these synthetic assumptions',c['summary'])
+        self.assertIn('Provider FTE changed from',c['summary'])
         self.assertIsNone(result['invalid'])
 
     def test_all_review_actions_are_revision_bound_and_session_only(self):
@@ -66,7 +66,7 @@ class InterpretationTests(BrowserModelCase):
         self.page.get_by_role('tab',name='Executive Summary',exact=True).click()
         expect(self.page.locator('[data-kpi="operating_income"] .kpi-scenario')).to_have_text('$67,182.80')
         expect(self.page.locator('#commentary-summary')).to_contain_text('−$21,740.40')
-        expect(self.page.locator('#commentary-disclosure')).to_have_text('Offline demo — deterministic fallback commentary; no live LLM used.')
+        expect(self.page.locator('#commentary-disclosure')).to_have_text('Rule-based commentary from calculated results and recorded evidence. No LLM or external API is used.')
         self.page.get_by_role('button',name='Reviewed — retain baseline',exact=True).click()
         expect(self.page.locator('#review-status')).to_contain_text('Reviewed — retain baseline')
         self.page.get_by_role('tab',name='Scenario Model',exact=True).click()

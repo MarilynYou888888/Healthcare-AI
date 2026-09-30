@@ -1,0 +1,29 @@
+<section id="user-analysis" hidden>
+<div class="page-heading"><div><div class="eyebrow">YOUR CONFIRMED DATA</div><h1>Run your FP&A workflow</h1><p>Protected baseline → selected scenario draft → analyst judgment</p></div><button id="user-back-import" type="button">Back to import</button></div>
+<p id="user-source" class="import-notice"></p>
+<section class="panel" id="user-benchmark-panel"><div class="panel-title"><h3>Benchmark context</h3><span class="small-label">OPTIONAL · DOES NOT DRIVE THE MODEL</span></div><label for="user-benchmark">Benchmark</label><select id="user-benchmark"><option value="none">No Benchmark</option><option value="HCA">HCA Healthcare · Built-in Public</option><option value="THC">Tenet Healthcare · Built-in Public</option><option value="custom">Custom Benchmark · User Uploaded</option></select><p id="user-benchmark-status">No Benchmark selected. Analysis remains available.</p><div id="user-benchmark-context"></div></section>
+<div class="panel import-controls" id="user-selectors"><label>Entity<select id="user-entity"></select></label><label>Period<select id="user-period"></select></label><label>Uploaded scenario<select id="user-scenario"></select></label><span id="month" hidden></span></div>
+<section class="panel" id="user-payer-mix-panel" hidden><div class="panel-title"><h3>Payer Mix &amp; Reimbursement</h3><span class="small-label">OPTIONAL · EXPLICIT OPT-IN</span></div><div id="user-payer-mix-rows"></div><div id="user-payer-mix-chart" class="payer-mix-chart"></div><p id="user-payer-mix-status" class="session-note"></p><p id="user-payer-mix-trace" class="session-note"></p><button id="user-use-payer-mix" type="button">Use payer-mix-derived Net Revenue / Visit</button></section>
+<nav class="import-actions" aria-label="Uploaded FP&A workflows"><button id="user-open-model" type="button">Scenario Model</button><button id="user-open-summary" type="button">Executive Summary</button><button id="user-open-investigation" type="button">Variance Investigation</button></nav>
+<p id="user-analysis-status" role="status"></p>
+<div id="user-panels"></div>
+<section class="panel"><label for="user-analyst-note">Analyst Note</label><textarea id="user-analyst-note" maxlength="2000" rows="3"></textarea><p class="session-note">Plain-text note for this selected analysis only. Never used as operating evidence or a confirmed cause.</p></section>
+</section>
+<template id="user-investigation-controls-template">
+<form id="user-investigation-controls" class="panel">
+<div class="import-controls"><label>Metric<select id="user-metric"></select></label></div>
+<label class="import-check"><input type="checkbox" id="user-closed"> I confirm this is a closed month</label>
+<label class="import-check"><input type="checkbox" id="user-forecast"> I confirm the comparator is the Latest Approved Forecast</label>
+<label class="import-check"><input type="checkbox" id="user-clinical"> LABOR_EXPENSE represents clinical labor (optional semantic confirmation)</label>
+<h3>Session review rules for this metric</h3><p>Blank thresholds mean no automatic materiality rule. Thresholds trigger when exceeded; selecting a variance alone does not establish a cause.</p>
+<div class="import-controls"><label>Absolute threshold (metric units)<input id="user-absolute" type="text" inputmode="decimal"></label><label>Percentage threshold (fraction; 0.1 = 10%)<input id="user-percentage" type="text" inputmode="decimal"></label></div>
+<label class="import-check"><input type="checkbox" id="user-always"> Always review this metric</label>
+<label class="import-check"><input type="checkbox" id="user-override"> Analyst Override — investigate regardless of thresholds</label>
+<details><summary>Optional structured timing evidence</summary><p>Supply evidence covering the entire supported mechanism, including contributing drivers. These fields do not establish a cause. An event end date or analyst note is not recovery evidence.</p>
+<div class="import-controls"><label>Expected normalization month<input id="user-normalization" type="month"></label><label>Persists through month<input id="user-persistence" type="month"></label><label>Approved forecast end month<input id="user-horizon" type="month"></label></div>
+<label>Timing / approved horizon source<input id="user-timing-source" type="text" maxlength="2000"></label><label class="import-check"><input id="user-recurring" type="checkbox"> Documented recurrence</label>
+<p>Without an approved horizon, the next three months are used and labeled. Without sufficient structured evidence, timing remains Unresolved. Structural timing requires persistence through at least half the remaining horizon.</p></details>
+<button id="user-run-investigation" type="submit">Run variance investigation</button>
+<p>Only normalized records for this entity and month are sent to the local Python process on your computer. Raw files and Analyst Notes remain in browser memory. No external service, persistence, or paid API is used.</p>
+</form>
+</template>

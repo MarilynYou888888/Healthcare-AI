@@ -1,6 +1,7 @@
 """Local-only demo server. Serves explicit assets and read-only financial views."""
 import argparse
 import json
+import ipaddress
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -10,6 +11,22 @@ from provider_fpa.investigation import investigation_catalog, investigation_view
 
 WEB = Path(__file__).resolve().parents[1] / 'web'
 ASSETS = {'/presentation.js':('presentation.js','text/javascript'),'/charts.js':('charts.js','text/javascript'),'/benchmark-view.js':('benchmark-view.js','text/javascript'),'/investigation.js':('investigation.js','text/javascript'),'/executive.js':('executive.js','text/javascript'),'/interpretation.js':('interpretation.js','text/javascript'),'/scenario-view.js':('scenario-view.js','text/javascript'),'/scenario.js':('scenario.js','text/javascript'),'/vendor/decimal.mjs':('vendor/decimal.mjs','text/javascript'),'/':('index.html','text/html'),'/app.js':('app.js','text/javascript'),'/style.css':('style.css','text/css')}
+ASSETS['/prototype/ux'] = ('ux-prototype.html', 'text/html')
+ASSETS['/prototype/ux.css'] = ('ux-prototype.css', 'text/css')
+ASSETS['/prototype/ux.js'] = ('ux-prototype.js', 'text/javascript')
+ASSETS['/prototype/ux-blue-sand-bg.png'] = ('ux-blue-sand-bg.png', 'image/png')
+
+# Ticket 1: static, locally bundled import workspace. No upload endpoint.
+ASSETS.update({
+    '/import': ('import.html', 'text/html'),
+    '/user-analysis.html': ('user-analysis.html', 'text/html'),
+    **{'/' + name: (name, 'text/javascript') for name in (
+        'commentary.js', 'payer-mix.js', 'user-investigation.js', 'user-workflows.js', 'import-view.js', 'import-schema.js', 'import-validation.js', 'import-worker.js',
+        'vendor/xlsx.full.min.js', 'vendor/papaparse.min.js')},
+    '/import.css': ('import.css', 'text/css'),
+    '/sample-import.xlsx': ('sample-import.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+})
+
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -39,6 +56,9 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(body, content)
 
     def do_POST(self):
+        if urlsplit(self.path).path == '/api/user-investigation':
+            self.user_investigation()
+            return
         if urlsplit(self.path).path != '/api/investigation/review':
             self.send_error(501, 'Only session investigation review accepts POST')
             return
@@ -58,6 +78,34 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(json.dumps({'error': 'Investigation data unavailable.'}).encode(), 'application/json', 503)
             return
         self.respond(json.dumps(result).encode(), 'application/json')
+
+    def user_investigation(self):
+        """Bounded same-origin loopback request; no request state is retained."""
+        from provider_fpa.uploaded_investigation import uploaded_investigation
+        try:
+            host = self.headers.get('Host', '')
+            parsed = urlsplit('http://' + host)
+            if (not ipaddress.ip_address(self.client_address[0]).is_loopback
+                    or parsed.hostname not in ('localhost', '127.0.0.1', '::1')
+                    or parsed.port != self.server.server_port
+                    or self.headers.get('Origin') != 'http://' + host
+                    or self.headers.get_content_type() != 'application/json'):
+                raise ValueError('Only same-origin loopback requests are accepted')
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 0 < length <= 1024 * 1024:
+                raise ValueError('Request limit exceeded')
+            payload = json.loads(self.rfile.read(length))
+            result = uploaded_investigation(payload)
+        except (ValueError, TypeError, KeyError, AttributeError, ArithmeticError, RecursionError):
+            self.respond(json.dumps({'error': 'Investigation request rejected. Check the selected records, units, confirmations and evidence settings; rerun before reviewing.'}).encode(), 'application/json', 400)
+            return
+        self.respond(json.dumps(result).encode(), 'application/json')
+
+    def log_request(self, code='-', size='-'):
+        # Never log the uploaded-analysis endpoint or user request/query content.
+        if urlsplit(self.path).path == '/api/user-investigation':
+            return
+        super().log_request(code, size)
 
     def respond(self, body, content, status=200):
         self.send_response(status)

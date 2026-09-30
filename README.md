@@ -13,7 +13,7 @@ cd "/Users/muhanyou/Desktop/Healthcare AI"
 python3 -m provider_fpa.web
 ```
 
-Open http://localhost:8501/. Python 3.11+; no runtime packages, API keys or network connection required. Source links open the original SEC filings when internet is available. Stop with Ctrl-C.
+Open http://localhost:8501/. Python 3.11+; no runtime packages, API keys or network connection required. Source links open the original SEC filings when internet is available. Stop with Ctrl-C. The landing controls separate **Explore Demo** from **Use My Data**; uploaded CSV/XLSX files remain in browser memory for the session.
 
 The app opens on Executive Summary. Switch to Scenario Model and edit Provider FTE 4.0 → 3.5; the calculation table, summary and offline commentary share one result revision. Record one of three session-only analyst decisions. Variance Investigation is available as the secondary workspace; the Executive Summary now includes the income bridge, expense mix, financial comparisons and model trace. Recovered investigation rules and approved scenario formulas are preserved.
 
@@ -26,6 +26,16 @@ The app opens on Executive Summary. Switch to Scenario Model and edit Provider F
 The selected public extract has 48 HCA and 32 Tenet reported/missing records, plus ratios derived at load time. It is not a comprehensive data warehouse. Tenet same-hospital volumes must not be divided into full-segment financials; HCA admission payer mix differs from Tenet patient-service revenue mix. Hospital benchmarks supply context, not statistical validation of clinic assumptions or affiliation with either company.
 
 The clinic's contribution margin is revenue less variable labor and supplies. Modeled operating income subtracts fixed clinic expense; it is not corporate GAAP net income. The model retains fractional expected visits and Decimal precision (28 significant digits, half-even rounding); display rounds to two decimals. Baseline: 1,425.6 expected visits, $277,992 revenue, $173,923.20 contribution margin and $88,923.20 operating income.
+
+## V2 local workflow and export
+
+Choose **Use My Data** to upload aggregated, de-identified CSV/XLSX data, assign sheet roles, map columns, validate, preview normalization, and explicitly confirm the session import. Planning-only data enables Scenario Model and Executive Summary; Actual vs Forecast data enables Variance Investigation. Operating Events alone never creates a variance target. **Clear Uploaded Data** removes browser-session datasets, drafts, notes, reviews, and pending import work, then returns to **Explore Demo**; built-in public and synthetic files are unchanged. **Reset Scenario** only resets the selected scenario draft.
+
+The uploaded workspace can export the current valid `ScenarioResult` as a lightweight CSV. It includes source disclosure, assumptions, outputs, changes, deterministic Automated FP&A Commentary, and a separately labeled Analyst Note. Export is generated in the browser; no report file is written to the server. The core commentary is complete rule-based functionality with zero LLM tokens, API keys, paid APIs, external AI-provider accounts, or paid cloud inference.
+
+Payer Mix / Reimbursement Drivers is an optional uploaded context role. Wide payer columns are normalized into payer-category records and checked against a 100% entity-period total. Payer mix without payer-specific reimbursement remains context only. A blended Net Revenue / Visit is calculated only when complete payer-specific values are present and the analyst explicitly selects **Use payer-mix-derived Net Revenue / Visit**; the existing Scenario Model remains the downstream source of revenue and operating-income calculations.
+
+For the V2.1 manual acceptance flow, use `data/synthetic/v2_1/payer_mix_acceptance.xlsx`. Select `Planning Assumptions` plus either `Payer Mix Only` (context-only state) or `Payer Mix + Rates` (complete reimbursement state), assign the payer sheet to **Payer Mix / Reimbursement Drivers**, and then select Nashville Specialty Clinic for August or September 2026.
 
 ## Verify
 
@@ -62,7 +72,7 @@ The pinned MIT-licensed decimal.js 10.6.0 module and license are vendored under 
 
 ## Executive Summary and interpretation
 
-`web/executive.js` renders the same result as the detailed model. `web/interpretation.js` formats validated current results only and owns a separate revision-bound review session. It accepts no live provider text, performs no financial arithmetic, and exposes no forecast write. The UI explicitly states: “Offline demo — deterministic fallback commentary; no live LLM used.”
+`web/executive.js` renders the same result as the detailed model. `web/interpretation.js` formats validated current results only and owns a separate revision-bound review session. It accepts no live provider text, performs no financial arithmetic, and exposes no forecast write. The UI explicitly states: “Rule-based commentary from calculated results and recorded evidence. No LLM or external API is used.”
 
 Review choices: Reviewed — retain baseline; Request further investigation; Mark for forecast-assumption review. Any model edit (including an invalid draft) or reset clears the decision. Navigation preserves it; reload creates a new session. Invalid inputs remove commentary and disable review while the numerical views label the last valid revision as stale. Neither localStorage nor sessionStorage is used.
 

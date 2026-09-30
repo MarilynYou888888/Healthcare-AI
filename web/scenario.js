@@ -86,18 +86,21 @@ export function change(baseline, scenario) {
 }
 
 export function scenarioResult(baseline, assumptions, revision) {
-  if (baseline.data_kind !== 'synthetic') throw new Error('Scenario inputs must be synthetic.');
+  if (!['synthetic','user_uploaded'].includes(baseline.data_kind)) throw new Error('Scenario inputs must be synthetic or validated user planning data.');
+  if (baseline.data_kind === 'user_uploaded' && (!baseline.entity_id || !baseline.currency || !baseline.source_lineage)) throw new Error('Uploaded planning inputs require identity, currency, and lineage.');
   const base = calculate(baseline.assumptions, baseline.month);
   const scenario = calculate(assumptions, baseline.month);
   const changes = Object.fromEntries(GRAPH.map(({id}) => [id, change(base[id], scenario[id])]));
   const assumptionChanges = Object.fromEntries(Object.keys(ASSUMPTIONS).map(id => [id,change(baseline.assumptions[id],assumptions[id])]));
   const changedDrivers = Object.entries(ASSUMPTIONS).filter(([id]) => !new D(assumptions[id]).eq(baseline.assumptions[id]))
-    .map(([id, meta]) => ({id, ...meta, baseline:baseline.assumptions[id], scenario:assumptions[id]}));
-  return deepFreeze({data_kind:'synthetic', validation:{status:'valid',errors:{}}, model_version:MODEL_VERSION, baseline_id:baseline.baseline_id,
+    .map(([id, meta]) => ({id, ...meta, unit:meta.unit === 'USD' ? (baseline.currency ?? 'USD') : meta.unit, baseline:baseline.assumptions[id], scenario:assumptions[id]}));
+  const result = {data_kind:baseline.data_kind, currency:baseline.currency ?? 'USD', entity_id:baseline.entity_id, entity_name:baseline.entity_name, scenario_name:baseline.scenario_name, source_lineage:baseline.source_lineage, source:baseline.source, payer_mix_context:baseline.payer_mix_context, validation:{status:'valid',errors:{}}, model_version:MODEL_VERSION, baseline_id:baseline.baseline_id,
     clinic:baseline.clinic, month:baseline.month, revision, baseline_assumptions:{...baseline.assumptions},
     assumptions:{...assumptions}, baseline:base, scenario, changes, assumption_changes:assumptionChanges,
-    changed_drivers:changedDrivers, output_units:Object.fromEntries(GRAPH.map(m => [m.id,m.unit])),
-    impact:changes.operating_income.amount, impact_definition:'Hypothetical one-month operating income change; not an approved forecast update.'});
+    changed_drivers:changedDrivers, output_units:Object.fromEntries(GRAPH.map(m => [m.id,m.unit === 'USD' ? (baseline.currency ?? 'USD') : m.unit])),
+    impact:changes.operating_income.amount, impact_definition:'Hypothetical one-month operating income change; not an approved forecast update.'};
+  result.presentation = assemblePresentation(result);
+  return deepFreeze(result);
 }
 
 export function formula(item) {
@@ -111,10 +114,11 @@ export function formatValue(raw, unit, signed = false) {
   const sign = value.lt(0) ? '−' : signed && value.gt(0) ? '+' : '';
   let display = unit === 'ratio' ? value.abs().mul(100) : value.abs();
   let fixed = display.toFixed(2);
-  if (unit !== 'USD') fixed = fixed.replace(/\.?0+$/, '');
+  const money = /^[A-Z]{3}$/.test(unit) && unit !== 'FTE';
+  if (!money) fixed = fixed.replace(/\.?0+$/, '');
   if (unit === 'FTE' && !fixed.includes('.')) fixed += '.0';
   fixed = fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return sign + (unit === 'USD' ? '$' : '') + fixed + (unit === 'ratio' ? '%' : unit === 'multiplier' ? '×' : '');
+  return sign + (unit === 'USD' ? '$' : money ? unit+' ' : '') + fixed + (unit === 'ratio' ? '%' : unit === 'multiplier' ? '×' : '');
 }
 export function formatPercent(raw) {
   const d = new D(raw);
@@ -156,4 +160,40 @@ export function createScenarioStore(source) {
     },
     reset() { draft = {...baseline.assumptions}; revision += 1; return refresh(); },
   });
+}
+
+function assemblePresentation(source) {
+  const base=source.baseline, scenario=source.scenario;
+  const bridge=[{id:'baseline',label:'Baseline income',start:'0',end:base.operating_income,impact:base.operating_income,tone:'baseline',meaning:'Baseline clinic operating income.'}];
+  let cursor=new D(base.operating_income);
+  for(const [id,label,metric,expense] of [
+    ['revenue','Revenue','revenue',false],['labor','Variable labor','labor',true],
+    ['supplies','Variable supplies','supplies',true],['fixed_expense','Fixed expense','fixed_expense',true],
+  ]) {
+    const fixed=metric==='fixed_expense';
+    const b=fixed?source.baseline_assumptions[metric]:base[metric];
+    const s=fixed?source.assumptions[metric]:scenario[metric];
+    const change=fixed?source.assumption_changes[metric]:source.changes[metric];
+    const impact=new D(change.amount).mul(expense?-1:1),end=cursor.add(impact);
+    bridge.push({id,label,baseline:b,scenario:s,start:cursor.toString(),end:end.toString(),impact:impact.toString(),tone:impact.isZero() ? 'neutral' : impact.gt(0) ? 'favorable' : 'unfavorable',
+      meaning:expense ? 'An expense decrease adds to income; an increase subtracts from income.' : 'Revenue change flows into operating income.'});
+    cursor=end;
+  }
+  bridge.push({id:'scenario',label:'Scenario income',start:'0',end:scenario.operating_income,impact:scenario.operating_income,tone:'scenario',meaning:'Scenario clinic operating income from the shared model.'});
+  const total=new D(scenario.variable_expense).add(source.assumptions.fixed_expense);
+  const expenses={total:total.toString(),items:[['labor','Variable labor',scenario.labor],['supplies','Variable supplies',scenario.supplies],['fixed_expense','Fixed operating expense',source.assumptions.fixed_expense]].map(([id,label,amount])=>({id,label,amount,share:total.isZero()?null:new D(amount).div(total).toString()}))};
+  const comparison=GRAPH.filter(n=>['revenue','contribution','operating_income'].includes(n.id)).map(n=>({id:n.id,label:n.name,baseline:base[n.id],scenario:scenario[n.id],change:source.changes[n.id]}));
+  const margin=(income,revenue)=>new D(revenue).isZero()?null:new D(income).div(revenue).toString();
+  const baselineMargin=margin(base.operating_income,base.revenue),scenarioMargin=margin(scenario.operating_income,scenario.revenue);
+  const affected=new Set(source.changed_drivers.map(d=>d.id));
+  const names={...ASSUMPTIONS,...Object.fromEntries(GRAPH.map(n=>[n.id,n]))};
+  const values={...source.assumptions,...scenario};
+  const trace=GRAPH.map(n=>{
+    const impacted=n.inputs.some(id=>affected.has(id));
+    if(impacted) affected.add(n.id);
+    return {id:n.id,label:n.name,unit:n.unit === 'USD' ? source.currency : n.unit,value:scenario[n.id],affected:impacted,formula:formula(n),op:n.op,
+      inputs:n.inputs.map(id=>({id,label:names[id].name,unit:names[id].unit === 'USD' ? source.currency : names[id].unit,value:values[id],affected:affected.has(id)}))};
+  });
+  return deepFreeze({revision:source.revision,bridge,expenses,comparison,trace,
+    margin:{baseline:baselineMargin,scenario:scenarioMargin,change_pp:baselineMargin===null||scenarioMargin===null?null:new D(scenarioMargin).sub(baselineMargin).mul(100).toString()}});
 }

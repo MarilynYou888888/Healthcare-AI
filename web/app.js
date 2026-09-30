@@ -4,6 +4,7 @@ import {mountInvestigation} from './investigation.js';
 import {mountBenchmarkComparison} from './benchmark-view.js';
 'use strict';
 const $ = id => document.getElementById(id);
+const entryChoice=document.createElement('nav');entryChoice.className='entry-choice';entryChoice.setAttribute('aria-label','Choose workspace');entryChoice.append(Object.assign(document.createElement('a'),{href:'/',textContent:'Explore Demo',className:'entry-choice-current'}),Object.assign(document.createElement('a'),{href:'/import',textContent:'Use My Data ↗'}));document.querySelector('.page-heading > div').append(entryChoice);
 const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(Number(value));
 const number = value => new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(Number(value));
 function node(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
@@ -19,6 +20,13 @@ async function selectCompany(ticker){
   const version=++requestVersion;
   document.querySelectorAll('[data-company]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.company===ticker)));
   $('benchmark-state').classList.remove('error');$('benchmark-state').textContent='Loading verified public references…';$('benchmark-cards').replaceChildren();$('source-rows').replaceChildren();$('company-notes').textContent='';$('benchmark-note').textContent='Reference context only';
+  if(ticker==='none'){
+    $('benchmark-state').textContent='No Benchmark selected. Public context is optional and does not affect the synthetic model.';
+    $('benchmark-note').textContent='No Benchmark · Context omitted';
+    $('benchmark-comparison-panel').hidden=true;
+    return;
+  }
+  $('benchmark-comparison-panel').hidden=false;
   try{
     const company=await getJSON('/api/benchmarks/'+ticker);if(version!==requestVersion)return;
     const find=(id,seg='Consolidated')=>company.metrics.find(m=>m.metric_id===id && m.period==='FY2025' && m.business_segment===seg);
@@ -43,6 +51,7 @@ async function selectCompany(ticker){
     $('benchmark-state').textContent='';
   }catch(error){if(version!==requestVersion)return;$('benchmark-cards').replaceChildren();$('benchmark-state').textContent='Public reference unavailable. The synthetic baseline is independent and remains usable.';$('benchmark-state').classList.add('error');}
 }
+const noBenchmark=document.createElement('button');noBenchmark.type='button';noBenchmark.dataset.company='none';noBenchmark.setAttribute('aria-pressed','false');noBenchmark.textContent='No Benchmark';document.querySelector('.switcher').prepend(noBenchmark);
 document.querySelectorAll('[data-company]').forEach(button=>button.addEventListener('click',()=>selectCompany(button.dataset.company)));
 $('sources-button').addEventListener('click',()=>{const show=$('source-panel').hidden;$('source-panel').hidden=!show;$('sources-button').setAttribute('aria-expanded',String(show));$('sources-button').textContent=show?'Close source register ↑':'Inspect sources & definitions ↗';});
 const openWorkspace = setupNavigation();
@@ -53,3 +62,18 @@ selectCompany('HCA');
 mountBenchmarkComparison();
 $('benchmark-jump').addEventListener('click',()=>{document.querySelector('.reference').scrollIntoView({block:'start'});$('benchmark-comparison-panel').open=true;});
 $('reset-demo').addEventListener('click',()=>window.location.reload());
+
+// The landing page is a visual entry point; the existing demo panels remain
+// mounted underneath so the approved ScenarioResult and benchmark workflows
+// are unchanged when the analyst chooses Explore Demo.
+document.getElementById('landing-demo')?.addEventListener('click',()=>{
+  document.body.classList.remove('landing-mode');
+  document.getElementById('landing-view')?.setAttribute('hidden','');
+  document.getElementById('legacy-demo')?.removeAttribute('hidden');
+  document.getElementById('tab-summary')?.focus();
+});
+document.querySelectorAll('#tab-summary,#tab-model,#tab-investigation').forEach(tab=>tab.addEventListener('click',()=>{
+  document.body.classList.remove('landing-mode');
+  document.getElementById('landing-view')?.setAttribute('hidden','');
+  document.getElementById('legacy-demo')?.removeAttribute('hidden');
+}));

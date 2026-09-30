@@ -20,7 +20,7 @@ class InvestigationWorkspaceTests(unittest.TestCase):
         external = next(d for d in weather['system']['drivers'] if d['driver_family'] == 'External Disruption')
         self.assertEqual((external['role'], external['epistemic_state']), ('upstream_context', 'observed_fact'))
         self.assertEqual(weather['handoffs'][0]['assumption'], 'clinic_days')
-        self.assertIn('offline', weather['narrative_disclosure'].lower())
+        self.assertIn('automated fp&a commentary', weather['narrative_disclosure'].lower())
 
     def test_human_decisions_are_explicit_scoped_and_do_not_rewrite_system_output(self):
         from provider_fpa.investigation import review_investigation

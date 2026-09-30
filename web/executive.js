@@ -21,6 +21,7 @@ export function setupNavigation() {
     }
     const summary = tab === tabs[0];
     const investigation = tab === tabs[2];
+    document.body.classList.toggle('investigation-active',investigation);
     document.querySelector('.period').hidden = investigation;
     document.querySelector('.eyebrow').textContent = investigation ? 'EVIDENCE-AWARE REVIEW' : 'DRIVER-BASED PLANNING';
     $('page-title').textContent = investigation ? 'Variance Investigation' : summary ? 'Executive Summary' : 'Scenario Model';
@@ -44,6 +45,8 @@ export function mountExecutiveSummary(store) {
   const review = createReviewSession(store);
   const renderCharts = mountScenarioCharts();
   const metrics = [...GRAPH.filter(m => ['revenue','visits','contribution','operating_income'].includes(m.id)),{id:'operating_margin',name:'Operating margin',unit:'ratio'}];
+  $('summary-kpis').replaceChildren();
+  $('review-actions').replaceChildren();
   const kpis = new Map();
   for (const metric of metrics) {
     const card = node('article',undefined,'kpi'); card.dataset.kpi = metric.id;
@@ -61,46 +64,48 @@ export function mountExecutiveSummary(store) {
     });
     $('review-actions').append(button);
   }
-  $('summary-reset').addEventListener('click',() => store.reset());
-  store.subscribe(state => {
+  $('summary-reset').onclick=() => store.reset();
+  const unsubscribeStore=store.subscribe(state => {
     const result=state.result ?? state.last_valid;
     const stale=state.status !== 'valid';
     const presentation=scenarioPresentation(result);
+    const money=result.currency ?? 'USD';
+    const format=(value,unit,signed=false)=>formatValue(value,unit === 'USD' ? money : unit,signed);
     renderCharts(presentation,stale);
     $('executive-view').dataset.revision=String(result.revision);
     $('executive-view').classList.toggle('stale',stale);
-    $('summary-status').textContent=stale ? `Stale — last valid revision ${result.revision}. Fix the draft in Scenario Model; commentary and review are unavailable.` : `Current · Revision ${result.revision} · ${result.month} · Synthetic clinic planning`;
+    $('summary-status').textContent=stale ? `Stale — last valid revision ${result.revision}. Fix the draft in Scenario Model; commentary and review are unavailable.` : `Current · Revision ${result.revision} · ${result.month} · ${result.data_kind === 'synthetic' ? 'Synthetic clinic planning' : 'Uploaded planning · '+result.entity_name+' · '+result.currency}`;
     $('summary-driver-label').textContent=result.changed_drivers.length > 1 ? 'Changed assumptions' : 'Scenario driver';
-    $('summary-driver').textContent=result.changed_drivers.length ? result.changed_drivers.map(d => `${d.name}: ${formatValue(d.baseline,d.unit)} → ${formatValue(d.scenario,d.unit)}`).join(' · ') : 'Baseline scenario · no assumptions changed';
+    $('summary-driver').textContent=result.changed_drivers.length ? result.changed_drivers.map(d => `${d.name}: ${format(d.baseline,d.unit)} → ${format(d.scenario,d.unit)}`).join(' · ') : 'Baseline scenario · no assumptions changed';
     for (const metric of metrics) {
       const elements=kpis.get(metric.id);
       if(metric.id==='operating_margin') {
         const margin=presentation.margin;
-        elements.baseline.textContent=(margin.baseline===null?'N/A':formatValue(margin.baseline,'ratio'))+' →';
-        elements.scenario.textContent=margin.scenario===null?'N/A':formatValue(margin.scenario,'ratio');
-        elements.delta.textContent=margin.change_pp===null?'N/A · revenue is zero':formatValue(margin.change_pp,'number',true)+' pp';
+        elements.baseline.textContent=(margin.baseline===null?'N/A':format(margin.baseline,'ratio'))+' →';
+        elements.scenario.textContent=margin.scenario===null?'N/A':format(margin.scenario,'ratio');
+        elements.delta.textContent=margin.change_pp===null?'N/A · revenue is zero':format(margin.change_pp,'number',true)+' pp';
         elements.delta.className='kpi-change '+(margin.change_pp===null?'neutral':tone(margin.change_pp));
         continue;
       }
       const delta=result.changes[metric.id];
       elements.delta.className='kpi-change '+(metric.id==='visits'?'neutral':tone(delta.amount));
-      elements.baseline.textContent=formatValue(result.baseline[metric.id],metric.unit)+' →';
-      elements.scenario.textContent=formatValue(result.scenario[metric.id],metric.unit);
-      elements.delta.textContent=formatValue(delta.amount,metric.unit,true)+' · '+(delta.percent === null ? `N/A (${delta.percent_reason})` : formatPercent(delta.percent));
+      elements.baseline.textContent=format(result.baseline[metric.id],metric.unit)+' →';
+      elements.scenario.textContent=format(result.scenario[metric.id],metric.unit);
+      elements.delta.textContent=format(delta.amount,metric.unit,true)+' · '+(delta.percent === null ? `N/A (${delta.percent_reason})` : formatPercent(delta.percent));
     }
-    $('summary-impact-value').textContent=formatValue(result.impact,'USD',true);
+    $('summary-impact-value').textContent=format(result.impact,'USD',true);
     $('summary-impact-value').className=tone(result.impact);
-    $('visits-comparison').textContent=`Expected visits: ${formatValue(result.baseline.visits,'visits')} → ${formatValue(result.scenario.visits,'visits')} · ${result.changes.visits.percent===null?'N/A':formatPercent(result.changes.visits.percent)}. Separate volume measure; financial bars are USD only.`;
-    $('summary-impact-context').textContent=`Operating income: ${formatValue(result.baseline.operating_income,'USD')} baseline → ${formatValue(result.scenario.operating_income,'USD')} scenario. No approved forecast is changed.`;
-    const comparisons=GRAPH.filter(m => ['revenue','contribution','operating_income'].includes(m.id)).map(m => [m.name,`${formatValue(result.baseline[m.id],'USD')} → ${formatValue(result.scenario[m.id],'USD')}`]);
+    $('visits-comparison').textContent=`Expected visits: ${format(result.baseline.visits,'visits')} → ${format(result.scenario.visits,'visits')} · ${result.changes.visits.percent===null?'N/A':formatPercent(result.changes.visits.percent)}. Separate volume measure; financial bars are ${money} only.`;
+    $('summary-impact-context').textContent=`Operating income: ${format(result.baseline.operating_income,'USD')} baseline → ${format(result.scenario.operating_income,'USD')} scenario. No approved forecast is changed.`;
+    const comparisons=GRAPH.filter(m => ['revenue','contribution','operating_income'].includes(m.id)).map(m => [m.name,`${format(result.baseline[m.id],'USD')} → ${format(result.scenario[m.id],'USD')}`]);
     renderPairs('summary-comparison-values',comparisons);
     renderPairs('summary-expense-values',[
-      ['Variable labor',formatValue(result.scenario.labor,'USD')],
-      ['Variable supplies',formatValue(result.scenario.supplies,'USD')],
-      ['Fixed operating expense',formatValue(result.assumptions.fixed_expense,'USD')],
+      ['Variable labor',format(result.scenario.labor,'USD')],
+      ['Variable supplies',format(result.scenario.supplies,'USD')],
+      ['Fixed operating expense',format(result.assumptions.fixed_expense,'USD')],
     ]);
   });
-  review.subscribe(state => {
+  const unsubscribeReview=review.subscribe(state => {
     const commentary=state.commentary;
     $('summary-review').dataset.revision=String(state.revision);
     $('summary-commentary').dataset.revision=commentary ? String(commentary.revision) : '';
@@ -115,6 +120,7 @@ export function mountExecutiveSummary(store) {
       button.setAttribute('aria-pressed',String(state.decision?.action===button.dataset.action));
     });
   });
+  return () => { unsubscribeStore(); unsubscribeReview(); review.dispose(); };
 }
 function fillList(id,items) { $(id).replaceChildren(...items.map(text=>node('li',text))); }
 function renderPairs(id,pairs) {
