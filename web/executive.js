@@ -21,6 +21,7 @@ export function setupNavigation() {
     }
     const summary = tab === tabs[0];
     const investigation = tab === tabs[2];
+    document.body.classList.toggle('investigation-active',investigation);
     document.querySelector('.period').hidden = investigation;
     document.querySelector('.eyebrow').textContent = investigation ? 'EVIDENCE-AWARE REVIEW' : 'DRIVER-BASED PLANNING';
     $('page-title').textContent = investigation ? 'Variance Investigation' : summary ? 'Executive Summary' : 'Scenario Model';

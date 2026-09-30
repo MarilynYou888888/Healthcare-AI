@@ -6,6 +6,12 @@ const STATES = {
   observed_fact:'Observed Fact', candidate_driver:'Candidate Driver', supported_driver:'Supported Driver',
   analyst_confirmed_cause:'Analyst-Confirmed Cause', rejected_driver:'Rejected Driver', unresolved_driver:'Unresolved Driver',
 };
+const FACT_LABELS = {
+  REV_NET_PATIENT:'Net patient revenue', PATIENT_VISITS:'Patient visits',
+  PROVIDER_AVAILABLE_DAYS:'Provider available days', NET_REVENUE_PER_VISIT:'Net revenue / visit',
+  PROVIDER_PTO_DAYS:'Provider PTO', CLINIC_CLOSURE_DAYS:'Clinic closure', OVERTIME_HOURS:'Overtime hours',
+  COMMERCIAL_PAYER_MIX:'Commercial payer mix', clinic_identity:'Clinic identity', reported_event:'Operating event',
+};
 const ACTIONS = {confirm:'Confirm supported cause', reject:'Reject cause', keep_unresolved:'Keep unresolved', request_investigation:'Request further investigation'};
 function node(tag,text,cls) {
   const element=document.createElement(tag);
@@ -128,19 +134,22 @@ export function mountInvestigation(openWorkspace) {
 export function createInvestigationRenderer({decide,handoff}) {
   function renderDrivers(view) {
     const system=view.system, effective=view.reviewed ?? system;
+    const decisionsPanel=$('investigation-decision-summary');
+    decisionsPanel.replaceChildren();
     $('investigation-drivers').replaceChildren(...system.drivers.map((driver,index)=>{
       const reviewed=effective.drivers[index], decision=view.decisions?.[index];
-      const card=node('article',undefined,'driver-card'); card.dataset.driverFamily=driver.driver_family;
-      card.append(node('h4',driver.driver_family),
-        node('p',`System: ${STATES[driver.epistemic_state]} · Role: ${driver.role ? label(driver.role) : 'Not assigned'}`,'driver-system'),
-        node('p',driver.explanation), sources(driver.evidence),
-        node('p',`Current review state: ${STATES[reviewed.epistemic_state]} · Role: ${reviewed.role ? label(reviewed.role) : 'Not assigned'}`,'driver-review-state'),
-        node('p','Session decision: '+(decision ? ACTIONS[decision.action] : 'Not reviewed'),'driver-decision'));
-      if(reviewed.human_decision) card.append(node('small','Explicit analyst confirmation · '+reviewed.human_decision.review_reference));
+      const role=driver.role ? label(driver.role) : 'No role assigned';
+      const state=STATES[reviewed.epistemic_state];
+      const card=node('article',undefined,'variance-driver-card'); card.dataset.driverFamily=driver.driver_family;
+      const head=node('div',undefined,'variance-driver-head');
+      head.append(node('span',role==='primary'?'PRIMARY DRIVER':role==='contributing'?'CONTRIBUTING DRIVER':'DRIVER','variance-driver-role'),node('b',state,'variance-state-chip '+state.toLowerCase().replaceAll(' ','-')));
+      card.append(head,node('h4',driver.driver_family),node('p',driver.explanation,'variance-driver-explanation'));
+      const evidence=details('View driver evidence',[sources(driver.evidence)]); card.append(evidence);
       const rationale=node('textarea'); rationale.id='investigation-rationale-'+index; rationale.maxLength=2000;
       rationale.rows=2; rationale.value=decision?.rationale ?? '';
       const title=node('label','Analyst rationale (optional)'); title.htmlFor=rationale.id;
-      card.append(title,rationale);
+      const decisionCard=node('div',undefined,'variance-driver-decision');
+      decisionCard.append(node('strong',driver.driver_family),node('span',decision ? ACTIONS[decision.action] : 'Not reviewed','variance-decision-state'),title,rationale);
       const buttons=node('div',undefined,'investigation-actions');
       for(const [action,title] of Object.entries(ACTIONS)) {
         const button=node('button',title); button.type='button'; button.dataset.investigationAction=action;
@@ -148,16 +157,21 @@ export function createInvestigationRenderer({decide,handoff}) {
         button.setAttribute('aria-pressed',String(decision?.action === action));
         button.addEventListener('click',()=>decide(index,action,rationale.value)); buttons.append(button);
       }
-      card.append(buttons);
-      if(driver.epistemic_state !== 'supported_driver') card.append(node('small','Confirmation requires a Supported Driver. A human request cannot manufacture missing operating evidence.'));
+      decisionCard.append(buttons);
+      if(reviewed.human_decision) decisionCard.append(node('small','Explicit analyst confirmation · '+reviewed.human_decision.review_reference));
+      decisionsPanel.append(decisionCard);
       return card;
     }));
     $('investigation-success').textContent=`Investigation workflow completed: ${system.successful_investigation ? 'Yes' : 'No'}. Analyst-confirmed explanation: ${effective.successfully_explained_variance ? 'Yes' : 'No'}. These are distinct measures; an unresolved investigation can still be complete.`;
+    $('investigation-evidence-status').replaceChildren(...system.drivers.map((driver,index)=>{
+      const row=node('div',undefined,'variance-status-row');
+      row.append(node('span',driver.driver_family),node('b',STATES[(effective.drivers[index] ?? driver).epistemic_state],'variance-state-chip '+STATES[(effective.drivers[index] ?? driver).epistemic_state].toLowerCase().replaceAll(' ','-'))); return row;
+    }));
   }
   function render(view) {
     const system=view.system, variance=system.variance;
     $('investigation-content').inert=false; $('investigation-content').hidden=false;
-    $('investigation-status').textContent=`${view.context.case_id} · ${system.clinic_id} · ${system.month} · ${view.data_kind === 'user_uploaded' ? 'Uploaded investigation inputs' : 'Synthetic investigation inputs'} · Current evidence`;
+    $('investigation-status').textContent=`${view.context.case_id} · ${system.clinic_id} · ${system.month} · ${view.data_kind === 'user_uploaded' ? 'Uploaded investigation inputs' : 'Synthetic demonstration case'}`;
     $('investigation-target').replaceChildren(...view.targets.map(target=>{
       const option=node('option',`${target.required ? 'Review Queue' : 'Below selection rules'} · ${target.id} · ${label(target.type)}`);
       option.value=JSON.stringify([target.id,target.type]);
@@ -168,24 +182,30 @@ export function createInvestigationRenderer({decide,handoff}) {
     $('investigation-rule-sources').replaceChildren(sources(system.review.evidence));
     const comparator=variance.variance_type === 'financial_variance' ? 'Latest Approved Forecast' : 'Expected operating comparator';
     const percent=variance.percentage === null ? 'N/A: '+label(variance.percentage_unavailable_reason) : new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:2}).format(Number(variance.percentage));
-    $('investigation-comparison').replaceChildren(node('h4',variance.id),
-      node('p',`${comparator}: ${display(variance.forecast_or_expected,variance.currency)} → Actual: ${display(variance.actual,variance.currency)} · ${variance.unit}${variance.currency ? ' / '+variance.currency : ''}`),
-      node('strong',`Variance: ${display(variance.absolute,variance.currency)} · ${percent} · ${label(variance.direction)}`), sources(variance.evidence));
-    $('investigation-facts').replaceChildren(...system.observed_facts.map(fact=>details(
-      `Observed Fact · ${fact.subject_id} · ${label(fact.fact_type)}`,
-      [node('p',Object.entries(fact.values).map(([key,value])=>`${label(key)}: ${value ?? 'Missing'}`).join(' · ')),sources(fact.evidence)])));
+    const comparison=node('div',undefined,'variance-metric-grid');
+    comparison.append(...[['Actual',display(variance.actual,variance.currency)],['Forecast',display(variance.forecast_or_expected,variance.currency)],['Variance',`${display(variance.absolute,variance.currency)} · ${percent}`],['Review status',label(variance.direction)]].map(([name,value])=>{const item=node('div',undefined,'variance-metric');item.append(node('span',name),node('strong',value));return item;}));
+    $('investigation-comparison').replaceChildren(comparison,details('Technical comparison',[node('p',`${comparator} · ${variance.id} · ${variance.unit}${variance.currency ? ' / '+variance.currency : ''}`),sources(variance.evidence)]));
+    const month=system.month;
+    const visibleFacts=system.observed_facts.filter(fact=>fact.fact_type==='clinic_identity'||fact.fact_type==='reported_event'||fact.values?.month===month).filter((fact,index,array)=>fact.fact_type==='reported_event'||fact.fact_type==='clinic_identity'||array.findIndex(other=>other.subject_id===fact.subject_id&&other.values?.month===month)===index);
+    $('investigation-facts').replaceChildren(...visibleFacts.map(fact=>{const values=fact.values||{};const card=node('article',undefined,'variance-fact-card');const title=FACT_LABELS[fact.subject_id]||FACT_LABELS[fact.fact_type]||label(fact.subject_id);card.append(node('span',title));if(fact.fact_type==='clinic_identity') card.append(node('strong',values.clinic_name||'Available'));else if(fact.fact_type==='reported_event') card.append(node('strong',values.event_type ? label(values.event_type) : 'Observed'));else {const actual=values.actual??'Missing', comparator=values.comparator??'Missing';card.append(node('strong',`${actual} vs ${comparator}`));const delta=Number(comparator)-Number(actual);card.append(node('em',actual===comparator?'No change':`${delta>0?'↓':'↑'} ${Math.abs(delta).toLocaleString()} vs comparator`,'variance-fact-delta'));}card.append(details('Source detail',[node('p',Object.entries(values).map(([key,value])=>`${label(key)}: ${value ?? 'Missing'}`).join(' · ')),sources(fact.evidence)]));return card;}));
     $('investigation-conclusion').textContent=system.primary_driver ? `System primary driver: ${system.primary_driver}. Supported does not mean analyst-confirmed. Contribution allocation: ${system.contribution_estimate ? display(system.contribution_estimate.amount,system.contribution_estimate.unit) : 'Not quantified; no guessed attribution.'}` : 'Unresolved — evidence does not establish a supported primary cause. Do not invent a root cause.';
     renderDrivers(view);
     const timing=system.timing;
-    $('investigation-timing').textContent=`Classification: ${label(timing.classification)} · Recurring: ${timing.recurring ? 'Yes' : 'No'} · Remaining horizon: ${timing.horizon.start} to ${timing.horizon.end} · Basis: ${label(timing.horizon.basis)}`;
+    $('investigation-timing').textContent=`${label(timing.classification)} · ${timing.recurring ? 'Recurring condition' : 'Evidence points to a current-period condition'}`;
+    $('investigation-timing-state').textContent=label(timing.classification);
     $('investigation-policy').textContent=`Configured threshold: ${new Intl.NumberFormat('en-US',{style:'percent'}).format(view.policy.structural_horizon_fraction)}. ${view.policy.disclosure}`;
+    $('investigation-policy-detail').textContent=$('investigation-policy').textContent;
     $('investigation-timing-sources').replaceChildren(details('Timing and horizon sources',[sources([...timing.evidence,...timing.horizon.evidence])]));
     $('investigation-questions').replaceChildren(...system.unresolved_questions.map(question=>node('li',question)));
     $('investigation-disclosure').textContent=view.narrative_disclosure;
     if(view.narrative_status === 'withheld') $('investigation-disclosure').textContent += ' Commentary withheld by the existing narrative guard for this target. Review the deterministic facts and evidence directly.';
-    $('investigation-narrative').replaceChildren(...view.narrative.sections.map(section=>{
-      const block=node('section'); block.append(node('h4',section.title),node('p',section.body)); return block;
-    }));
+    const narrativeSections=view.narrative.sections||[];
+    const lead=narrativeSections.find(section=>section.title==='Executive Summary')||narrativeSections[0];
+    const leadBlock=node('p',lead?.body||'Commentary is unavailable for this target.');
+    if(narrativeSections.length>1){
+      const detailBlocks=narrativeSections.slice(1).map(section=>{const block=node('section');block.append(node('h4',section.title),node('p',section.body));return block;});
+      $('investigation-narrative').replaceChildren(leadBlock,details('View detailed commentary',detailBlocks));
+    } else $('investigation-narrative').replaceChildren(leadBlock);
     $('investigation-handoffs').replaceChildren(...view.handoffs.map(option=>{
       const button=node('button','Explore '+option.label); button.type='button';
       button.addEventListener('click',()=>handoff(view,option)); return button;
