@@ -1,5 +1,5 @@
 import {createUserWorkspace} from './user-workflows.js';
-import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,suggestSheetRole,suggestPayerMappings,PAYER_CATEGORIES,ambiguousAlias} from './import-schema.js';
+import {ROLES,FIELDS,METRICS,LIMITS,suggestMappings,suggestSheetRole,suggestPayerMappings,PAYER_CATEGORIES,ambiguousAlias,normalizeName} from './import-schema.js';
 import {headersFor,validateImport,createImportSession} from './import-validation.js';
 const $=id=>document.getElementById(id);
 function el(tag,text,cls) {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -38,6 +38,25 @@ function renderSheets(){
   }
   $('import-sheets').hidden=false;
 }
+function autoSelectSafePercentageEncoding(table){
+  if(table.settings.percent||table.settings.percentTouched||!['planning','payer_mix'].includes(table.role)) return;
+  const ratioIndexes=table.mapping.map((id,index)=>({id,index})).filter(item=>item.id==='utilization_rate'||item.id==='payer_mix_share'||String(item.id).startsWith('payer_share:'));
+  if(!ratioIndexes.length) return;
+  let sawPercent=false,sawPointValue=false,sawFraction=false;
+  for(const {index} of ratioIndexes){
+    for(const row of table.sheet.rows.slice(table.headerRow)){
+      const cell=row[index]; if(!cell||String(cell.v??'').trim()==='') continue;
+      const raw=String(cell.v??'').trim(); if(cell.percent||raw.endsWith('%')) sawPercent=true;
+      const numericValue=Number(raw.replace(/,/g,'')); if(Number.isFinite(numericValue)){if(numericValue>1)sawPointValue=true;if(numericValue>0&&numericValue<1)sawFraction=true;}
+    }
+  }
+  const headers=headersFor(table).map(normalizeName);
+  const explicitHeader=ratioIndexes.some(({index})=>/(%|percent|share|mix)/.test(headers[index]||''));
+  if(!sawFraction && (sawPercent||(sawPointValue&&explicitHeader)||(sawPointValue&&table.mapping.some(id=>id==='utilization_rate')))){
+    table.settings.percent='percent';
+    table.safeFixes.push({type:'percentage-encoding',sheet:table.sheet.name,detail:'Unmarked ratio values were treated as percentage points (for example, 90 → 0.90) because the mapped field and values were unambiguous.'});
+  }
+}
 $('import-file').addEventListener('change',()=>{
   stopWorker();const file=$('import-file').files[0];if(!file)return;
   invalidate();tables=[];$('import-sheets').hidden=true;$('import-mapping').hidden=true;hasDraft=true;
@@ -51,10 +70,10 @@ $('import-file').addEventListener('change',()=>{
   worker.onmessage=({data})=>{
     if(token!==generation)return;stopWorker();
     if(data.error){status('ERROR · '+data.error);return;}
-    // The bundled onboarding workbook explicitly documents utilization as whole
-    // percentage points (90 = 90%). Keep this convenience scoped to that
-    // fingerprint; user files still require an explicit percentage encoding.
-    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,suggestion:suggestSheetRole(sheet,1),mapping:[],mappingDrafts:new Map(),constants:{},settings:{percent:data.synthetic?'percent':'',numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
+    // Safe percentage repair is selected only after the mapped role, field, and
+    // source values make the representation unambiguous. Ambiguous values stay
+    // blocked by the validator and still require an analyst choice.
+    tables=data.sheets.map(sheet=>({sheet,fileName:data.name,synthetic:data.synthetic,role:'',headerRow:1,suggestion:suggestSheetRole(sheet,1),mapping:[],mappingDrafts:new Map(),safeFixes:[],constants:{},settings:{percent:data.synthetic?'percent':'',percentTouched:false,numberFormat:'dot',dateFormat:'iso',currency:'',confirmSemantics:false,generateIds:false}}));
     renderSheets();step(1);status(`${data.name} · ${tables.length} table(s) read locally. Select the roles to include.`);
   };
   worker.postMessage({file});
@@ -72,11 +91,11 @@ function renderMapping(){
       ROLES[table.role].fields.forEach(id=>sel.append(option(id,`${FIELDS[id].label}${FIELDS[id].required?' *':''}`)));
       if(table.role==='payer_mix') PAYER_CATEGORIES.forEach(category=>{sel.append(option(`payer_share:${category}`,`Payer mix share · ${category}`));sel.append(option(`payer_rate:${category}`,`Reimbursement value · ${category}`));});
       sel.value=table.mapping[c]??'';
-      sel.onchange=()=>{table.mapping[c]=sel.value;invalidate();refreshStatus();};mapping.append(sel);row.append(name,mapping,el('td',table.sheet.rows[table.headerRow]?.[c]?.w||table.sheet.rows[table.headerRow]?.[c]?.v||'—'));body.append(row);
+      sel.onchange=()=>{table.mapping[c]=sel.value;if(!table.settings.percentTouched){table.settings.percent='';table.safeFixes=[];}invalidate();refreshStatus();};mapping.append(sel);row.append(name,mapping,el('td',table.sheet.rows[table.headerRow]?.[c]?.w||table.sheet.rows[table.headerRow]?.[c]?.v||'—'));body.append(row);
     });
     const scroll=el('div',undefined,'import-scroll');scroll.append(list);section.append(scroll,fieldStatus);refreshStatus();
     const settings=el('div',undefined,'import-settings'),controls=el('div',undefined,'import-controls');
-    controls.append(select('Numeric percentage encoding',[['','Choose for unmarked numbers'],['fraction','Fraction (0.90 = 90%)'],['percent','Percentage points (90 = 90%)']],table.settings.percent,v=>{table.settings.percent=v;invalidate();}));
+    controls.append(select('Numeric percentage encoding',[['','Choose for unmarked numbers'],['fraction','Fraction (0.90 = 90%)'],['percent','Percentage points (90 = 90%)']],table.settings.percent,v=>{table.settings.percentTouched=true;table.settings.percent=v;invalidate();}));
     controls.append(select('Numeric format',[['dot','1,234.56 — dot decimals'],['comma','1.234,56 — comma decimals']],table.settings.numberFormat,v=>{table.settings.numberFormat=v;invalidate();}));
     controls.append(select('Date format',[['iso','ISO: YYYY-MM or YYYY-MM-DD'],['mdy','MM/DD/YYYY'],['dmy','DD/MM/YYYY']],table.settings.dateFormat,v=>{table.settings.dateFormat=v;invalidate();}));
     controls.append(select('Currency for missing monetary currency',[['','Use mapped currency'],...Intl.supportedValuesOf('currency').map(c=>[c,c])],table.settings.currency,v=>{table.settings.currency=v;invalidate();}));settings.append(controls);
@@ -96,13 +115,15 @@ $('import-map').onclick=()=>{if(!tables.some(t=>t.role)){status('Choose at least
   // Keep separate drafts when the user changes a sheet's role or header row.
   const key=JSON.stringify([t.role,t.headerRow]);
   if(!t.mappingDrafts.has(key))t.mappingDrafts.set(key,t.role==='payer_mix'?suggestPayerMappings(headersFor(t)):suggestMappings(headersFor(t),t.role));
-  t.mapping=t.mappingDrafts.get(key);
+  t.mapping=t.mappingDrafts.get(key); t.safeFixes=[]; autoSelectSafePercentageEncoding(t);
 }renderMapping();status('Review your column mappings and explicit format choices. Previous choices are preserved; new mappings use suggestions.');};
 $('import-back-sheets').onclick=()=>{invalidate();$('import-sheets').hidden=false;$('import-mapping').hidden=true;step(1);};
 $('import-validate').onclick=()=>{
-  invalidate();result=validateImport(tables.filter(t=>t.role),session.snapshot().datasets);
+  invalidate();for(const table of tables.filter(t=>t.role)){if(!table.settings.percentTouched){table.settings.percent='';table.safeFixes=[];}autoSelectSafePercentageEncoding(table);}result=validateImport(tables.filter(t=>t.role),session.snapshot().datasets);
   const counts=el('div',undefined,'import-counts');for(const severity of ['ERROR','WARNING','INFO'])counts.append(el('span',`${result.issues.filter(i=>i.severity===severity).length} ${severity==='ERROR'?'errors':severity==='WARNING'?'warnings':'info'}`,`severity-${severity.toLowerCase()}`));
-  $('import-validation-summary').replaceChildren(counts,el('p',`${result.rowsCount} rows checked. ERROR blocks import; WARNING needs review; INFO describes normalization or exclusions.`));
+  const safeFixes=tables.flatMap(table=>table.safeFixes||[]),summary=[counts,el('p',`${result.rowsCount} rows checked. Safe fixes are applied only when the field and source representation are unambiguous.`)];
+  if(safeFixes.length){const fixes=el('div',undefined,'import-auto-fixes');fixes.append(el('strong',`System applied ${safeFixes.length} safe fix${safeFixes.length===1?'':'es'}.`));safeFixes.forEach(fix=>fixes.append(el('p',`${fix.sheet}: ${fix.detail}`)));summary.push(fixes);}
+  summary.push(el('p','Remaining ERROR items require a source or mapping correction. WARNING items require review. INFO items describe normalization or exclusions.'));$('import-validation-summary').replaceChildren(...summary);
   $('import-issues').replaceChildren();grid(['Level','File / sheet','Row','Column','Problem','Suggested correction'],result.issues.map(i=>[i.severity,`${i.file??''} / ${i.sheet??''}`,i.row,i.column,i.problem,i.correction]),$('import-issues'));
   $('import-warnings').parentElement.hidden=!result.issues.some(i=>i.severity==='WARNING');$('import-validation').hidden=false;$('import-show-preview').disabled=!result.valid||result.issues.some(i=>i.severity==='WARNING');step(3);$('import-validation').scrollIntoView({block:'start'});status(result.valid?'Validation complete. Review warnings and proceed to preview.':'Some data needs correction. Confirmed session data has not changed.');
 };
